@@ -12,12 +12,12 @@ class RimeInputEngine(private val context: Context) : InputEngine {
     init {
         RimeResourceManager.deployIfNeeded(context)
         try {
-            System.loadLibrary("rime") // 这里的名称需与 jniLibs 下的文件名一致
+            System.loadLibrary("rime_jni") // 修改为实际提取的文件名
             isNativeLoaded = true
-            // RimeNative.init(context.filesDir.absolutePath + "/rime")
+            // TODO: 调用 RimeNative.init(...)
         } catch (e: UnsatisfiedLinkError) {
             e.printStackTrace()
-            // 如果加载失败，将继续使用 Mock 模式，不至于崩溃
+            // 加载失败时自动降级到 Mock 模式
         }
     }
 
