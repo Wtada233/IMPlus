@@ -1,0 +1,85 @@
+package com.implus.input.view
+
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
+import android.util.AttributeSet
+import android.view.MotionEvent
+import android.view.View
+import com.implus.input.model.KeyDefinition
+import com.implus.input.model.KeyboardLayout
+
+/**
+ * 核心键盘视图，负责渲染 JSON 定义的布局并处理触摸事件
+ */
+class KeyboardView @JvmOverloads constructor(
+    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+) : View(context, attrs, defStyleAttr) {
+
+    private var layout: KeyboardLayout? = null
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+    }
+    private val keyRect = RectF()
+    private var keyWidth: Float = 0f
+    private var keyHeight: Float = 0f
+
+    fun setLayout(keyboardLayout: KeyboardLayout) {
+        this.layout = keyboardLayout
+        invalidate()
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val layout = layout ?: return
+
+        val totalHeight = height.toFloat()
+        val rowCount = layout.rows.size
+        keyHeight = totalHeight / rowCount
+
+        var currentY = 0f
+        for (row in layout.rows) {
+            val totalWeight = row.keys.sumOf { it.weight.toDouble() }.toFloat()
+            var currentX = 0f
+            
+            for (key in row.keys) {
+                val currentKeyWidth = (key.weight / totalWeight) * width
+                drawKey(canvas, key, currentX, currentY, currentKeyWidth, keyHeight)
+                currentX += currentKeyWidth
+            }
+            currentY += keyHeight
+        }
+    }
+
+    private fun drawKey(canvas: Canvas, key: KeyDefinition, x: Float, y: Float, w: Float, h: Float) {
+        val padding = 4f
+        keyRect.set(x + padding, y + padding, x + w - padding, y + h - padding)
+        
+        // 绘制按键背景
+        paint.color = if (key.functional) Color.LTGRAY else Color.WHITE
+        canvas.drawRoundRect(keyRect, 8f, 8f, paint)
+
+        // 绘制按键文字
+        paint.color = Color.BLACK
+        paint.textSize = h * 0.4f
+        val label = key.label ?: ""
+        val fontMetrics = paint.fontMetrics
+        val centerY = keyRect.centerY() - (fontMetrics.ascent + fontMetrics.descent) / 2
+        canvas.drawText(label, keyRect.centerX(), centerY, paint)
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            // TODO: 处理按键点击逻辑
+            performClick()
+            return true
+        }
+        return super.onTouchEvent(event)
+    }
+    
+    override fun performClick(): Boolean {
+        return super.performClick()
+    }
+}

@@ -20,6 +20,12 @@ class ImplusInputMethodService : InputMethodService() {
 
     override fun onCreateInputView(): View {
         _binding = KeyboardBaseBinding.inflate(layoutInflater)
+        
+        val layout = com.implus.input.model.LayoutLoader.loadLayout(this, "qwerty_en.json")
+        layout?.let {
+            binding.keyboardView.setLayout(it)
+        }
+        
         return binding.root
     }
 

@@ -17,12 +17,11 @@
         android:id="@+id/keyboard_container"
         android:layout_width="match_parent"
         android:layout_height="260dp">
-        <!-- 动态加载键盘布局 -->
-        <TextView
+
+        <com.implus.input.view.KeyboardView
+            android:id="@+id/keyboard_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="主键盘区域"/>
+            android:layout_height="match_parent" />
     </FrameLayout>
 
 </LinearLayout>
