@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import com.implus.input.model.KeyDefinition
@@ -25,6 +26,8 @@ class KeyboardView @JvmOverloads constructor(
     private val keyRect = RectF()
     private var keyWidth: Float = 0f
     private var keyHeight: Float = 0f
+
+    var hapticFeedbackEnabled: Boolean = true
 
     interface OnKeyListener {
         fun onKey(key: KeyDefinition)
@@ -90,7 +93,17 @@ class KeyboardView @JvmOverloads constructor(
         val y = event.y
 
         when (event.action) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+            MotionEvent.ACTION_DOWN -> {
+                val key = findKeyAt(x, y)
+                if (key != null) {
+                    if (hapticFeedbackEnabled) {
+                        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    }
+                    pressedKey = key
+                    invalidate()
+                }
+            }
+            MotionEvent.ACTION_MOVE -> {
                 val key = findKeyAt(x, y)
                 if (key != pressedKey) {
                     pressedKey = key

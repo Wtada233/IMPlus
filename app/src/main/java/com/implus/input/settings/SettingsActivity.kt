@@ -1,6 +1,9 @@
 package com.implus.input.settings
 
+import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import com.implus.input.databinding.ActivitySettingsBinding
 
@@ -15,6 +18,14 @@ class SettingsActivity : AppCompatActivity() {
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
-        // TODO: 实现设置逻辑和初始化向导
+        binding.btnEnableIme.setOnClickListener {
+            val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
+            startActivity(intent)
+        }
+        
+        binding.btnSelectIme.setOnClickListener {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showInputMethodPicker()
+        }
     }
 }
