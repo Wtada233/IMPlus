@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "com.implus.input.app-merged_res-33:/xml_method.xml.flat",
+        "source": "com.implus.input.app-main-35:/xml/method.xml"
+    },
+    {
+        "merged": "com.implus.input.app-merged_res-33:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.implus.input.app-main-35:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.implus.input.app-merged_res-33:/layout_activity_settings.xml.flat",
+        "source": "com.implus.input.app-main-35:/layout/activity_settings.xml"
+    },
+    {
+        "merged": "com.implus.input.app-merged_res-33:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.implus.input.app-main-35:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.implus.input.app-merged_res-33:/layout_keyboard_base.xml.flat",
+        "source": "com.implus.input.app-main-35:/layout/keyboard_base.xml"
+    }
+]

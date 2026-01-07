@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@android:color/white" />
+    <foreground>
+        <inset android:inset="16%">
+             <path
+                android:fillColor="#6200EE"
+                android:pathData="M20,4H4C2.9,4 2,4.9 2,6V18C2,19.1 2.9,20 4,20H20C21.1,20 22,19.1 22,18V6C22,4.9 21.1,4 20,4M20,18H4V6H20V18M7,12H9V14H7V12M11,12H13V14H11V12M15,12H17V14H15V12M7,8H9V10H7V8M11,8H13V10H11V8M15,8H17V10H15V8M7,15H17V17H7V15Z" />
+        </inset>
+    </foreground>
+</adaptive-icon>

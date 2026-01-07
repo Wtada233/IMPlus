@@ -1,4 +1,8 @@
+package com.implus.input
+
+import android.inputmethodservice.InputMethodService
 import android.view.KeyEvent
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import com.implus.input.databinding.KeyboardBaseBinding
 import com.implus.input.engine.InputEngine
@@ -23,6 +27,7 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
 
     private lateinit var candidateAdapter: CandidateAdapter
     private lateinit var settingsManager: SettingsManager
+    private var currentLayoutName = "qwerty_en.json"
 
     override fun onCreate() {
         super.onCreate()
@@ -38,12 +43,12 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
         // 设置键盘高度
         binding.keyboardContainer.layoutParams.height = settingsManager.keyboardHeight
         
-        val layout = com.implus.input.model.LayoutLoader.loadLayout(this, "qwerty_en.json")
+        val layout = com.implus.input.model.LayoutLoader.loadLayout(this, currentLayoutName)
         layout?.let {
             binding.keyboardView.setLayout(it)
         }
         binding.keyboardView.setOnKeyListener(this)
-        binding.keyboardView.hapticFeedbackEnabled = settingsManager.hapticEnabled
+        binding.keyboardView.isHapticFeedbackEnabledCustom = settingsManager.hapticEnabled
         
         candidateAdapter = CandidateAdapter { candidate ->
             currentInputConnection?.commitText(candidate, 1)
@@ -53,6 +58,10 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
         binding.candidateRecyclerView.adapter = candidateAdapter
         
         return binding.root
+    }
+
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
     }
 
     override fun onKey(key: KeyDefinition) {
@@ -72,7 +81,7 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
         }
 
         when (key.code) {
-            -5 -> {
+            -5 -> { // Backspace
                 if (currentEngine?.getCandidates()?.isNotEmpty() == true) {
                     currentEngine?.reset()
                     updateCandidates()
@@ -117,3 +126,9 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
     private fun updateCandidates() {
         candidateAdapter.setCandidates(currentEngine?.getCandidates() ?: emptyList())
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
+    }
+}

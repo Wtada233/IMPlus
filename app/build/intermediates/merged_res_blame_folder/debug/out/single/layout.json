@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "com.implus.input.app-mergeDebugResources-32:/layout/keyboard_base.xml",
+        "source": "com.implus.input.app-main-35:/layout/keyboard_base.xml"
+    },
+    {
+        "merged": "com.implus.input.app-mergeDebugResources-32:/layout/activity_settings.xml",
+        "source": "com.implus.input.app-main-35:/layout/activity_settings.xml"
+    }
+]

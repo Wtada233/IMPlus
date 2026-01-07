@@ -1,20 +1,9 @@
 package com.implus.input.view
 
-import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
-import android.util.AttributeSet
-import android.view.HapticFeedbackConstants
-import android.view.MotionEvent
-import android.view.View
-import com.google.android.material.color.MaterialColors
-import com.implus.input.model.KeyDefinition
-import com.implus.input.model.KeyboardLayout
-
 import android.animation.ValueAnimator
+import android.content.Context
 import android.graphics.*
+import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
@@ -45,12 +34,12 @@ class KeyboardView @JvmOverloads constructor(
     private var activeRippleKey: KeyDefinition? = null
 
     // 缓存主题颜色
-    private val colorPrimaryContainer = MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimaryContainer, Color.LTGRAY)
-    private val colorOnPrimaryContainer = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnPrimaryContainer, Color.BLACK)
-    private val colorSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.WHITE)
-    private val colorOnSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK)
+    private val colorPrimaryContainer by lazy { MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimaryContainer, Color.LTGRAY) }
+    private val colorOnPrimaryContainer by lazy { MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnPrimaryContainer, Color.BLACK) }
+    private val colorSurface by lazy { MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.WHITE) }
+    private val colorOnSurface by lazy { MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK) }
 
-    var hapticFeedbackEnabled: Boolean = true
+    var isHapticFeedbackEnabledCustom: Boolean = true
     var isShifted: Boolean = false
         set(value) {
             field = value
@@ -101,7 +90,10 @@ class KeyboardView @JvmOverloads constructor(
         
         // 1. 绘制按键背景
         paint.color = when {
-            key.functional -> Color.alpha(colorPrimaryContainer).let { Color.argb(40, Color.red(colorPrimaryContainer), Color.green(colorPrimaryContainer), Color.blue(colorPrimaryContainer)) }
+            key.functional -> {
+                val base = colorPrimaryContainer
+                Color.argb(40, Color.red(base), Color.green(base), Color.blue(base))
+            }
             else -> colorSurface
         }
         canvas.drawRoundRect(keyRect, 16f, 16f, paint)
@@ -149,7 +141,7 @@ class KeyboardView @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 val key = findKeyAt(x, y)
                 if (key != null) {
-                    if (hapticFeedbackEnabled) {
+                    if (isHapticFeedbackEnabledCustom) {
                         performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                     }
                     pressedKey = key
@@ -167,7 +159,6 @@ class KeyboardView @JvmOverloads constructor(
             MotionEvent.ACTION_UP -> {
                 pressedKey?.let { listener?.onKey(it) }
                 pressedKey = null
-                // 动画会由 animator 处理结束
                 invalidate()
                 performClick()
             }
@@ -216,12 +207,6 @@ class KeyboardView @JvmOverloads constructor(
         return null
     }
 
-    override fun performClick(): Boolean {
-        return super.performClick()
-    }
-}
-
-    
     override fun performClick(): Boolean {
         return super.performClick()
     }
