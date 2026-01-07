@@ -60,6 +60,13 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
         
         // 尝试通过引擎处理
         if (currentEngine?.processKey(key.code ?: 0, key.label) == true) {
+            // 检查引擎是否有直接上屏的文本 (Commit)
+            if (currentEngine is RimeInputEngine) {
+                val commitText = com.osfans.trime.Rime.getCommit()
+                if (commitText != null) {
+                    ic.commitText(commitText, 1)
+                }
+            }
             updateCandidates()
             return
         }
