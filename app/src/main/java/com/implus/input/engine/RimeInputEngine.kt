@@ -3,34 +3,55 @@ package com.implus.input.engine
 /**
  * RIME 引擎的 JNI 桥接
  */
-class RimeInputEngine : InputEngine {
+class RimeInputEngine(private val context: Context) : InputEngine {
     
-    companion object {
-        init {
-            // System.loadLibrary("rime_jni")
-        }
+    private var compositionString = ""
+    private var currentCandidates = mutableListOf<String>()
+
+    init {
+        RimeResourceManager.deployIfNeeded(context)
+        // TODO: 调用 Native 初始化：RimeNative.init(context.filesDir.absolutePath + "/rime")
     }
 
-    // 原生方法定义 (暂未实现)
-    // external fun initialize(configPath: String, userDataPath: String): Boolean
-    // external fun processKey(keyCode: Int, mask: Int): Boolean
-    // external fun getCommit(): String?
-    // external fun getCandidates(): List<String>
-
     override fun processKey(keyCode: Int, label: String?): Boolean {
-        // TODO: 调用 JNI 处理中文输入
+        // 如果是 a-z，则进入 RIME 处理
+        if (label?.length == 1 && label[0] in 'a'..'z') {
+            compositionString += label
+            updateMockCandidates() // 实际应调用 RimeNative.processKey
+            return true
+        }
+        
+        // 如果是空格且有候选词，选择第一个
+        if (keyCode == 32 && compositionString.isNotEmpty()) {
+            return false // 让 Service 处理 commit 逻辑，或者在此处 selectCandidate(0)
+        }
+
         return false
     }
 
-    override fun getCandidates(): List<String> {
-        return emptyList()
+    private fun updateMockCandidates() {
+        // 模拟拼音匹配
+        currentCandidates = when (compositionString) {
+            "ni" -> mutableListOf("你", "泥", "拟")
+            "hao" -> mutableListOf("好", "号", "毫")
+            "nihao" -> mutableListOf("你好", "你好吗")
+            else -> mutableListOf(compositionString)
+        }
     }
 
+    override fun getCandidates(): List<String> = currentCandidates
+
     override fun selectCandidate(index: Int): String? {
+        if (index < currentCandidates.size) {
+            val selected = currentCandidates[index]
+            reset()
+            return selected
+        }
         return null
     }
 
     override fun reset() {
-        // TODO: 重置 RIME 状态
+        compositionString = ""
+        currentCandidates.clear()
     }
 }
