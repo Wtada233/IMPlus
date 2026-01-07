@@ -7,25 +7,37 @@ class RimeInputEngine(private val context: Context) : InputEngine {
     
     private var compositionString = ""
     private var currentCandidates = mutableListOf<String>()
+    private var isNativeLoaded = false
 
     init {
         RimeResourceManager.deployIfNeeded(context)
-        // TODO: 调用 Native 初始化：RimeNative.init(context.filesDir.absolutePath + "/rime")
+        try {
+            System.loadLibrary("rime") // 这里的名称需与 jniLibs 下的文件名一致
+            isNativeLoaded = true
+            // RimeNative.init(context.filesDir.absolutePath + "/rime")
+        } catch (e: UnsatisfiedLinkError) {
+            e.printStackTrace()
+            // 如果加载失败，将继续使用 Mock 模式，不至于崩溃
+        }
     }
 
     override fun processKey(keyCode: Int, label: String?): Boolean {
-        // 如果是 a-z，则进入 RIME 处理
-        if (label?.length == 1 && label[0] in 'a'..'z') {
-            compositionString += label
-            updateMockCandidates() // 实际应调用 RimeNative.processKey
-            return true
+        if (!isNativeLoaded) {
+            // 如果没有 native 库，走 Mock 逻辑演示效果
+            return handleMockLogic(keyCode, label)
         }
         
-        // 如果是空格且有候选词，选择第一个
-        if (keyCode == 32 && compositionString.isNotEmpty()) {
-            return false // 让 Service 处理 commit 逻辑，或者在此处 selectCandidate(0)
-        }
+        // TODO: 调用真正的 RimeNative 接口
+        return false
+    }
 
+    private fun handleMockLogic(keyCode: Int, label: String?): Boolean {
+        // 如果是 a-z，则进入 Mock 处理
+        if (label?.length == 1 && label[0] in 'a'..'z') {
+            compositionString += label
+            updateMockCandidates()
+            return true
+        }
         return false
     }
 
