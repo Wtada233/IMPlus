@@ -26,6 +26,17 @@ class KeyboardView @JvmOverloads constructor(
     private var keyWidth: Float = 0f
     private var keyHeight: Float = 0f
 
+    interface OnKeyListener {
+        fun onKey(key: KeyDefinition)
+    }
+
+    private var listener: OnKeyListener? = null
+    private var pressedKey: KeyDefinition? = null
+
+    fun setOnKeyListener(listener: OnKeyListener) {
+        this.listener = listener
+    }
+
     fun setLayout(keyboardLayout: KeyboardLayout) {
         this.layout = keyboardLayout
         invalidate()
@@ -57,12 +68,16 @@ class KeyboardView @JvmOverloads constructor(
         val padding = 4f
         keyRect.set(x + padding, y + padding, x + w - padding, y + h - padding)
         
-        // 绘制按键背景
-        paint.color = if (key.functional) Color.LTGRAY else Color.WHITE
+        // 绘制按键背景，如果是当前按下的键则改变颜色
+        paint.color = when {
+            key == pressedKey -> Color.DKGRAY
+            key.functional -> Color.LTGRAY
+            else -> Color.WHITE
+        }
         canvas.drawRoundRect(keyRect, 8f, 8f, paint)
 
         // 绘制按键文字
-        paint.color = Color.BLACK
+        paint.color = if (key == pressedKey) Color.WHITE else Color.BLACK
         paint.textSize = h * 0.4f
         val label = key.label ?: ""
         val fontMetrics = paint.fontMetrics
@@ -71,12 +86,48 @@ class KeyboardView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (event.action == MotionEvent.ACTION_DOWN) {
-            // TODO: 处理按键点击逻辑
-            performClick()
-            return true
+        val x = event.x
+        val y = event.y
+
+        when (event.action) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                val key = findKeyAt(x, y)
+                if (key != pressedKey) {
+                    pressedKey = key
+                    invalidate()
+                }
+            }
+            MotionEvent.ACTION_UP -> {
+                pressedKey?.let { listener?.onKey(it) }
+                pressedKey = null
+                invalidate()
+                performClick()
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                pressedKey = null
+                invalidate()
+            }
         }
-        return super.onTouchEvent(event)
+        return true
+    }
+
+    private fun findKeyAt(x: Float, y: Float): KeyDefinition? {
+        val layout = layout ?: return null
+        val rowCount = layout.rows.size
+        val rowIndex = (y / (height / rowCount)).toInt().coerceIn(0, rowCount - 1)
+        
+        val row = layout.rows[rowIndex]
+        val totalWeight = row.keys.sumOf { it.weight.toDouble() }.toFloat()
+        
+        var currentX = 0f
+        for (key in row.keys) {
+            val currentKeyWidth = (key.weight / totalWeight) * width
+            if (x >= currentX && x <= currentX + currentKeyWidth) {
+                return key
+            }
+            currentX += currentKeyWidth
+        }
+        return null
     }
     
     override fun performClick(): Boolean {
