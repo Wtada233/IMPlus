@@ -13,6 +13,16 @@ import com.google.android.material.color.MaterialColors
 import com.implus.input.model.KeyDefinition
 import com.implus.input.model.KeyboardLayout
 
+import android.animation.ValueAnimator
+import android.graphics.*
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
+import android.view.View
+import android.view.animation.DecelerateInterpolator
+import com.google.android.material.color.MaterialColors
+import com.implus.input.model.KeyDefinition
+import com.implus.input.model.KeyboardLayout
+
 /**
  * 核心键盘视图，负责渲染 JSON 定义的布局并处理触摸事件
  */
@@ -25,8 +35,14 @@ class KeyboardView @JvmOverloads constructor(
         textAlign = Paint.Align.CENTER
     }
     private val keyRect = RectF()
-    private var keyWidth: Float = 0f
-    private var keyHeight: Float = 0f
+    
+    // 涟漪动画相关
+    private var rippleCenterX = 0f
+    private var rippleCenterY = 0f
+    private var rippleRadius = 0f
+    private var rippleAlpha = 0
+    private var rippleAnimator: ValueAnimator? = null
+    private var activeRippleKey: KeyDefinition? = null
 
     // 缓存主题颜色
     private val colorPrimaryContainer = MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimaryContainer, Color.LTGRAY)
@@ -63,7 +79,7 @@ class KeyboardView @JvmOverloads constructor(
 
         val totalHeight = height.toFloat()
         val rowCount = layout.rows.size
-        keyHeight = totalHeight / rowCount
+        val keyHeight = totalHeight / rowCount
 
         var currentY = 0f
         for (row in layout.rows) {
@@ -80,19 +96,37 @@ class KeyboardView @JvmOverloads constructor(
     }
 
     private fun drawKey(canvas: Canvas, key: KeyDefinition, x: Float, y: Float, w: Float, h: Float) {
-        val padding = 4f
+        val padding = 6f
         keyRect.set(x + padding, y + padding, x + w - padding, y + h - padding)
         
-        // 绘制按键背景，如果是当前按下的键则改变颜色
+        // 1. 绘制按键背景
         paint.color = when {
-            key == pressedKey -> colorPrimaryContainer
-            key.functional -> Color.alpha(colorPrimaryContainer).let { Color.argb(80, Color.red(colorPrimaryContainer), Color.green(colorPrimaryContainer), Color.blue(colorPrimaryContainer)) }
+            key.functional -> Color.alpha(colorPrimaryContainer).let { Color.argb(40, Color.red(colorPrimaryContainer), Color.green(colorPrimaryContainer), Color.blue(colorPrimaryContainer)) }
             else -> colorSurface
         }
-        canvas.drawRoundRect(keyRect, 12f, 12f, paint)
+        canvas.drawRoundRect(keyRect, 16f, 16f, paint)
 
-        // 绘制按键文字
-        paint.color = if (key == pressedKey) colorOnPrimaryContainer else colorOnSurface
+        // 2. 绘制涟漪效果
+        if (key == activeRippleKey && rippleAlpha > 0) {
+            paint.color = colorPrimaryContainer
+            paint.alpha = rippleAlpha
+            canvas.save()
+            canvas.clipRect(keyRect)
+            canvas.drawCircle(rippleCenterX, rippleCenterY, rippleRadius, paint)
+            canvas.restore()
+            paint.alpha = 255
+        }
+
+        // 3. 如果是常按状态且没有动画，显示一个静态深色背景
+        if (key == pressedKey && key != activeRippleKey) {
+            paint.color = colorPrimaryContainer
+            paint.alpha = 100
+            canvas.drawRoundRect(keyRect, 16f, 16f, paint)
+            paint.alpha = 255
+        }
+
+        // 4. 绘制按键文字
+        paint.color = colorOnSurface
         paint.textSize = h * 0.35f
         
         val label = key.label ?: ""
@@ -119,6 +153,7 @@ class KeyboardView @JvmOverloads constructor(
                         performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                     }
                     pressedKey = key
+                    startRipple(x, y, key)
                     invalidate()
                 }
             }
@@ -132,6 +167,7 @@ class KeyboardView @JvmOverloads constructor(
             MotionEvent.ACTION_UP -> {
                 pressedKey?.let { listener?.onKey(it) }
                 pressedKey = null
+                // 动画会由 animator 处理结束
                 invalidate()
                 performClick()
             }
@@ -141,6 +177,24 @@ class KeyboardView @JvmOverloads constructor(
             }
         }
         return true
+    }
+
+    private fun startRipple(x: Float, y: Float, key: KeyDefinition) {
+        rippleCenterX = x
+        rippleCenterY = y
+        activeRippleKey = key
+        
+        rippleAnimator?.cancel()
+        rippleAnimator = ValueAnimator.ofFloat(0f, width * 0.2f).apply {
+            duration = 250
+            interpolator = DecelerateInterpolator()
+            addUpdateListener { animator ->
+                rippleRadius = animator.animatedValue as Float
+                rippleAlpha = (255 * (1 - animator.animatedFraction)).toInt()
+                invalidate()
+            }
+            start()
+        }
     }
 
     private fun findKeyAt(x: Float, y: Float): KeyDefinition? {
@@ -161,6 +215,12 @@ class KeyboardView @JvmOverloads constructor(
         }
         return null
     }
+
+    override fun performClick(): Boolean {
+        return super.performClick()
+    }
+}
+
     
     override fun performClick(): Boolean {
         return super.performClick()
