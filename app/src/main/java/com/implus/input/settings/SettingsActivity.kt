@@ -13,19 +13,23 @@ import com.implus.input.databinding.ActivitySettingsBinding
 class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivitySettingsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    override fun onResume() {
+        super.onResume()
+        updateButtonStates()
+    }
+
+    private fun updateButtonStates() {
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        val enabledIds = imm.enabledInputMethodList.map { it.id }
+        val isEnabled = enabledIds.contains("$packageName/.ImplusInputMethodService")
         
-        binding.btnEnableIme.setOnClickListener {
-            val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
-            startActivity(intent)
-        }
+        binding.btnEnableIme.isEnabled = !isEnabled
+        binding.btnEnableIme.text = if (isEnabled) "IMPlus 已启用" else "第一步：启用 IMPlus"
         
-        binding.btnSelectIme.setOnClickListener {
-            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showInputMethodPicker()
-        }
+        val currentIme = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
+        val isSelected = currentIme == "$packageName/.ImplusInputMethodService"
+        
+        binding.btnSelectIme.isEnabled = isEnabled && !isSelected
+        binding.btnSelectIme.text = if (isSelected) "IMPlus 当前正在使用" else "第二步：切换到 IMPlus"
     }
 }
