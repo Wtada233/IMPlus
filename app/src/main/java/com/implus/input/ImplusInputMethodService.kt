@@ -5,7 +5,10 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.KeyEvent
 import com.implus.input.databinding.KeyboardBaseBinding
+import com.implus.input.engine.InputEngine
+import com.implus.input.engine.LatinInputEngine
 import com.implus.input.model.KeyDefinition
+import com.implus.input.view.CandidateAdapter
 import com.implus.input.view.KeyboardView
 
 /**
@@ -15,6 +18,9 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
 
     private var _binding: KeyboardBaseBinding? = null
     private val binding get() = _binding!!
+    
+    private var inputEngine: InputEngine = LatinInputEngine()
+    private lateinit var candidateAdapter: CandidateAdapter
 
     override fun onCreate() {
         super.onCreate()
@@ -30,12 +36,25 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
         }
         binding.keyboardView.setOnKeyListener(this)
         
+        candidateAdapter = CandidateAdapter { candidate ->
+            currentInputConnection?.commitText(candidate, 1)
+            inputEngine.reset()
+            updateCandidates()
+        }
+        binding.candidateRecyclerView.adapter = candidateAdapter
+        
         return binding.root
     }
 
     override fun onKey(key: KeyDefinition) {
         val ic = currentInputConnection ?: return
         
+        // 尝试通过引擎处理
+        if (inputEngine.processKey(key.code ?: 0, key.label)) {
+            updateCandidates()
+            return
+        }
+
         when (key.code) {
             -5 -> ic.deleteSurroundingText(1, 0) // Backspace
             -1 -> { /* TODO: Shift Logic */ }
@@ -47,6 +66,10 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
                 }
             }
         }
+    }
+
+    private fun updateCandidates() {
+        candidateAdapter.setCandidates(inputEngine.getCandidates())
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
