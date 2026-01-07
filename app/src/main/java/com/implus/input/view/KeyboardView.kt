@@ -9,6 +9,7 @@ import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
+import com.google.android.material.color.MaterialColors
 import com.implus.input.model.KeyDefinition
 import com.implus.input.model.KeyboardLayout
 
@@ -26,6 +27,12 @@ class KeyboardView @JvmOverloads constructor(
     private val keyRect = RectF()
     private var keyWidth: Float = 0f
     private var keyHeight: Float = 0f
+
+    // 缓存主题颜色
+    private val colorPrimaryContainer = MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimaryContainer, Color.LTGRAY)
+    private val colorOnPrimaryContainer = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnPrimaryContainer, Color.BLACK)
+    private val colorSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, Color.WHITE)
+    private val colorOnSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.BLACK)
 
     var hapticFeedbackEnabled: Boolean = true
     var isShifted: Boolean = false
@@ -78,15 +85,15 @@ class KeyboardView @JvmOverloads constructor(
         
         // 绘制按键背景，如果是当前按下的键则改变颜色
         paint.color = when {
-            key == pressedKey -> Color.DKGRAY
-            key.functional -> Color.LTGRAY
-            else -> Color.WHITE
+            key == pressedKey -> colorPrimaryContainer
+            key.functional -> Color.alpha(colorPrimaryContainer).let { Color.argb(80, Color.red(colorPrimaryContainer), Color.green(colorPrimaryContainer), Color.blue(colorPrimaryContainer)) }
+            else -> colorSurface
         }
-        canvas.drawRoundRect(keyRect, 8f, 8f, paint)
+        canvas.drawRoundRect(keyRect, 12f, 12f, paint)
 
         // 绘制按键文字
-        paint.color = if (key == pressedKey) Color.WHITE else Color.BLACK
-        paint.textSize = h * 0.4f
+        paint.color = if (key == pressedKey) colorOnPrimaryContainer else colorOnSurface
+        paint.textSize = h * 0.35f
         
         val label = key.label ?: ""
         val displayLabel = if (isShifted && label.length == 1 && label[0].isLetter()) {

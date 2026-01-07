@@ -61,6 +61,8 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
         }
     }
 
+    private var currentLayoutName = "qwerty_en.json"
+
     override fun onKey(key: KeyDefinition) {
         val ic = currentInputConnection ?: return
         
@@ -74,6 +76,11 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
             -5 -> ic.deleteSurroundingText(1, 0) // Backspace
             -1 -> { // Shift
                 binding.keyboardView.isShifted = !binding.keyboardView.isShifted
+            }
+            -2 -> { // 切换布局
+                currentLayoutName = if (currentLayoutName == "qwerty_en.json") "symbols.json" else "qwerty_en.json"
+                val layout = com.implus.input.model.LayoutLoader.loadLayout(this, currentLayoutName)
+                layout?.let { binding.keyboardView.setLayout(it) }
             }
             10 -> ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)) // Enter
             else -> {
