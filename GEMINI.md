@@ -82,3 +82,4 @@
 ## 9. 开发要求：
 使用中文回答和写注释，少量多次replace。注意replace是精确匹配，所以不要使用占位符，否则可能替换正确代码
 尽量少使用正则表达式，编写可复用和稳健的逻辑，模块化。
+使用git add .和git commit进行代码commit，使用git push来推送，一次性完成所有内容，检查bug并build。在build之后提交commit，不要push
