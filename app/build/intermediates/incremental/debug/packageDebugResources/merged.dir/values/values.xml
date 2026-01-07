@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">IMPlus</string>
-    <string name="ime_name">Implus 键盘</string>
-    <style name="Theme.IMPlus" parent="Theme.Material3.DayNight.NoActionBar"/>
-</resources>
