@@ -4,25 +4,36 @@ package com.implus.input.engine
  * RIME 引擎的 JNI 桥接
  */
 import android.content.Context
+import android.util.Log
 import com.osfans.trime.Rime
 import java.io.File
 
 class RimeInputEngine(private val context: Context) : InputEngine {
     
     private var isNativeLoaded = false
+    private val TAG = "RimeInputEngine"
 
     init {
-        RimeResourceManager.deployIfNeeded(context)
         try {
+            Log.d(TAG, "Initializing RIME resources...")
+            RimeResourceManager.deployIfNeeded(context)
+            
+            Log.d(TAG, "Loading rime_jni library...")
             System.loadLibrary("rime_jni")
+            
             val rimeDir = File(context.filesDir, "rime").absolutePath
-            // RIME 需要两个目录：共享目录和用户目录，这里暂设为同一个
+            Log.d(TAG, "Starting RIME with dir: $rimeDir")
+            
+            // 扩大捕获范围到 Throwable 以处理 Error
             isNativeLoaded = Rime.startup(rimeDir, rimeDir)
             if (isNativeLoaded) {
+                Log.d(TAG, "RIME started successfully, deploying...")
                 Rime.deploy()
+            } else {
+                Log.e(TAG, "RIME startup failed (returned false)")
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (t: Throwable) {
+            Log.e(TAG, "Fatal error during RIME initialization", t)
             isNativeLoaded = false
         }
     }

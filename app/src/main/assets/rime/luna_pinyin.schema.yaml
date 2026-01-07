@@ -1,0 +1,6 @@
+schema:
+  schema_id: luna_pinyin
+  name: "朙月拼音"
+  version: "0.22"
+translator:
+  dictionary: luna_pinyin

@@ -1,41 +1,37 @@
 package com.implus.input.engine
 
 import android.content.Context
+import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
 
-/**
- * 负责将 assets 中的 RIME 配置文件释放到内部存储
- */
 object RimeResourceManager {
+    private const val TAG = "RimeResourceManager"
     
     fun deployIfNeeded(context: Context) {
         val rimeDir = File(context.filesDir, "rime")
         if (!rimeDir.exists()) {
+            Log.d(TAG, "Creating RIME directory at ${rimeDir.absolutePath}")
             rimeDir.mkdirs()
         }
         
-        // 示例：释放基础配置文件
-        copyAssetFolder(context, "rime", rimeDir.absolutePath)
-    }
-
-    private fun copyAssetFolder(context: Context, assetPath: String, targetPath: String) {
-        val assets = context.assets.list(assetPath) ?: return
-        if (assets.isEmpty()) {
-            copyAssetFile(context, assetPath, targetPath)
-        } else {
-            File(targetPath).mkdirs()
-            for (asset in assets) {
-                copyAssetFolder(context, "$assetPath/$asset", "$targetPath/$asset")
+        try {
+            // 简单的扁平化释放，后续可根据需要扩展递归逻辑
+            val assets = context.assets.list("rime") ?: return
+            for (fileName in assets) {
+                val outFile = File(rimeDir, fileName)
+                // 仅在文件不存在时释放，避免每次启动都覆盖用户配置
+                if (!outFile.exists()) {
+                    Log.d(TAG, "Deploying asset: $fileName")
+                    context.assets.open("rime/$fileName").use { input ->
+                        FileOutputStream(outFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
             }
-        }
-    }
-
-    private fun copyAssetFile(context: Context, assetFile: String, targetFile: String) {
-        context.assets.open(assetFile).use { input ->
-            FileOutputStream(targetFile).use { output ->
-                input.copyTo(output)
-            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to deploy RIME assets", e)
         }
     }
 }

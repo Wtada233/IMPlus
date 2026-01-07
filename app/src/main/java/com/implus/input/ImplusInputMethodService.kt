@@ -31,10 +31,19 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
 
     override fun onCreate() {
         super.onCreate()
-        settingsManager = SettingsManager(this)
-        latinEngine = LatinInputEngine()
-        rimeEngine = RimeInputEngine(this)
-        currentEngine = rimeEngine // 默认开启中文模式
+        try {
+            settingsManager = SettingsManager(this)
+            latinEngine = LatinInputEngine()
+            // 先设为拉丁引擎作为降级方案
+            currentEngine = latinEngine
+            
+            // 尝试初始化 RIME
+            rimeEngine = RimeInputEngine(this)
+            // 如果 RIME 启动成功（这里可以增加一个状态检查），再切换过去
+            currentEngine = rimeEngine
+        } catch (e: Throwable) {
+            android.util.Log.e("ImplusIMS", "Failed to initialize engines", e)
+        }
     }
 
     override fun onCreateInputView(): View {
