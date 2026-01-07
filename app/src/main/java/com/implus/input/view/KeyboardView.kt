@@ -28,6 +28,11 @@ class KeyboardView @JvmOverloads constructor(
     private var keyHeight: Float = 0f
 
     var hapticFeedbackEnabled: Boolean = true
+    var isShifted: Boolean = false
+        set(value) {
+            field = value
+            invalidate()
+        }
 
     interface OnKeyListener {
         fun onKey(key: KeyDefinition)
@@ -82,10 +87,17 @@ class KeyboardView @JvmOverloads constructor(
         // 绘制按键文字
         paint.color = if (key == pressedKey) Color.WHITE else Color.BLACK
         paint.textSize = h * 0.4f
+        
         val label = key.label ?: ""
+        val displayLabel = if (isShifted && label.length == 1 && label[0].isLetter()) {
+            label.uppercase()
+        } else {
+            label
+        }
+        
         val fontMetrics = paint.fontMetrics
         val centerY = keyRect.centerY() - (fontMetrics.ascent + fontMetrics.descent) / 2
-        canvas.drawText(label, keyRect.centerX(), centerY, paint)
+        canvas.drawText(displayLabel, keyRect.centerX(), centerY, paint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {

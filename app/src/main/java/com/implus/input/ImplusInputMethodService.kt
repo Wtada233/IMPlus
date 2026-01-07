@@ -4,10 +4,12 @@ import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.KeyEvent
+import android.view.inputmethod.EditorInfo
 import com.implus.input.databinding.KeyboardBaseBinding
 import com.implus.input.engine.InputEngine
 import com.implus.input.engine.LatinInputEngine
 import com.implus.input.model.KeyDefinition
+import com.implus.input.model.SettingsManager
 import com.implus.input.view.CandidateAdapter
 import com.implus.input.view.KeyboardView
 
@@ -21,20 +23,25 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
     
     private var inputEngine: InputEngine = LatinInputEngine()
     private lateinit var candidateAdapter: CandidateAdapter
+    private lateinit var settingsManager: SettingsManager
 
     override fun onCreate() {
         super.onCreate()
-        // TODO: 初始化 RIME 引擎
+        settingsManager = SettingsManager(this)
     }
 
     override fun onCreateInputView(): View {
         _binding = KeyboardBaseBinding.inflate(layoutInflater)
+        
+        // 设置键盘高度
+        binding.keyboardContainer.layoutParams.height = settingsManager.keyboardHeight
         
         val layout = com.implus.input.model.LayoutLoader.loadLayout(this, "qwerty_en.json")
         layout?.let {
             binding.keyboardView.setLayout(it)
         }
         binding.keyboardView.setOnKeyListener(this)
+        binding.keyboardView.hapticFeedbackEnabled = settingsManager.hapticEnabled
         
         candidateAdapter = CandidateAdapter { candidate ->
             currentInputConnection?.commitText(candidate, 1)
@@ -44,6 +51,14 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
         binding.candidateRecyclerView.adapter = candidateAdapter
         
         return binding.root
+    }
+
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+        // 自动切换 Shift 状态（例如在文本输入框开头）
+        if (info?.inputType?.and(EditorInfo.TYPE_MASK_CLASS) == EditorInfo.TYPE_CLASS_TEXT) {
+            // 这里可以实现更复杂的自动大写逻辑
+        }
     }
 
     override fun onKey(key: KeyDefinition) {
@@ -57,13 +72,24 @@ class ImplusInputMethodService : InputMethodService(), KeyboardView.OnKeyListene
 
         when (key.code) {
             -5 -> ic.deleteSurroundingText(1, 0) // Backspace
-            -1 -> { /* TODO: Shift Logic */ }
+            -1 -> { // Shift
+                binding.keyboardView.isShifted = !binding.keyboardView.isShifted
+            }
             10 -> ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)) // Enter
             else -> {
-                val textToCommit = key.text ?: key.label
+                val label = key.label
+                var textToCommit = key.text ?: label
+                
+                if (binding.keyboardView.isShifted && textToCommit?.length == 1) {
+                    textToCommit = textToCommit.uppercase()
+                }
+                
                 textToCommit?.let {
                     ic.commitText(it, 1)
                 }
+                
+                // 输入完成后如果不是锁定状态，可以自动关闭 Shift
+                // binding.keyboardView.isShifted = false 
             }
         }
     }
