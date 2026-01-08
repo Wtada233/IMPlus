@@ -1,6 +1,7 @@
 package com.implus.input
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -13,10 +14,6 @@ import com.implus.input.layout.KeyboardPage
 import com.implus.input.layout.KeyType
 import com.implus.input.layout.KeyStyle
 
-/**
- * 现代化的键盘视图
- * 支持 JSON 动态布局渲染
- */
 class ImplusKeyboardView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -26,54 +23,54 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private var currentPage: KeyboardPage? = null
     private val keyDrawables = mutableListOf<KeyDrawable>()
     
-    // State
-    var isShifted: Boolean = false
-        set(value) {
-            field = value
-            invalidate()
-        }
-    var isCapsLock: Boolean = false
-        set(value) {
-            field = value
-            invalidate()
-        }
-    
-    // 监听器: 回调完整的 Key 对象以便 Service 处理复杂逻辑
-    var onKeyListener: ((com.implus.input.layout.KeyboardKey) -> Unit)? = null
+    var isShifted: Boolean = false; set(value) { field = value; invalidate() }
+    var isCapsLock: Boolean = false; set(value) { field = value; invalidate() }
+    var onKeyListener: ((KeyboardKey) -> Unit)? = null
 
-    // 画笔
-    private val bgPaint = Paint().apply { color = Color.parseColor("#ECEFF1") }
-    private val keyBgPaint = Paint().apply { color = Color.WHITE; style = Paint.Style.FILL }
-    private val keyFuncBgPaint = Paint().apply { color = Color.parseColor("#CFD8DC"); style = Paint.Style.FILL }
-    private val keyStickyBgPaint = Paint().apply { color = Color.parseColor("#D1C4E9"); style = Paint.Style.FILL } // Light Purple
-    private val keyStickyLockedBgPaint = Paint().apply { color = Color.parseColor("#9575CD"); style = Paint.Style.FILL } // Deep Purple
-    
-    private val textPaint = Paint().apply {
-        color = Color.BLACK
-        textSize = 48f
-        textAlign = Paint.Align.CENTER
-        isAntiAlias = true
+    // 颜色配置
+    private var colorBg = 0
+    private var colorKey = 0
+    private var colorFuncKey = 0
+    private var colorText = 0
+    private var colorSticky = 0
+    private var colorStickyActive = 0
+    private var colorShadow = Color.argb(40, 0, 0, 0)
+
+    private val bgPaint = Paint()
+    private val keyPaint = Paint().apply { style = Paint.Style.FILL }
+    private val textPaint = Paint().apply { textAlign = Paint.Align.CENTER; isAntiAlias = true }
+    private val shadowPaint = Paint().apply { style = Paint.Style.FILL }
+    private val ripplePaint = Paint().apply { color = Color.argb(40, 255, 255, 255) }
+
+    init {
+        applyTheme()
     }
-    private val ripplePaint = Paint().apply { color = Color.parseColor("#40000000") }
+
+    private fun applyTheme() {
+        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        val isDark = nightMode == Configuration.UI_MODE_NIGHT_YES
+
+        if (isDark) {
+            colorBg = Color.parseColor("#1A1C1E")
+            colorKey = Color.parseColor("#303030")
+            colorFuncKey = Color.parseColor("#252525")
+            colorText = Color.WHITE
+            colorSticky = Color.parseColor("#42474E")
+            colorStickyActive = Color.parseColor("#D1E4FF")
+        } else {
+            colorBg = Color.parseColor("#F0F0F0")
+            colorKey = Color.WHITE
+            colorFuncKey = Color.parseColor("#E0E0E0")
+            colorText = Color.BLACK
+            colorSticky = Color.parseColor("#D0D0D0")
+            colorStickyActive = Color.parseColor("#3F51B5")
+        }
+    }
 
     fun setPage(page: KeyboardPage) {
         this.currentPage = page
-        requestLayout()
+        layoutKeys(width, height)
         invalidate()
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        // Respect parent measurements
-        val width = MeasureSpec.getSize(widthMeasureSpec)
-        val heightMode = MeasureSpec.getMode(heightMeasureSpec)
-        val heightSize = MeasureSpec.getSize(heightMeasureSpec)
-        
-        val targetHeight = if (heightMode == MeasureSpec.EXACTLY) {
-            heightSize
-        } else {
-             (280 * resources.displayMetrics.density).toInt()
-        }
-        setMeasuredDimension(width, targetHeight)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -82,6 +79,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
     }
 
     private fun layoutKeys(viewWidth: Int, viewHeight: Int) {
+        if (viewWidth <= 0 || viewHeight <= 0) return
         keyDrawables.clear()
         val page = currentPage ?: return
         
@@ -92,135 +90,101 @@ class ImplusKeyboardView @JvmOverloads constructor(
         var currentY = 0f
 
         for (row in rows) {
-            // 计算当前行的总权重
             val totalWeight = row.keys.sumOf { it.weight.toDouble() }.toFloat()
+            if (totalWeight <= 0) continue
             val keyUnitWidth = viewWidth / totalWeight
             
             var currentX = 0f
             for (key in row.keys) {
                 val keyWidth = key.weight * keyUnitWidth
                 val rect = RectF(
-                    currentX + 4f, 
+                    currentX + 6f, 
                     currentY + 6f, 
-                    currentX + keyWidth - 4f, 
+                    currentX + keyWidth - 6f, 
                     currentY + rowHeight - 6f
                 )
-                
                 keyDrawables.add(KeyDrawable(key, rect))
                 currentX += keyWidth
             }
             currentY += rowHeight
         }
+        textPaint.textSize = rowHeight * 0.35f
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        // 绘制背景
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), bgPaint)
-
-        // 绘制所有按键
+        canvas.drawColor(colorBg)
         for (kd in keyDrawables) {
             drawKey(canvas, kd)
         }
     }
 
     private fun drawKey(canvas: Canvas, kd: KeyDrawable) {
-        val rect = kd.rect
         val key = kd.key
+        val rect = kd.rect
         
-        // Determine Paint and Corner Radius based on style and state
-        val paint: Paint
-        val cornerRadius: Float
-        
+        // 选择颜色和圆角
+        var paintColor = colorKey
+        var cornerRadius = 16f
+        var textColor = colorText
+
         when (key.style) {
-            KeyStyle.NORMAL -> {
-                paint = keyBgPaint
-                cornerRadius = 12f
-            }
-            KeyStyle.FUNCTION -> {
-                paint = keyFuncBgPaint
-                cornerRadius = 6f
-            }
+            KeyStyle.FUNCTION -> { paintColor = colorFuncKey; cornerRadius = 8f }
             KeyStyle.STICKY -> {
-                // Check if this specific sticky key is active
-                if ((key.sticky == "transient" && isShifted && !isCapsLock) ||
-                    (key.sticky == "permanent" && isCapsLock)) {
-                    paint = keyStickyLockedBgPaint
-                } else {
-                    paint = keyStickyBgPaint
+                val active = (key.sticky == "transient" && isShifted && !isCapsLock) ||
+                             (key.sticky == "permanent" && isCapsLock)
+                paintColor = if (active) colorStickyActive else colorSticky
+                if (active && (colorStickyActive == Color.parseColor("#D1E4FF") || colorStickyActive == Color.parseColor("#3F51B5"))) {
+                    textColor = if (colorStickyActive == Color.parseColor("#D1E4FF")) Color.BLACK else Color.WHITE
                 }
                 cornerRadius = 4f
             }
+            else -> { if (key.type != KeyType.NORMAL) paintColor = colorFuncKey }
         }
+
+        // 阴影
+        canvas.drawRoundRect(rect.left, rect.top + 2f, rect.right, rect.bottom + 2f, cornerRadius, cornerRadius, shadowPaint.apply { color = colorShadow })
         
-        // If type is modifier/func but style is normal, fallback
-        val finalPaint = if (key.type != KeyType.NORMAL && key.style == KeyStyle.NORMAL) {
-             keyFuncBgPaint
-        } else {
-             paint
-        }
+        // 背景
+        keyPaint.color = paintColor
+        canvas.drawRoundRect(rect, cornerRadius, cornerRadius, keyPaint)
 
-        canvas.drawRoundRect(rect, cornerRadius, cornerRadius, finalPaint)
+        if (kd.isPressed) canvas.drawRoundRect(rect, cornerRadius, cornerRadius, ripplePaint)
 
-        if (kd.isPressed) {
-            canvas.drawRoundRect(rect, cornerRadius, cornerRadius, ripplePaint)
-        }
-
-        // Determine Text
+        // 文字
         var label = key.label ?: ""
-        
-        // Handle Shift Label Switching
         if (isShifted || isCapsLock) {
-            if (key.shiftedLabel != null) {
-                label = key.shiftedLabel
-            } else if (label.length == 1 && label[0].isLowerCase()) {
-                label = label.uppercase()
-            }
+            label = key.shiftedLabel ?: if (label.length == 1) label.uppercase() else label
         }
 
+        textPaint.color = textColor
         val fontMetrics = textPaint.fontMetrics
         val baseline = rect.centerY() - (fontMetrics.bottom + fontMetrics.top) / 2
         canvas.drawText(label, rect.centerX(), baseline, textPaint)
     }
 
-    private var pressedKey: KeyDrawable? = null
-
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val x = event.x
-        val y = event.y
-
+        val x = event.x; val y = event.y
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                val target = keyDrawables.find { it.rect.contains(x, y) }
-                if (target != null) {
-                    pressedKey = target
-                    target.isPressed = true
-                    invalidate() // 触发重绘显示按下效果
-                }
+                pressedKey = keyDrawables.find { it.rect.contains(x, y) }
+                pressedKey?.let { it.isPressed = true; invalidate() }
             }
             MotionEvent.ACTION_MOVE -> {
-                // 如果滑出按键范围，取消按下状态
                 if (pressedKey != null && !pressedKey!!.rect.contains(x, y)) {
-                    pressedKey!!.isPressed = false
-                    pressedKey = null
-                    invalidate()
+                    pressedKey!!.isPressed = false; pressedKey = null; invalidate()
                 }
             }
             MotionEvent.ACTION_UP -> {
-                if (pressedKey != null && pressedKey!!.rect.contains(x, y)) {
-                    // 触发按键事件
-                    onKeyListener?.invoke(pressedKey!!.key)
-                    pressedKey!!.isPressed = false
-                    pressedKey = null
-                    invalidate()
+                pressedKey?.let {
+                    if (it.rect.contains(x, y)) onKeyListener?.invoke(it.key)
+                    it.isPressed = false; pressedKey = null; invalidate()
                 }
             }
         }
         return true
     }
 
-    // 内部类保存绘制状态
-    private class KeyDrawable(val key: KeyboardKey, val rect: RectF) {
-        var isPressed: Boolean = false
-    }
+    private var pressedKey: KeyDrawable? = null
+    private class KeyDrawable(val key: KeyboardKey, val rect: RectF) { var isPressed = false }
 }

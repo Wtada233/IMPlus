@@ -88,7 +88,7 @@
             {"label": "&", "code": 21, "weight": 1},
             {"label": "*", "code": 22, "weight": 1},
             {"label": "(", "code": 16, "weight": 1},
-            {")", "code": 7, "weight": 1},
+            {"label": ")", "code": 7, "weight": 1},
             {"label": "_", "code": 69, "weight": 1}
           ]
         },

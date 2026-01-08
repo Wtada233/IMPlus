@@ -27,19 +27,20 @@ class ImplusInputMethodService : InputMethodService() {
     override fun onCreateInputView(): View {
         val root = layoutInflater.inflate(R.layout.input_view, null)
         
-        // 处理点击外部关闭
+        keyboardView = root.findViewById(R.id.keyboard_view)
+        candidateContainer = root.findViewById(R.id.candidate_container)
+        btnClose = root.findViewById(R.id.btn_close_keyboard)
+
+        // 处理点击外部关闭 (点击 root 但不点击 keyboardView)
         root.setOnClickListener {
             val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
             if (prefs.getBoolean("close_outside", false)) {
+                android.util.Log.d("Implus", "Outside clicked, hiding")
                 requestHideSelf(0)
             }
         }
         // 阻止点击键盘内部区域触发 root 的点击事件
-        root.findViewById<View>(R.id.keyboard_view).setOnClickListener { /* consume */ }
-        
-        keyboardView = root.findViewById(R.id.keyboard_view)
-        candidateContainer = root.findViewById(R.id.candidate_container)
-        btnClose = root.findViewById(R.id.btn_close_keyboard)
+        keyboardView.setOnClickListener { /* 只是为了阻止冒泡 */ }
 
         // 1. 加载默认布局 (PC Layout)
         loadLayout("pc_layout.json")
@@ -50,6 +51,11 @@ class ImplusInputMethodService : InputMethodService() {
         // 3. 设置回调
         keyboardView.onKeyListener = { key ->
             handleKey(key)
+        }
+        
+        // 确保初次加载时 View 已经有了页面
+        currentLayout?.pages?.find { it.id == "main" }?.let {
+            keyboardView.setPage(it)
         }
 
         btnClose.setOnClickListener {
@@ -189,5 +195,15 @@ class ImplusInputMethodService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         applyKeyboardHeight()
+        
+        // 动态调整全屏模式，以便点击外部
+        val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("close_outside", false)) {
+            window?.window?.setFlags(
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+            )
+            // 设置一个全透明的背景点击监听 (这通常通过设置 fullscreen 或大的 View 实现)
+        }
     }
 }
