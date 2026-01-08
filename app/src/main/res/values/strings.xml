@@ -17,8 +17,9 @@
         <string name="language_menu_title">Language</string>
         <string name="settings_title">Settings</string>
         <string name="pref_height_title">Keyboard Height</string>
-        <string name="pref_height_summary">Adjust the keyboard height as a percentage of screen height</string>
-        <string name="pref_close_outside">Close keyboard when touching outside</string>
-        <string name="open_settings">Open Settings</string>
-    </resources>
-    
+            <string name="pref_height_summary">Adjust the keyboard height as a percentage of screen height</string>
+            <string name="pref_candidate_height_title">Candidate Bar Height</string>
+            <string name="pref_close_outside">Close keyboard when touching outside</string>
+            <string name="open_settings">Open Settings</string>
+        </resources>
+        

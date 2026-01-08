@@ -48,7 +48,40 @@
         android:text="@string/pref_height_summary"
         android:textSize="12sp"
         android:alpha="0.7"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="16dp" />
+
+    <!-- Candidate Bar Height -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_candidate_height_title"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <SeekBar
+            android:id="@+id/seekbar_candidate_height"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="80"
+            android:progress="48" />
+
+        <TextView
+            android:id="@+id/tv_candidate_height_val"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="48dp" />
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="24dp" />
 
     <!-- Close on outside click -->
     <com.google.android.material.switchmaterial.SwitchMaterial

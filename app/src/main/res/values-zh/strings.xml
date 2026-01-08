@@ -18,6 +18,7 @@
     <string name="settings_title">设置</string>
     <string name="pref_height_title">键盘高度</string>
     <string name="pref_height_summary">调整键盘高度占屏幕高度的百分比</string>
+    <string name="pref_candidate_height_title">候选栏高度</string>
     <string name="pref_close_outside">点击外部关闭键盘</string>
     <string name="open_settings">打开设置</string>
 </resources>

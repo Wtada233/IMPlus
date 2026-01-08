@@ -14,7 +14,28 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_settings)
 
         setupHeightControl()
+        setupCandidateHeightControl()
         setupCloseOutside()
+    }
+
+    private fun setupCandidateHeightControl() {
+        val seekBar = findViewById<SeekBar>(R.id.seekbar_candidate_height)
+        val tvVal = findViewById<TextView>(R.id.tv_candidate_height_val)
+        val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
+        
+        val saved = prefs.getInt("candidate_height", 48)
+        seekBar.progress = saved
+        tvVal.text = "${saved}dp"
+
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val real = if (progress < 30) 30 else progress
+                tvVal.text = "${real}dp"
+                prefs.edit().putInt("candidate_height", real).apply()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
     }
 
     private fun setupHeightControl() {

@@ -70,7 +70,7 @@
             {"label": "Alt", "keyEvent": 57, "weight": 1.2, "type": "modifier", "style": "function"},
             {"label": "Space", "code": 62, "weight": 4},
             {"label": ".", "code": 56, "weight": 1, "shiftedLabel": ">"},
-            {"label": "Close", "code": -3, "weight": 1.2, "type": "func", "style": "function", "action": "hide"}
+            {"label": ",", "code": 55, "weight": 1, "shiftedLabel": "<"}
           ]
         }
       ]
@@ -95,12 +95,12 @@
         {
            "keys": [
             {"label": "[", "code": 71, "weight": 1},
-            {"]", "code": 72, "weight": 1},
+            {"label": "]", "code": 72, "weight": 1},
             {"label": "{", "code": 71, "shiftedCode": 71, "weight": 1},
             {"label": "}", "code": 72, "shiftedCode": 72, "weight": 1},
-            {"label": "\", "code": 73, "weight": 1},
+            {"label": "\\", "code": 73, "weight": 1},
             {"label": "|", "code": 73, "shiftedCode": 73, "weight": 1},
-            {";", "code": 74, "weight": 1, "shiftedLabel": ":"},
+            {"{'label': ';', 'code': 74, 'weight': 1, 'shiftedLabel': ':'}"},
             {"label": "'", "code": 75, "weight": 1, "shiftedLabel": "\""},
             {"label": "/", "code": 76, "weight": 1, "shiftedLabel": "?"}
            ]

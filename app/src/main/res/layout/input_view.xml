@@ -1,80 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root_container"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="#ECEFF1">
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
 
-    <!-- 候选栏区域 -->
-    <RelativeLayout
-        android:id="@+id/candidate_container"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="#FFFFFF"
-        android:visibility="gone"> <!-- 默认隐藏，由代码控制 -->
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:background="#1A1C1E"
+        android:clickable="true"
+        android:focusable="true">
 
-        <!-- 候选词滚动区 -->
-        <HorizontalScrollView
-            android:id="@+id/candidate_scroll"
+        <!-- 候选栏区域 -->
+        <RelativeLayout
+            android:id="@+id/candidate_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_toStartOf="@+id/btn_close_keyboard"
-            android:scrollbars="none">
+            android:layout_height="48dp"
+            android:background="#252525"
+            android:visibility="gone">
 
-            <LinearLayout
-                android:id="@+id/candidate_strip"
-                android:layout_width="wrap_content"
+            <HorizontalScrollView
+                android:id="@+id/candidate_scroll"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingStart="8dp">
-                
-                <TextView
+                android:layout_toStartOf="@+id/btn_close_keyboard"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/candidate_strip"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Candidates will appear here..."
-                    android:padding="8dp"/>
-            </LinearLayout>
-        </HorizontalScrollView>
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="8dp" />
+            </HorizontalScrollView>
 
-        <!-- 收起键盘按钮 (圆形带 X) -->
-        <ImageView
-            android:id="@+id/btn_close_keyboard"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="4dp"
-            android:src="@drawable/ic_close"
-            android:padding="8dp" />
-            
-    </RelativeLayout>
+            <ImageView
+                android:id="@+id/btn_close_keyboard"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_close"
+                android:background="@drawable/bg_circle_button"
+                android:padding="6dp" />
+        </RelativeLayout>
 
-    <!-- 悬浮收起按钮 (当候选栏隐藏时显示) -->
-    <!-- 由于 LinearLayout 不支持重叠，如果需要悬浮在键盘右上角，需调整根布局为 FrameLayout 或代码动态添加。
-         为简化，这里若候选栏关闭，我们暂不显示此悬浮按钮，或者我们之后在 Window 上添加。
-         根据需求，我们先只实现候选栏右侧的按钮。如果候选栏关闭，我们在键盘右上角预留位置或者使用 FrameLayout。 -->
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        
         <com.implus.input.ImplusKeyboardView
             android:id="@+id/keyboard_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-            
-        <!-- 悬浮关闭按钮 (Backup) -->
-        <ImageView
-            android:id="@+id/btn_close_floating"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="top|end"
-            android:layout_margin="4dp"
-            android:src="@drawable/ic_close"
-            android:background="@drawable/bg_circle_button"
-            android:padding="6dp"
-            android:visibility="gone" />
-    </FrameLayout>
 
-</LinearLayout>
+    </LinearLayout>
+</FrameLayout>

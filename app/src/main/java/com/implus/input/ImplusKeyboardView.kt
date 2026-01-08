@@ -158,9 +158,23 @@ class ImplusKeyboardView @JvmOverloads constructor(
         }
 
         textPaint.color = textColor
+        
+        // 动态调整文字大小以适应按键宽度 (防止溢出)
+        val maxTextWidth = rect.width() * 0.8f
+        var currentTextSize = textPaint.textSize
+        textPaint.textSize = currentTextSize // 重置为默认
+        var measuredWidth = textPaint.measureText(label)
+        
+        if (measuredWidth > maxTextWidth) {
+            textPaint.textSize = currentTextSize * (maxTextWidth / measuredWidth)
+        }
+
         val fontMetrics = textPaint.fontMetrics
         val baseline = rect.centerY() - (fontMetrics.bottom + fontMetrics.top) / 2
         canvas.drawText(label, rect.centerX(), baseline, textPaint)
+        
+        // 还原字体大小供下一个按键使用
+        textPaint.textSize = currentTextSize
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
