@@ -2,6 +2,7 @@ package com.implus.input
 
 import android.content.Context
 import android.inputmethodservice.InputMethodService
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -16,7 +17,7 @@ class ImplusInputMethodService : InputMethodService() {
     private lateinit var btnClose: ImageView
     private var currentLayout: KeyboardLayout? = null
     
-    // 追踪所有按键状态的 Map (Framework 核心)
+    // 框架核心状态：仅追踪 JSON 中定义的 ID
     private val activeStates = mutableMapOf<String, Boolean>()
 
     override fun onCreateInputView(): View {
@@ -36,22 +37,88 @@ class ImplusInputMethodService : InputMethodService() {
         keyboardView.onKeyListener = { key -> handleKey(key) }
         btnClose.setOnClickListener { requestHideSelf(0) }
         
-        currentLayout?.pages?.find { it.id == "main" }?.let { keyboardView.setPage(it) }
-        
         return root
     }
 
     private fun loadLayout(name: String) {
         currentLayout = LayoutManager.loadLayout(this, name)
-        currentLayout?.let { 
-            candidateContainer.visibility = if (it.showCandidates) View.VISIBLE else View.GONE
-            // 初始化状态 Map
+        currentLayout?.let { layout ->
+            candidateContainer.visibility = if (layout.showCandidates) View.VISIBLE else View.GONE
             activeStates.clear()
-            it.pages.flatMap { p -> p.rows.flatMap { r -> r.keys } }.forEach { k ->
-                if (k.id != null) activeStates[k.id] = false
+            // 预初始化所有具有 ID 的按键状态为 false
+            layout.pages.flatMap { it.rows }.flatMap { it.keys }.forEach { k ->
+                k.id?.let { activeStates[it] = false }
             }
             keyboardView.activeStates = activeStates
+            layout.pages.find { it.id == "main" }?.let { keyboardView.setPage(it) }
         }
+    }
+
+    private fun handleKey(key: KeyboardKey) {
+        val ic = currentInputConnection ?: return
+        
+        // 1. 粘滞逻辑：完全由 JSON 的 id 和 sticky 属性驱动
+        if (key.sticky != null && key.id != null) {
+            activeStates[key.id] = !(activeStates[key.id] ?: false)
+            keyboardView.activeStates = activeStates
+            return
+        }
+
+        // 2. 属性覆盖逻辑：检查当前哪些活跃状态被当前按键“监听” (on/overrides)
+        var effCode = key.code
+        var effKeyEvent = key.keyEvent
+        key.overrides?.forEach { (stateId, override) ->
+            if (activeStates[stateId] == true) {
+                override.code?.let { effCode = it }
+                override.keyEvent?.let { effKeyEvent = it }
+            }
+        }
+
+        // 3. 动态 MetaState 计算：汇总所有活跃按键的 metaValue
+        var totalMeta = 0
+        currentLayout?.pages?.flatMap { it.rows }?.flatMap { it.keys }?.forEach { k ->
+            if (k.id != null && activeStates[k.id] == true) {
+                k.metaValue?.let { totalMeta = totalMeta or it }
+            }
+        }
+
+        // 4. 执行输出
+        val now = SystemClock.uptimeMillis()
+        if (key.action != null) {
+            handleAction(key.action)
+        } else {
+            val finalEvent = effKeyEvent
+            if (finalEvent != null) {
+                ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, finalEvent, 0, totalMeta))
+                ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, finalEvent, 0, totalMeta))
+            } else {
+                when (effCode) {
+                    67 -> ic.deleteSurroundingText(1, 0)
+                    62 -> ic.commitText(" ", 1)
+                    else -> {
+                        ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, effCode, 0, totalMeta))
+                        ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, effCode, 0, totalMeta))
+                    }
+                }
+            }
+        }
+
+        // 5. 自动消耗 transient 状态：所有标记为 transient 且处于激活状态的 ID 重置
+        var stateChanged = false
+        currentLayout?.pages?.flatMap { it.rows }?.flatMap { it.keys }?.forEach { k ->
+            if (k.id != null && k.sticky == "transient" && activeStates[k.id] == true) {
+                activeStates[k.id] = false
+                stateChanged = true
+            }
+        }
+        if (stateChanged) keyboardView.activeStates = activeStates
+    }
+
+    private fun handleAction(action: String) {
+        if (action.startsWith("switch_page:")) {
+            val pageId = action.substringAfter("switch_page:")
+            currentLayout?.pages?.find { it.id == pageId }?.let { keyboardView.setPage(it) }
+        } else if (action == "hide") requestHideSelf(0)
     }
 
     private fun applyKeyboardHeight() {
@@ -60,74 +127,6 @@ class ImplusInputMethodService : InputMethodService() {
         keyboardView.layoutParams.height = (resources.displayMetrics.heightPixels * (prefs.getInt("height_percent", 35) / 100f)).toInt()
         candidateContainer.layoutParams.height = (prefs.getInt("candidate_height", 48) * resources.displayMetrics.density).toInt()
         keyboardView.requestLayout(); candidateContainer.requestLayout()
-    }
-
-    private fun handleKey(key: KeyboardKey) {
-        val ic = currentInputConnection ?: return
-        
-        // 1. 处理粘滞逻辑 (Sticky Logic)
-        if (key.sticky != null && key.id != null) {
-            val cur = activeStates[key.id] ?: false
-            activeStates[key.id] = !cur
-            keyboardView.activeStates = activeStates // 通知 View 刷新
-            return
-        }
-
-        // 2. 获取有效属性 (应用 Overrides)
-        var effCode = key.code
-        var effKeyEvent = key.keyEvent
-        
-        key.overrides?.forEach { (stateId, override) ->
-            if (activeStates[stateId] == true) {
-                override.code?.let { effCode = it }
-                override.keyEvent?.let { effKeyEvent = it }
-            }
-        }
-
-        val finalKeyEvent = effKeyEvent
-
-        // 3. 计算 MetaState (Framework 核心: 动态映射)
-        var metaState = 0
-        currentLayout?.pages?.flatMap { it.rows.flatMap { r -> r.keys } }?.forEach { k ->
-            if (k.id != null && activeStates[k.id] == true && k.modifierType != null) {
-                metaState = metaState or when(k.modifierType) {
-                    "shift" -> KeyEvent.META_SHIFT_ON
-                    "ctrl" -> KeyEvent.META_CTRL_ON
-                    "alt" -> KeyEvent.META_ALT_ON
-                    "meta" -> KeyEvent.META_META_ON
-                    else -> 0
-                }
-            }
-        }
-
-        // 4. 发送按键
-        if (key.action != null) {
-            if (key.action.startsWith("switch_page:")) {
-                currentLayout?.pages?.find { it.id == key.action.substringAfter("switch_page:") }?.let { keyboardView.setPage(it) }
-            } else if (key.action == "hide") requestHideSelf(0)
-        } else if (finalKeyEvent != null) {
-            sendDownUpKeyEvents(finalKeyEvent)
-        } else {
-            when (effCode) {
-                67 -> ic.deleteSurroundingText(1, 0)
-                66 -> { ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, 66)); ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, 66)) }
-                62 -> ic.commitText(" ", 1)
-                else -> {
-                    ic.sendKeyEvent(KeyEvent(0, 0, KeyEvent.ACTION_DOWN, effCode, 0, metaState))
-                    ic.sendKeyEvent(KeyEvent(0, 0, KeyEvent.ACTION_UP, effCode, 0, metaState))
-                }
-            }
-        }
-
-        // 5. 自动重置 transient 状态
-        var changed = false
-        currentLayout?.pages?.flatMap { it.rows.flatMap { r -> r.keys } }?.forEach { k ->
-            if (k.id != null && k.sticky == "transient" && activeStates[k.id] == true) {
-                activeStates[k.id] = false
-                changed = true
-            }
-        }
-        if (changed) keyboardView.activeStates = activeStates
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) { super.onStartInputView(info, restarting); applyKeyboardHeight() }

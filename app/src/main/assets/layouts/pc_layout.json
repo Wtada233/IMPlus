@@ -1,5 +1,5 @@
 {
-  "name": "PC Data-Driven Layout",
+  "name": "PC Framework Layout",
   "defaultHeight": 280,
   "showCandidates": true,
   "pages": [
@@ -12,7 +12,7 @@
             {"label": "1", "code": 8, "weight": 1, "overrides": {"shift": {"label": "!"}}},
             {"label": "2", "code": 9, "weight": 1, "overrides": {"shift": {"label": "@"}}},
             {"label": "3", "code": 10, "weight": 1, "overrides": {"shift": {"label": "#"}}},
-            {"label": "4", "code": 11, "weight": 1, "overrides": {"shift": {"label": "$"}},
+            {"label": "4", "code": 11, "weight": 1, "overrides": {"shift": {"label": "$"}}},
             {"label": "5", "code": 12, "weight": 1, "overrides": {"shift": {"label": "%"}}},
             {"label": "6", "code": 13, "weight": 1, "overrides": {"shift": {"label": "^"}}},
             {"label": "7", "code": 14, "weight": 1, "overrides": {"shift": {"label": "&"}}},
@@ -37,7 +37,7 @@
         },
         {
           "keys": [
-            {"id": "caps", "label": "Caps", "sticky": "permanent", "weight": 1.2, "type": "modifier", "style": "sticky"},
+            {"id": "caps", "label": "Caps", "sticky": "permanent", "metaValue": 1048576, "weight": 1.2, "type": "modifier", "style": "sticky"},
             {"label": "a", "code": 29, "weight": 1},
             {"label": "s", "code": 47, "weight": 1},
             {"label": "d", "code": 32, "weight": 1},
@@ -52,7 +52,7 @@
         },
         {
           "keys": [
-            {"id": "shift", "label": "Shift", "sticky": "transient", "modifierType": "shift", "weight": 1.5, "type": "modifier", "style": "sticky"},
+            {"id": "shift", "label": "Shift", "sticky": "transient", "metaValue": 1, "weight": 1.5, "type": "modifier", "style": "sticky"},
             {"label": "z", "code": 54, "weight": 1},
             {"label": "x", "code": 52, "weight": 1},
             {"label": "c", "code": 31, "weight": 1},
@@ -65,9 +65,9 @@
         },
         {
           "keys": [
-            {"id": "ctrl", "label": "Ctrl", "sticky": "transient", "modifierType": "ctrl", "weight": 1.2, "type": "modifier", "style": "sticky"},
+            {"id": "ctrl", "label": "Ctrl", "sticky": "transient", "metaValue": 4096, "weight": 1.2, "type": "modifier", "style": "sticky"},
             {"label": "?123", "code": -2, "weight": 1.5, "type": "modifier", "action": "switch_page:symbols", "style": "function"},
-            {"id": "alt", "label": "Alt", "sticky": "transient", "modifierType": "alt", "weight": 1.2, "type": "modifier", "style": "sticky"},
+            {"id": "alt", "label": "Alt", "sticky": "transient", "metaValue": 2, "weight": 1.2, "type": "modifier", "style": "sticky"},
             {"label": "Space", "code": 62, "weight": 4},
             {"label": ".", "code": 56, "weight": 1, "overrides": {"shift": {"label": ">"}}},
             {"label": ",", "code": 55, "weight": 1, "overrides": {"shift": {"label": "<"}}}
@@ -101,7 +101,7 @@
             {"label": "\\", "code": 73, "weight": 1},
             {"label": "|", "code": 73, "weight": 1},
             {"label": ";", "code": 74, "weight": 1, "overrides": {"shift": {"label": ":"}}},
-            {"label": "'", "code": 75, "weight": 1, "overrides": {"shift": {"label": \""}}},
+            {"label": "'", "code": 75, "weight": 1, "overrides": {"shift": {"label": "\""}}},
             {"label": "/", "code": 76, "weight": 1, "overrides": {"shift": {"label": "?"}}}
            ]
         },
