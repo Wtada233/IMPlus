@@ -2,13 +2,9 @@ package com.implus.input.layout
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * 键盘布局数据模型
- * 对应 JSON 根节点
- */
 data class KeyboardLayout(
     @SerializedName("name") val name: String,
-    @SerializedName("defaultHeight") val defaultHeight: Int = 250, // dp
+    @SerializedName("defaultHeight") val defaultHeight: Int = 250,
     @SerializedName("showCandidates") val showCandidates: Boolean = true,
     @SerializedName("pages") val pages: List<KeyboardPage> = emptyList()
 )
@@ -19,23 +15,34 @@ data class KeyboardPage(
 )
 
 data class KeyboardRow(
-    @SerializedName("heightRatio") val heightRatio: Float = 1.0f, // 相对于默认行高的比例
+    @SerializedName("heightRatio") val heightRatio: Float = 1.0f,
     @SerializedName("keys") val keys: List<KeyboardKey> = emptyList()
 )
 
 data class KeyboardKey(
+    @SerializedName("id") val id: String? = null,             // 用于追踪状态的唯一ID (如 "shift_l")
     @SerializedName("label") val label: String? = null,
-    @SerializedName("code") val code: Int = 0,               // Default KeyCode
+    @SerializedName("code") val code: Int = 0,
     @SerializedName("weight") val weight: Float = 1.0f,
     @SerializedName("type") val type: KeyType = KeyType.NORMAL,
+    @SerializedName("style") val style: KeyStyle = KeyStyle.NORMAL,
     @SerializedName("action") val action: String? = null,
+    @SerializedName("sticky") val sticky: String? = null,     // "transient", "permanent"
+    @SerializedName("keyEvent") val keyEvent: Int? = null,
+    @SerializedName("modifierType") val modifierType: String? = null, // "shift", "ctrl", "alt", "meta"
     
-    // New properties
-    @SerializedName("sticky") val sticky: String? = null,    // "transient" (Shift) or "permanent" (CapsLock)
-    @SerializedName("keyEvent") val keyEvent: Int? = null,   // Custom Android KeyEvent
-    @SerializedName("shiftedLabel") val shiftedLabel: String? = null,
-    @SerializedName("shiftedCode") val shiftedCode: Int? = null,
-    @SerializedName("style") val style: KeyStyle = KeyStyle.NORMAL
+    // 状态覆盖逻辑: 当 Map<String, Boolean> 中对应的 key 为 true 时，覆盖当前属性
+    @SerializedName("overrides") val overrides: Map<String, KeyOverride>? = null
+)
+
+/**
+ * 覆盖属性的子集
+ */
+data class KeyOverride(
+    @SerializedName("label") val label: String? = null,
+    @SerializedName("code") val code: Int? = null,
+    @SerializedName("keyEvent") val keyEvent: Int? = null,
+    @SerializedName("style") val style: KeyStyle? = null
 )
 
 enum class KeyType {
@@ -46,7 +53,7 @@ enum class KeyType {
 }
 
 enum class KeyStyle {
-    @SerializedName("normal") NORMAL,      // Round, standard color
-    @SerializedName("function") FUNCTION,  // Square-ish, different shade
-    @SerializedName("sticky") STICKY       // Square-ish, distinct shade
+    @SerializedName("normal") NORMAL,
+    @SerializedName("function") FUNCTION,
+    @SerializedName("sticky") STICKY
 }
