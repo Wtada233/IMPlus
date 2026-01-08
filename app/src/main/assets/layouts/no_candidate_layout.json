@@ -1,0 +1,19 @@
+{
+  "name": "No Candidate Test",
+  "defaultHeight": 280,
+  "showCandidates": false,
+  "pages": [
+    {
+      "id": "main",
+      "rows": [
+        {
+          "keys": [
+            {"label": "A", "code": 29, "weight": 1},
+            {"label": "B", "code": 30, "weight": 1},
+            {"label": "C", "code": 31, "weight": 1}
+          ]
+        }
+      ]
+    }
+  ]
+}

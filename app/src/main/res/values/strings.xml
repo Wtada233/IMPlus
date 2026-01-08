@@ -3,4 +3,22 @@
     <string name="app_name">Implus</string>
     <string name="ime_name">Implus Input Method</string>
     <string name="subtype_en_us">English (US)</string>
-</resources>
+    
+    <!-- MainActivity Strings -->
+    <string name="welcome_title">Welcome to Implus</string>
+    <string name="welcome_subtitle">Please follow these steps to enable the keyboard</string>
+    <string name="step_1_enable">1. Enable Implus in Settings</string>
+    <string name="step_1_done">✅ 1. Implus Enabled</string>
+    <string name="step_2_select">2. Switch to Implus</string>
+    <string name="step_2_done">✅ 2. Implus Selected</string>
+    <string name="test_input_label">Test your input here:</string>
+    <string name="test_input_hint">Tap here to start typing...</string>
+    <string name="toast_enable_first">Please enable the keyboard in Step 1 first.</string>
+        <string name="language_menu_title">Language</string>
+        <string name="settings_title">Settings</string>
+        <string name="pref_height_title">Keyboard Height</string>
+        <string name="pref_height_summary">Adjust the keyboard height as a percentage of screen height</string>
+        <string name="pref_close_outside">Close keyboard when touching outside</string>
+        <string name="open_settings">Open Settings</string>
+    </resources>
+    

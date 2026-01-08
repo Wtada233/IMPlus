@@ -1,0 +1,118 @@
+{
+  "name": "PC Extended Layout",
+  "defaultHeight": 280,
+  "showCandidates": true,
+  "pages": [
+    {
+      "id": "main",
+      "rows": [
+        {
+          "keys": [
+            {"label": "Esc", "keyEvent": 111, "weight": 1, "type": "func", "style": "function"},
+            {"label": "1", "code": 8, "weight": 1, "shiftedLabel": "!"},
+            {"label": "2", "code": 9, "weight": 1, "shiftedLabel": "@"},
+            {"label": "3", "code": 10, "weight": 1, "shiftedLabel": "#"},
+            {"label": "4", "code": 11, "weight": 1, "shiftedLabel": "$"},
+            {"label": "5", "code": 12, "weight": 1, "shiftedLabel": "%"},
+            {"label": "6", "code": 13, "weight": 1, "shiftedLabel": "^"},
+            {"label": "7", "code": 14, "weight": 1, "shiftedLabel": "&"},
+            {"label": "8", "code": 15, "weight": 1, "shiftedLabel": "*"},
+            {"label": "0", "code": 7, "weight": 1, "shiftedLabel": ")"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "Tab", "code": 61, "weight": 1.2, "type": "func", "style": "function"},
+            {"label": "q", "code": 45, "weight": 1, "shiftedLabel": "Q"},
+            {"label": "w", "code": 51, "weight": 1, "shiftedLabel": "W"},
+            {"label": "e", "code": 33, "weight": 1, "shiftedLabel": "E"},
+            {"label": "r", "code": 46, "weight": 1, "shiftedLabel": "R"},
+            {"label": "t", "code": 48, "weight": 1, "shiftedLabel": "T"},
+            {"label": "y", "code": 53, "weight": 1, "shiftedLabel": "Y"},
+            {"label": "u", "code": 49, "weight": 1, "shiftedLabel": "U"},
+            {"label": "i", "code": 37, "weight": 1, "shiftedLabel": "I"},
+            {"label": "o", "code": 43, "weight": 1, "shiftedLabel": "O"},
+            {"label": "p", "code": 44, "weight": 1, "shiftedLabel": "P"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "Caps", "code": 115, "weight": 1.2, "type": "modifier", "style": "sticky", "sticky": "permanent"},
+            {"label": "a", "code": 29, "weight": 1, "shiftedLabel": "A"},
+            {"label": "s", "code": 47, "weight": 1, "shiftedLabel": "S"},
+            {"label": "d", "code": 32, "weight": 1, "shiftedLabel": "D"},
+            {"label": "f", "code": 34, "weight": 1, "shiftedLabel": "F"},
+            {"label": "g", "code": 35, "weight": 1, "shiftedLabel": "G"},
+            {"label": "h", "code": 36, "weight": 1, "shiftedLabel": "H"},
+            {"label": "j", "code": 38, "weight": 1, "shiftedLabel": "J"},
+            {"label": "k", "code": 39, "weight": 1, "shiftedLabel": "K"},
+            {"label": "l", "code": 40, "weight": 1, "shiftedLabel": "L"},
+            {"label": "Enter", "code": 66, "weight": 1.5, "type": "func", "style": "function"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "Shift", "code": -1, "weight": 1.5, "type": "modifier", "style": "sticky", "sticky": "transient"},
+            {"label": "z", "code": 54, "weight": 1, "shiftedLabel": "Z"},
+            {"label": "x", "code": 52, "weight": 1, "shiftedLabel": "X"},
+            {"label": "c", "code": 31, "weight": 1, "shiftedLabel": "C"},
+            {"label": "v", "code": 50, "weight": 1, "shiftedLabel": "V"},
+            {"label": "b", "code": 30, "weight": 1, "shiftedLabel": "B"},
+            {"label": "n", "code": 42, "weight": 1, "shiftedLabel": "N"},
+            {"label": "m", "code": 41, "weight": 1, "shiftedLabel": "M"},
+            {"label": "⌫", "code": 67, "weight": 1.5, "type": "func", "style": "function"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "Ctrl", "keyEvent": 113, "weight": 1.2, "type": "modifier", "style": "function"},
+            {"label": "?123", "code": -2, "weight": 1.5, "type": "modifier", "action": "switch_page:symbols", "style": "function"},
+            {"label": "Alt", "keyEvent": 57, "weight": 1.2, "type": "modifier", "style": "function"},
+            {"label": "Space", "code": 62, "weight": 4},
+            {"label": ".", "code": 56, "weight": 1, "shiftedLabel": ">"},
+            {"label": "Close", "code": -3, "weight": 1.2, "type": "func", "style": "function", "action": "hide"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "symbols",
+      "rows": [
+        {
+          "keys": [
+            {"label": "!", "code": 8, "shiftedCode": 8, "weight": 1},
+            {"label": "@", "code": 77, "weight": 1},
+            {"label": "#", "code": 18, "weight": 1},
+            {"label": "$", "code": 19, "weight": 1},
+            {"label": "%", "code": 20, "weight": 1},
+            {"label": "&", "code": 21, "weight": 1},
+            {"label": "*", "code": 22, "weight": 1},
+            {"label": "(", "code": 16, "weight": 1},
+            {")", "code": 7, "weight": 1},
+            {"label": "_", "code": 69, "weight": 1}
+          ]
+        },
+        {
+           "keys": [
+            {"label": "[", "code": 71, "weight": 1},
+            {"]", "code": 72, "weight": 1},
+            {"label": "{", "code": 71, "shiftedCode": 71, "weight": 1},
+            {"label": "}", "code": 72, "shiftedCode": 72, "weight": 1},
+            {"label": "\", "code": 73, "weight": 1},
+            {"label": "|", "code": 73, "shiftedCode": 73, "weight": 1},
+            {";", "code": 74, "weight": 1, "shiftedLabel": ":"},
+            {"label": "'", "code": 75, "weight": 1, "shiftedLabel": "\""},
+            {"label": "/", "code": 76, "weight": 1, "shiftedLabel": "?"}
+           ]
+        },
+        {
+          "keys": [
+             {"label": "ABC", "code": -2, "weight": 1.5, "type": "modifier", "action": "switch_page:main", "style": "function"},
+             {"label": "Space", "code": 62, "weight": 4},
+             {"label": "⌫", "code": 67, "weight": 1.5, "type": "func", "style": "function"}
+          ]
+        }
+      ]
+    }
+  ]
+}
