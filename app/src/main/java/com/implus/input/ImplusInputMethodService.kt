@@ -367,7 +367,10 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private fun handleAction(action: String) {
         if (action.startsWith("switch_page:")) {
             val pageId = action.substringAfter("switch_page:")
-            currentLayout?.pages?.find { it.id == pageId }?.let { keyboardView.setPage(it) }
+            currentLayout?.pages?.find { it.id == pageId }?.let { 
+                keyboardView.setPage(it)
+                updatePageIndicator(it)
+            }
         } else if (action == "hide") requestHideSelf(0)
     }
 
