@@ -91,14 +91,14 @@
         },
         {
            "keys": [
-            {"label": "\", "text": "\", "weight": 1},
+            {"label": "\\", "text": "\\", "weight": 1},
             {"label": "<", "text": "<", "weight": 1},
             {"label": ">", "text": ">", "weight": 1},
             {"label": "=", "text": "=", "weight": 1},
             {"label": ":", "text": ":", "weight": 1},
             {"label": ";", "text": ";", "weight": 1},
             {"label": "'", "text": "'", "weight": 1},
-            {"label": \"", "text": \"", "weight": 1},
+            {"label": "\"", "text": "\"", "weight": 1},
             {"label": "*", "text": "*", "weight": 1},
             {"label": "!", "text": "!", "weight": 1}
            ]
