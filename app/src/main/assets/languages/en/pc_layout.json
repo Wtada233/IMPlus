@@ -8,70 +8,70 @@
       "rows": [
         {
           "keys": [
-            {"label": "Esc", "keyEvent": 111, "weight": 1, "type": "func", "style": "function"},
-            {"label": "1", "code": 8, "weight": 1, "overrides": {"shift": {"label": "!"}}},
-            {"label": "2", "code": 9, "weight": 1, "overrides": {"shift": {"label": "@"}}},
-            {"label": "3", "code": 10, "weight": 1, "overrides": {"shift": {"label": "#"}}},
-            {"label": "4", "code": 11, "weight": 1, "overrides": {"shift": {"label": "$"}}},
-            {"label": "5", "code": 12, "weight": 1, "overrides": {"shift": {"label": "%"}}},
-            {"label": "6", "code": 13, "weight": 1, "overrides": {"shift": {"label": "^"}}},
-            {"label": "7", "code": 14, "weight": 1, "overrides": {"shift": {"label": "&"}}},
-            {"label": "8", "code": 15, "weight": 1, "overrides": {"shift": {"label": "*"}}},
-            {"label": "9", "code": 16, "weight": 1, "overrides": {"shift": {"label": "("}}},
-            {"label": "0", "code": 7, "weight": 1, "overrides": {"shift": {"label": ")"}}}
+            {"label": "Esc", "text": 111, "weight": 1, "type": "func", "style": "function"},
+            {"label": "1", "text": "1", "weight": 1, "overrides": {"shift": {"label": "!", "text": "!"}}},
+            {"label": "2", "text": "2", "weight": 1, "overrides": {"shift": {"label": "@", "text": "@"}}},
+            {"label": "3", "text": "3", "weight": 1, "overrides": {"shift": {"label": "#", "text": "#"}}},
+            {"label": "4", "text": "4", "weight": 1, "overrides": {"shift": {"label": "$", "text": "$"}},
+            {"label": "5", "text": "5", "weight": 1, "overrides": {"shift": {"label": "%", "text": "%"}}},
+            {"label": "6", "text": "6", "weight": 1, "overrides": {"shift": {"label": "^", "text": "^"}}},
+            {"label": "7", "text": "7", "weight": 1, "overrides": {"shift": {"label": "&", "text": "&"}}},
+            {"label": "8", "text": "8", "weight": 1, "overrides": {"shift": {"label": "*", "text": "*"}}},
+            {"label": "9", "text": "9", "weight": 1, "overrides": {"shift": {"label": "(", "text": "("}},
+            {"label": "0", "text": "0", "weight": 1, "overrides": {"shift": {"label": ")", "text": ")"}}}
           ]
         },
         {
           "keys": [
-            {"label": "Tab", "code": 61, "weight": 1.2, "type": "func", "style": "function"},
-            {"label": "q", "code": 45, "weight": 1, "overrides": {"shift": {"label": "Q"}, "caps": {"label": "Q"}}},
-            {"label": "w", "code": 51, "weight": 1, "overrides": {"shift": {"label": "W"}, "caps": {"label": "W"}}},
-            {"label": "e", "code": 33, "weight": 1, "overrides": {"shift": {"label": "E"}, "caps": {"label": "E"}}},
-            {"label": "r", "code": 46, "weight": 1, "overrides": {"shift": {"label": "R"}, "caps": {"label": "R"}}},
-            {"label": "t", "code": 48, "weight": 1, "overrides": {"shift": {"label": "T"}, "caps": {"label": "T"}}},
-            {"label": "y", "code": 53, "weight": 1, "overrides": {"shift": {"label": "Y"}, "caps": {"label": "Y"}}},
-            {"label": "u", "code": 49, "weight": 1, "overrides": {"shift": {"label": "U"}, "caps": {"label": "U"}}},
-            {"label": "i", "code": 37, "weight": 1, "overrides": {"shift": {"label": "I"}, "caps": {"label": "I"}}},
-            {"label": "o", "code": 43, "weight": 1, "overrides": {"shift": {"label": "O"}, "caps": {"label": "O"}}},
-            {"label": "p", "code": 44, "weight": 1, "overrides": {"shift": {"label": "P"}, "caps": {"label": "P"}}}
+            {"label": "Tab", "text": 61, "weight": 1.2, "type": "func", "style": "function"},
+            {"label": "q", "text": "q", "weight": 1, "overrides": {"shift": {"label": "Q", "text": "Q"}, "caps": {"label": "Q", "text": "Q"}}},
+            {"label": "w", "text": "w", "weight": 1, "overrides": {"shift": {"label": "W", "text": "W"}, "caps": {"label": "W", "text": "W"}}},
+            {"label": "e", "text": "e", "weight": 1, "overrides": {"shift": {"label": "E", "text": "E"}, "caps": {"label": "E", "text": "E"}}},
+            {"label": "r", "text": "r", "weight": 1, "overrides": {"shift": {"label": "R", "text": "R"}, "caps": {"label": "R", "text": "R"}}},
+            {"label": "t", "text": "t", "weight": 1, "overrides": {"shift": {"label": "T", "text": "T"}, "caps": {"label": "T", "text": "T"}}},
+            {"label": "y", "text": "y", "weight": 1, "overrides": {"shift": {"label": "Y", "text": "Y"}, "caps": {"label": "Y", "text": "Y"}}},
+            {"label": "u", "text": "u", "weight": 1, "overrides": {"shift": {"label": "U", "text": "U"}, "caps": {"label": "U", "text": "U"}}},
+            {"label": "i", "text": "i", "weight": 1, "overrides": {"shift": {"label": "I", "text": "I"}, "caps": {"label": "I", "text": "I"}}},
+            {"label": "o", "text": "o", "weight": 1, "overrides": {"shift": {"label": "O", "text": "O"}, "caps": {"label": "O", "text": "O"}}},
+            {"label": "p", "text": "p", "weight": 1, "overrides": {"shift": {"label": "P", "text": "P"}, "caps": {"label": "P", "text": "P"}}}
           ]
         },
         {
           "keys": [
             {"id": "caps", "label": "Caps", "sticky": "permanent", "metaValue": 1048576, "weight": 1.3, "type": "modifier", "style": "sticky", "overrides": {"caps": {"label": "CAPS"}}},
-            {"label": "a", "code": 29, "weight": 1, "overrides": {"shift": {"label": "A"}, "caps": {"label": "A"}}},
-            {"label": "s", "code": 47, "weight": 1, "overrides": {"shift": {"label": "S"}, "caps": {"label": "S"}}},
-            {"label": "d", "code": 32, "weight": 1, "overrides": {"shift": {"label": "D"}, "caps": {"label": "D"}}},
-            {"label": "f", "code": 34, "weight": 1, "overrides": {"shift": {"label": "F"}, "caps": {"label": "F"}}},
-            {"label": "g", "code": 35, "weight": 1, "overrides": {"shift": {"label": "G"}, "caps": {"label": "G"}}},
-            {"label": "h", "code": 36, "weight": 1, "overrides": {"shift": {"label": "H"}, "caps": {"label": "H"}}},
-            {"label": "j", "code": 38, "weight": 1, "overrides": {"shift": {"label": "J"}, "caps": {"label": "J"}}},
-            {"label": "k", "code": 39, "weight": 1, "overrides": {"shift": {"label": "K"}, "caps": {"label": "K"}}},
-            {"label": "l", "code": 40, "weight": 1, "overrides": {"shift": {"label": "L"}, "caps": {"label": "L"}}},
-            {"label": "Enter", "code": 66, "weight": 1.7, "type": "func", "style": "function"}
+            {"label": "a", "text": "a", "weight": 1, "overrides": {"shift": {"label": "A", "text": "A"}, "caps": {"label": "A", "text": "A"}}},
+            {"label": "s", "text": "s", "weight": 1, "overrides": {"shift": {"label": "S", "text": "S"}, "caps": {"label": "S", "text": "S"}}},
+            {"label": "d", "text": "d", "weight": 1, "overrides": {"shift": {"label": "D", "text": "D"}, "caps": {"label": "D", "text": "D"}}},
+            {"label": "f", "text": "f", "weight": 1, "overrides": {"shift": {"label": "F", "text": "F"}, "caps": {"label": "F", "text": "F"}}},
+            {"label": "g", "text": "g", "weight": 1, "overrides": {"shift": {"label": "G", "text": "G"}, "caps": {"label": "G", "text": "G"}}},
+            {"label": "h", "text": "h", "weight": 1, "overrides": {"shift": {"label": "H", "text": "H"}, "caps": {"label": "H", "text": "H"}}},
+            {"label": "j", "text": "j", "weight": 1, "overrides": {"shift": {"label": "J", "text": "J"}, "caps": {"label": "J", "text": "J"}}},
+            {"label": "k", "text": "k", "weight": 1, "overrides": {"shift": {"label": "K", "text": "K"}, "caps": {"label": "K", "text": "K"}}},
+            {"label": "l", "text": "l", "weight": 1, "overrides": {"shift": {"label": "L", "text": "L"}, "caps": {"label": "L", "text": "L"}}},
+            {"label": "Enter", "action": "enter", "weight": 1.7, "type": "func", "style": "function"}
           ]
         },
         {
           "keys": [
             {"id": "shift", "label": "Shift", "sticky": "transient", "metaValue": 1, "weight": 1.5, "type": "modifier", "style": "sticky", "overrides": {"shift": {"label": "SHIFT"}}},
-            {"label": "z", "code": 54, "weight": 1, "overrides": {"shift": {"label": "Z"}, "caps": {"label": "Z"}}},
-            {"label": "x", "code": 52, "weight": 1, "overrides": {"shift": {"label": "X"}, "caps": {"label": "X"}}},
-            {"label": "c", "code": 31, "weight": 1, "overrides": {"shift": {"label": "C"}, "caps": {"label": "C"}}},
-            {"label": "v", "code": 50, "weight": 1, "overrides": {"shift": {"label": "V"}, "caps": {"label": "V"}}},
-            {"label": "b", "code": 30, "weight": 1, "overrides": {"shift": {"label": "B"}, "caps": {"label": "B"}}},
-            {"label": "n", "code": 42, "weight": 1, "overrides": {"shift": {"label": "N"}, "caps": {"label": "N"}}},
-            {"label": "m", "code": 41, "weight": 1, "overrides": {"shift": {"label": "M"}, "caps": {"label": "M"}}},
-            {"label": "⌫", "code": 67, "weight": 1.5, "type": "func", "style": "function"}
+            {"label": "z", "text": "z", "weight": 1, "overrides": {"shift": {"label": "Z", "text": "Z"}, "caps": {"label": "Z", "text": "Z"}}},
+            {"label": "x", "text": "x", "weight": 1, "overrides": {"shift": {"label": "X", "text": "X"}, "caps": {"label": "X", "text": "X"}}},
+            {"label": "c", "text": "c", "weight": 1, "overrides": {"shift": {"label": "C", "text": "C"}, "caps": {"label": "C", "text": "C"}}},
+            {"label": "v", "text": "v", "weight": 1, "overrides": {"shift": {"label": "V", "text": "V"}, "caps": {"label": "V", "text": "V"}}},
+            {"label": "b", "text": "b", "weight": 1, "overrides": {"shift": {"label": "B", "text": "B"}, "caps": {"label": "B", "text": "B"}}},
+            {"label": "n", "text": "n", "weight": 1, "overrides": {"shift": {"label": "N", "text": "N"}, "caps": {"label": "N", "text": "N"}}},
+            {"label": "m", "text": "m", "weight": 1, "overrides": {"shift": {"label": "M", "text": "M"}, "caps": {"label": "M", "text": "M"}}},
+            {"label": "⌫", "action": "backspace", "weight": 1.5, "type": "func", "style": "function"}
           ]
         },
         {
           "keys": [
             {"id": "ctrl", "label": "Ctrl", "sticky": "transient", "metaValue": 4096, "weight": 1.2, "type": "modifier", "style": "sticky"},
-            {"label": "?123", "code": -2, "weight": 1.5, "type": "modifier", "action": "switch_page:symbols", "style": "function"},
+            {"label": "?123", "weight": 1.5, "type": "modifier", "action": "switch_page:symbols", "style": "function"},
             {"id": "alt", "label": "Alt", "sticky": "transient", "metaValue": 2, "weight": 1.2, "type": "modifier", "style": "sticky"},
-            {"label": "Space", "code": 62, "weight": 4},
-            {"label": ".", "code": 56, "weight": 1, "overrides": {"shift": {"label": ">"}}},
-            {"label": ",", "code": 55, "weight": 1, "overrides": {"shift": {"label": "<"}}}
+            {"label": "Space", "action": "space", "weight": 4},
+            {"label": ".", "text": ".", "weight": 1, "overrides": {"shift": {"label": ">", "text": ">"}}},
+            {"label": ",", "text": ",", "weight": 1, "overrides": {"shift": {"label": "<", "text": "<"}}}
           ]
         }
       ]
@@ -82,51 +82,51 @@
       "rows": [
         {
           "keys": [
-            {"label": "1", "code": 8, "weight": 1},
-            {"label": "2", "code": 9, "weight": 1},
-            {"label": "3", "code": 10, "weight": 1},
-            {"label": "4", "code": 11, "weight": 1},
-            {"label": "5", "code": 12, "weight": 1},
-            {"label": "6", "code": 13, "weight": 1},
-            {"label": "7", "code": 14, "weight": 1},
-            {"label": "8", "code": 15, "weight": 1},
-            {"label": "9", "code": 16, "weight": 1},
-            {"label": "0", "code": 7, "weight": 1}
+            {"label": "1", "text": "1", "weight": 1},
+            {"label": "2", "text": "2", "weight": 1},
+            {"label": "3", "text": "3", "weight": 1},
+            {"label": "4", "text": "4", "weight": 1},
+            {"label": "5", "text": "5", "weight": 1},
+            {"label": "6", "text": "6", "weight": 1},
+            {"label": "7", "text": "7", "weight": 1},
+            {"label": "8", "text": "8", "weight": 1},
+            {"label": "9", "text": "9", "weight": 1},
+            {"label": "0", "text": "0", "weight": 1}
           ]
         },
         {
           "keys": [
-            {"label": "@", "code": 77, "weight": 1},
-            {"label": "#", "code": 18, "weight": 1},
-            {"label": "$", "code": 19, "weight": 1},
-            {"label": "%", "code": 20, "weight": 1},
-            {"label": "&", "code": 21, "weight": 1},
-            {"label": "-", "code": 69, "weight": 1},
-            {"label": "+", "code": 81, "weight": 1},
-            {"label": "(", "code": 16, "overrides": {"shift": {"code": 16}}, "weight": 1},
-            {"label": ")", "code": 7, "overrides": {"shift": {"code": 7}}, "weight": 1},
-            {"label": "/", "code": 76, "weight": 1}
+            {"label": "@", "text": "@", "weight": 1},
+            {"label": "#", "text": "#", "weight": 1},
+            {"label": "$", "text": "$", "weight": 1},
+            {"label": "%", "text": "%", "weight": 1},
+            {"label": "&", "text": "&", "weight": 1},
+            {"label": "-", "text": "-", "weight": 1},
+            {"label": "+", "text": "+", "weight": 1},
+            {"label": "(", "text": "(", "weight": 1},
+            {"label": ")", "text": ")", "weight": 1},
+            {"label": "/", "text": "/", "weight": 1}
           ]
         },
         {
            "keys": [
-            {"label": "\\", "code": 73, "weight": 1},
-            {"label": "<", "code": 55, "overrides": {"shift": {"code": 55}}, "weight": 1},
-            {"label": ">", "code": 56, "overrides": {"shift": {"code": 56}}, "weight": 1},
-            {"label": "=", "code": 70, "weight": 1},
-            {"label": ":", "code": 74, "overrides": {"shift": {"code": 74}}, "weight": 1},
-            {"label": ";", "code": 74, "weight": 1},
-            {"label": "'", "code": 75, "weight": 1},
-            {"label": "\"", "code": 75, "overrides": {"shift": {"code": 75}}, "weight": 1},
-            {"label": "*", "code": 17, "weight": 1},
-            {"label": "!", "code": 8, "overrides": {"shift": {"code": 8}}, "weight": 1}
+            {"label": "\", "text": "\", "weight": 1},
+            {"label": "<", "text": "<", "weight": 1},
+            {"label": ">", "text": ">", "weight": 1},
+            {"label": "=", "text": "=", "weight": 1},
+            {"label": ":", "text": ":", "weight": 1},
+            {"label": ";", "text": ";", "weight": 1},
+            {"label": "'", "text": "'", "weight": 1},
+            {"label": \"", "text": \"", "weight": 1},
+            {"label": "*", "text": "*", "weight": 1},
+            {"label": "!", "text": "!", "weight": 1}
            ]
         },
         {
           "keys": [
-             {"label": "ABC", "code": -2, "weight": 1.5, "type": "modifier", "action": "switch_page:main", "style": "function"},
-             {"label": "Space", "code": 62, "weight": 4},
-             {"label": "⌫", "code": 67, "weight": 1.5, "type": "func", "style": "function"}
+             {"label": "ABC", "weight": 1.5, "type": "modifier", "action": "switch_page:main", "style": "function"},
+             {"label": "Space", "action": "space", "weight": 4},
+             {"label": "⌫", "action": "backspace", "weight": 1.5, "type": "func", "style": "function"}
           ]
         }
       ]
@@ -137,37 +137,37 @@
       "rows": [
         {
           "keys": [
-            {"label": "~", "code": 68, "weight": 1},
-            {"label": "`", "code": 68, "weight": 1},
-            {"label": "|", "code": 73, "overrides": {"shift": {"code": 73}}, "weight": 1},
-            {"label": "•", "code": 0, "weight": 1},
-            {"label": "√", "code": 0, "weight": 1},
-            {"label": "π", "code": 0, "weight": 1},
-            {"label": "÷", "code": 0, "weight": 1},
-            {"label": "×", "code": 0, "weight": 1},
-            {"label": "{", "code": 71, "overrides": {"shift": {"code": 71}}, "weight": 1},
-            {"label": "}", "code": 72, "overrides": {"shift": {"code": 72}}, "weight": 1}
+            {"label": "~", "text": "~", "weight": 1},
+            {"label": "`", "text": "`", "weight": 1},
+            {"label": "|", "text": "|", "weight": 1},
+            {"label": "•", "text": "•", "weight": 1},
+            {"label": "√", "text": "√", "weight": 1},
+            {"label": "π", "text": "π", "weight": 1},
+            {"label": "÷", "text": "÷", "weight": 1},
+            {"label": "×", "text": "×", "weight": 1},
+            {"label": "{", "text": "{", "weight": 1},
+            {"label": "}", "text": "}", "weight": 1}
           ]
         },
         {
            "keys": [
-            {"label": "[", "code": 71, "weight": 1},
-            {"label": "]", "code": 72, "weight": 1},
-            {"label": "£", "code": 0, "weight": 1},
-            {"label": "¢", "code": 0, "weight": 1},
-            {"label": "€", "code": 0, "weight": 1},
-            {"label": "°", "code": 0, "weight": 1},
-            {"label": "^", "code": 0, "weight": 1},
-            {"label": "_", "code": 69, "overrides": {"shift": {"code": 69}}, "weight": 1},
-            {"label": "¡", "code": 0, "weight": 1},
-            {"label": "¿", "code": 0, "weight": 1}
+            {"label": "[", "text": "[", "weight": 1},
+            {"label": "]", "text": "]", "weight": 1},
+            {"label": "£", "text": "£", "weight": 1},
+            {"label": "¢", "text": "¢", "weight": 1},
+            {"label": "€", "text": "€", "weight": 1},
+            {"label": "°", "text": "°", "weight": 1},
+            {"label": "^", "text": "^", "weight": 1},
+            {"label": "_", "text": "_", "weight": 1},
+            {"label": "¡", "text": "¡", "weight": 1},
+            {"label": "¿", "text": "¿", "weight": 1}
            ]
         },
         {
           "keys": [
-             {"label": "ABC", "code": -2, "weight": 1.5, "type": "modifier", "action": "switch_page:main", "style": "function"},
-             {"label": "Space", "code": 62, "weight": 4},
-             {"label": "⌫", "code": 67, "weight": 1.5, "type": "func", "style": "function"}
+             {"label": "ABC", "weight": 1.5, "type": "modifier", "action": "switch_page:main", "style": "function"},
+             {"label": "Space", "action": "space", "weight": 4},
+             {"label": "⌫", "action": "backspace", "weight": 1.5, "type": "func", "style": "function"}
           ]
         }
       ]

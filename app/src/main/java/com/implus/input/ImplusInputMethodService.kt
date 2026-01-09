@@ -323,16 +323,14 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             return
         }
 
-        var effCode = key.code
-        var effKeyEvent = key.keyEvent
+        var effInput = key.text
         key.overrides?.forEach { (stateId, override) ->
             if (activeStates[stateId] == true) {
-                override.code?.let { effCode = it }
-                override.keyEvent?.let { effKeyEvent = it }
+                override.text?.let { effInput = it }
             }
         }
 
-        // Optimized Meta State Calculation: Iterate only through active states
+        // Optimized Meta State Calculation
         var totalMeta = 0
         activeStates.forEach { (stateId, isActive) ->
             if (isActive) {
@@ -340,23 +338,21 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             }
         }
 
-        val now = SystemClock.uptimeMillis()
         if (key.action != null) {
             handleAction(key.action)
         } else {
-            val finalEvent = effKeyEvent
-            if (finalEvent != null) {
-                ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, finalEvent, 0, totalMeta))
-                ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, finalEvent, 0, totalMeta))
-            } else {
-                when (effCode) {
-                    67 -> ic.deleteSurroundingText(1, 0)
-                    62 -> ic.commitText(" ", 1)
-                    -2 -> { }
-                    else -> {
-                        if (effCode > 0) {
-                             ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, effCode, 0, totalMeta))
-                             ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, effCode, 0, totalMeta))
+            effInput?.let { input ->
+                if (input.isJsonPrimitive) {
+                    val p = input.asJsonPrimitive
+                    when {
+                        p.isNumber -> {
+                            val code = p.asInt
+                            val now = SystemClock.uptimeMillis()
+                            ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, totalMeta))
+                            ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, totalMeta))
+                        }
+                        p.isString -> {
+                            ic.commitText(p.asString, 1)
                         }
                     }
                 }
@@ -376,13 +372,24 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     }
 
     private fun handleAction(action: String) {
-        if (action.startsWith("switch_page:")) {
-            val pageId = action.substringAfter("switch_page:")
-            currentLayout?.pages?.find { it.id == pageId }?.let { 
-                keyboardView.setPage(it)
-                updatePageIndicator(it)
+        val ic = currentInputConnection ?: return
+        when {
+            action.startsWith("switch_page:") -> {
+                val pageId = action.substringAfter("switch_page:")
+                currentLayout?.pages?.find { it.id == pageId }?.let { 
+                    keyboardView.setPage(it)
+                    updatePageIndicator(it)
+                }
             }
-        } else if (action == "hide") requestHideSelf(0)
+            action == "backspace" -> ic.deleteSurroundingText(1, 0)
+            action == "enter" -> {
+                val now = SystemClock.uptimeMillis()
+                ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER, 0))
+                ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER, 0))
+            }
+            action == "space" -> ic.commitText(" ", 1)
+            action == "hide" -> requestHideSelf(0)
+        }
     }
 
     private fun updateCandidates() {
