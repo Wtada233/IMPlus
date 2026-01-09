@@ -245,15 +245,10 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             currentInputConnection?.performContextMenuAction(android.R.id.paste)
         }
         
-        val sendKey = { code: Int -> 
-            currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code))
-            currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
-        }
-
-        root.findViewById<View>(R.id.btn_arrow_left).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_LEFT) }
-        root.findViewById<View>(R.id.btn_arrow_right).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_RIGHT) }
-        root.findViewById<View>(R.id.btn_arrow_up).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_UP) }
-        root.findViewById<View>(R.id.btn_arrow_down).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_DOWN) }
+        root.findViewById<View>(R.id.btn_arrow_left).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_LEFT, 0) }
+        root.findViewById<View>(R.id.btn_arrow_right).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_RIGHT, 0) }
+        root.findViewById<View>(R.id.btn_arrow_up).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_UP, 0) }
+        root.findViewById<View>(R.id.btn_arrow_down).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_DOWN, 0) }
         
         root.findViewById<View>(R.id.btn_back_to_keyboard).setOnClickListener {
             editPadView.visibility = View.GONE
@@ -339,7 +334,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         }
 
         if (key.action != null) {
-            handleAction(key.action)
+            handleAction(key.action, totalMeta)
         } else {
             effInput?.let { input ->
                 if (input.isJsonPrimitive) {
@@ -371,7 +366,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         updateCandidates()
     }
 
-    private fun handleAction(action: String) {
+    private fun handleAction(action: String, totalMeta: Int) {
         val ic = currentInputConnection ?: return
         when {
             action.startsWith("switch_page:") -> {
@@ -381,15 +376,30 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                     updatePageIndicator(it)
                 }
             }
-            action == "backspace" -> ic.deleteSurroundingText(1, 0)
-            action == "enter" -> {
-                val now = SystemClock.uptimeMillis()
-                ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER, 0))
-                ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER, 0))
+            action == "backspace" -> {
+                if ((totalMeta and (KeyEvent.META_CTRL_ON or KeyEvent.META_ALT_ON)) != 0) {
+                    sendKey(KeyEvent.KEYCODE_DEL, totalMeta)
+                } else {
+                    ic.deleteSurroundingText(1, 0)
+                }
             }
-            action == "space" -> ic.commitText(" ", 1)
+            action == "enter" -> sendKey(KeyEvent.KEYCODE_ENTER, totalMeta)
+            action == "space" -> {
+                if ((totalMeta and (KeyEvent.META_CTRL_ON or KeyEvent.META_ALT_ON)) != 0) {
+                    sendKey(KeyEvent.KEYCODE_SPACE, totalMeta)
+                } else {
+                    ic.commitText(" ", 1)
+                }
+            }
             action == "hide" -> requestHideSelf(0)
         }
+    }
+
+    private fun sendKey(code: Int, meta: Int) {
+        val ic = currentInputConnection ?: return
+        val now = SystemClock.uptimeMillis()
+        ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta))
+        ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta))
     }
 
     private fun updateCandidates() {
