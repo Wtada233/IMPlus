@@ -20,10 +20,19 @@ Implus 使用统一的 `text` 字段来处理所有按键输入，支持两种�
 { "label": "q", "text": "q" }
 ```
 
-### 2. 系统按键 (Number)
-定义按键点击后要发送的 Android KeyCode（整数）。适用于 Esc, Tab, F1-F12 等。
+### 2. 系统按键 (String - KeyCode Name)
+定义按键对应的 Android KeyCode 名称（不含 `KEYCODE_` 前缀）。这是实现 Ctrl+C 等组合键的**推荐方式**。
 ```json
-{ "label": "Esc", "text": 111 }
+{ "label": "q", "text": "Q" }
+{ "label": "Enter", "text": "ENTER" }
+{ "label": "Esc", "text": "ESCAPE" }
+```
+
+### 3. 字面量输出 (String - Literal)
+如果字符串无法解析为 KeyCode 名称，则作为字面量直接提交。
+```json
+{ "label": "Space", "text": " " }
+{ "label": "😊", "text": "😊" }
 ```
 
 ### 3. 语义化动作 (Action)

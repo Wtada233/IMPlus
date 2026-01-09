@@ -325,11 +325,19 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             }
         }
 
-        // Optimized Meta State Calculation
+        // Optimized Meta State Calculation: 自动补充左右掩码以提高兼容性
         var totalMeta = 0
         activeStates.forEach { (stateId, isActive) ->
             if (isActive) {
-                metaStateMap[stateId]?.let { totalMeta = totalMeta or it }
+                metaStateMap[stateId]?.let { meta ->
+                    totalMeta = totalMeta or meta
+                    // 兼容性补充：如果开启了 Ctrl/Alt/Shift，同时开启对应的 LEFT 标志
+                    when (meta) {
+                        KeyEvent.META_CTRL_ON -> totalMeta = totalMeta or 0x2000 // META_CTRL_LEFT_ON
+                        KeyEvent.META_ALT_ON -> totalMeta = totalMeta or 0x10   // META_ALT_LEFT_ON
+                        KeyEvent.META_SHIFT_ON -> totalMeta = totalMeta or 0x40 // META_SHIFT_LEFT_ON
+                    }
+                }
             }
         }
 
@@ -339,15 +347,17 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             effInput?.let { input ->
                 if (input.isJsonPrimitive) {
                     val p = input.asJsonPrimitive
-                    when {
-                        p.isNumber -> {
-                            val code = p.asInt
-                            val now = SystemClock.uptimeMillis()
-                            ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, totalMeta))
-                            ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, totalMeta))
-                        }
-                        p.isString -> {
-                            ic.commitText(p.asString, 1)
+                    if (p.isNumber) {
+                        sendKey(p.asInt, totalMeta)
+                    } else if (p.isString) {
+                        val str = p.asString
+                        // 1. 尝试作为 KeyCode 处理 (支持 "A", "ENTER", "DEL", "COMMA" 等)
+                        val code = KeyEvent.keyCodeFromString("KEYCODE_${str.uppercase()}")
+                        if (code != KeyEvent.KEYCODE_UNKNOWN) {
+                            sendKey(code, totalMeta)
+                        } else {
+                            // 2. 作为字面量提交 (如 " ", "😊", "hello")
+                            ic.commitText(str, 1)
                         }
                     }
                 }
@@ -376,21 +386,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                     updatePageIndicator(it)
                 }
             }
-            action == "backspace" -> {
-                if ((totalMeta and (KeyEvent.META_CTRL_ON or KeyEvent.META_ALT_ON)) != 0) {
-                    sendKey(KeyEvent.KEYCODE_DEL, totalMeta)
-                } else {
-                    ic.deleteSurroundingText(1, 0)
-                }
-            }
-            action == "enter" -> sendKey(KeyEvent.KEYCODE_ENTER, totalMeta)
-            action == "space" -> {
-                if ((totalMeta and (KeyEvent.META_CTRL_ON or KeyEvent.META_ALT_ON)) != 0) {
-                    sendKey(KeyEvent.KEYCODE_SPACE, totalMeta)
-                } else {
-                    ic.commitText(" ", 1)
-                }
-            }
+            action == "backspace" -> ic.deleteSurroundingText(1, 0) // 保持语义化的退格，比 KeyCode 兼容性更好
             action == "hide" -> requestHideSelf(0)
         }
     }
