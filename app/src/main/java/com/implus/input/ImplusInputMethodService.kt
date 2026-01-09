@@ -220,33 +220,28 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     }
 
     private fun setupRepeatKey(view: View, keyCode: Int) {
-        view.setOnTouchListener(object : View.OnTouchListener {
-            private var handler: android.os.Handler? = null
-            private val runnable = object : Runnable {
-                override fun run() {
-                    sendKey(keyCode, 0)
-                    handler?.postDelayed(this, 50)
-                }
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val runnable = object : Runnable {
+            override fun run() {
+                sendKey(keyCode, 0)
+                handler.postDelayed(this, 50)
             }
+        }
 
-            override fun onTouch(v: View, event: android.view.MotionEvent): Boolean {
-                when (event.action) {
-                    android.view.MotionEvent.ACTION_DOWN -> {
-                        if (handler == null) handler = android.os.Handler(android.os.Looper.getMainLooper())
-                        sendKey(keyCode, 0)
-                        handler?.postDelayed(runnable, 400) // Initial delay
-                        v.isPressed = true
-                        return true
-                    }
-                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                        handler?.removeCallbacks(runnable)
-                        v.isPressed = false
-                        return true
-                    }
+        view.setOnTouchListener { v, event ->
+            when (event.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    sendKey(keyCode, 0)
+                    handler.postDelayed(runnable, 400)
+                    v.isPressed = true
                 }
-                return false
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    handler.removeCallbacks(runnable)
+                    v.isPressed = false
+                }
             }
-        })
+            true
+        }
     }
 
     private fun reloadLanguage() {

@@ -115,17 +115,21 @@ class ImplusKeyboardView @JvmOverloads constructor(
             colorRipple = context.getColor(R.color.ripple_light)
         }
 
-        // 2. 覆盖 JSON 定义的颜色
+        // 2. 覆盖 JSON 定义的颜色 (安全解析)
         theme?.let { t ->
-            t.background?.let { colorBg = Color.parseColor(it) }
-            t.keyBackground?.let { colorKey = Color.parseColor(it) }
-            t.keyText?.let { colorText = Color.parseColor(it) }
-            t.functionKeyBackground?.let { colorFuncKey = Color.parseColor(it) }
-            t.functionKeyText?.let { colorFuncText = Color.parseColor(it) }
-            t.stickyInactiveBackground?.let { colorSticky = Color.parseColor(it) }
-            t.stickyActiveBackground?.let { colorStickyActive = Color.parseColor(it) }
-            t.stickyActiveText?.let { colorStickyTextActive = Color.parseColor(it) }
-            t.rippleColor?.let { colorRipple = Color.parseColor(it) }
+            fun parseSafe(c: String?, default: Int): Int = try {
+                if (c != null) Color.parseColor(c) else default
+            } catch (e: Exception) { default }
+
+            colorBg = parseSafe(t.background, colorBg)
+            colorKey = parseSafe(t.keyBackground, colorKey)
+            colorText = parseSafe(t.keyText, colorText)
+            colorFuncKey = parseSafe(t.functionKeyBackground, colorFuncKey)
+            colorFuncText = parseSafe(t.functionKeyText, colorFuncText)
+            colorSticky = parseSafe(t.stickyInactiveBackground, colorSticky)
+            colorStickyActive = parseSafe(t.stickyActiveBackground, colorStickyActive)
+            colorStickyTextActive = parseSafe(t.stickyActiveText, colorStickyTextActive)
+            colorRipple = parseSafe(t.rippleColor, colorRipple)
         }
     }
 
@@ -173,7 +177,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
     }
 
     private fun layoutKeys(page: KeyboardPage, targetList: MutableList<KeyDrawable>, w: Int, h: Int) {
-        if (w <= 0 || h <= 0) return
+        if (w <= 0 || h <= 0 || page.rows.isEmpty()) return
         targetList.clear()
         val rowHeight = h / page.rows.size.toFloat()
         var curY = 0f
@@ -183,6 +187,11 @@ class ImplusKeyboardView @JvmOverloads constructor(
 
         for (row in page.rows) {
             val totalWeight = row.keys.sumOf { it.weight.toDouble() }.toFloat()
+            if (totalWeight <= 0f) {
+                curY += rowHeight
+                continue
+            }
+            
             var curX = 0f
             for (key in row.keys) {
                 val keyW = key.weight * (w / totalWeight)
