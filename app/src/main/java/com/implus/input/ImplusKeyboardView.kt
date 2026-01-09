@@ -32,6 +32,9 @@ class ImplusKeyboardView @JvmOverloads constructor(
     var activeStates: Map<String, Boolean> = emptyMap()
         set(value) { field = value; invalidate() }
         
+    var theme: KeyboardTheme? = null
+        set(value) { field = value; applyTheme(); invalidate() }
+
     var onKeyListener: ((KeyboardKey) -> Unit)? = null
     var onSwipeListener: ((Direction) -> Unit)? = null
 
@@ -48,6 +51,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private var colorText = 0; private var colorSticky = 0; private var colorStickyActive = 0
     private var colorStickyTextActive = 0
     private var colorRipple = 0
+    private var colorFuncText = 0
     
     private val vibrator = context.getSystemService(android.os.Vibrator::class.java)
 
@@ -88,11 +92,13 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private fun applyTheme() {
         val isDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         
+        // 1. 设置默认颜色 (兜底方案)
         if (isDark) {
             colorBg = context.getColor(R.color.keyboard_bg_dark)
             colorKey = context.getColor(R.color.key_bg_dark)
             colorFuncKey = context.getColor(R.color.func_key_bg_dark)
             colorText = context.getColor(R.color.text_dark)
+            colorFuncText = context.getColor(R.color.text_dark)
             colorSticky = context.getColor(R.color.sticky_inactive_dark)
             colorStickyActive = context.getColor(R.color.sticky_active_dark)
             colorStickyTextActive = context.getColor(R.color.sticky_text_active_dark)
@@ -102,10 +108,24 @@ class ImplusKeyboardView @JvmOverloads constructor(
             colorKey = context.getColor(R.color.key_bg_light)
             colorFuncKey = context.getColor(R.color.func_key_bg_light)
             colorText = context.getColor(R.color.text_light)
+            colorFuncText = context.getColor(R.color.text_light)
             colorSticky = context.getColor(R.color.sticky_inactive_light)
             colorStickyActive = context.getColor(R.color.sticky_active_light)
             colorStickyTextActive = context.getColor(R.color.sticky_text_active_light)
             colorRipple = context.getColor(R.color.ripple_light)
+        }
+
+        // 2. 覆盖 JSON 定义的颜色
+        theme?.let { t ->
+            t.background?.let { colorBg = Color.parseColor(it) }
+            t.keyBackground?.let { colorKey = Color.parseColor(it) }
+            t.keyText?.let { colorText = Color.parseColor(it) }
+            t.functionKeyBackground?.let { colorFuncKey = Color.parseColor(it) }
+            t.functionKeyText?.let { colorFuncText = Color.parseColor(it) }
+            t.stickyInactiveBackground?.let { colorSticky = Color.parseColor(it) }
+            t.stickyActiveBackground?.let { colorStickyActive = Color.parseColor(it) }
+            t.stickyActiveText?.let { colorStickyTextActive = Color.parseColor(it) }
+            t.rippleColor?.let { colorRipple = Color.parseColor(it) }
         }
     }
 
@@ -236,7 +256,11 @@ class ImplusKeyboardView @JvmOverloads constructor(
         var textColor = colorText
 
         when (effectiveStyle) {
-            KeyStyle.FUNCTION -> { paintColor = colorFuncKey; radius = 12f }
+            KeyStyle.FUNCTION -> { 
+                paintColor = colorFuncKey
+                textColor = colorFuncText
+                radius = 12f 
+            }
             KeyStyle.STICKY -> {
                 val isActive = key.id?.let { activeStates[it] } ?: false
                 paintColor = if (isActive) colorStickyActive else colorSticky
@@ -245,7 +269,12 @@ class ImplusKeyboardView @JvmOverloads constructor(
                 }
                 radius = 12f
             }
-            else -> { if (key.type != KeyType.NORMAL) paintColor = colorFuncKey }
+            else -> { 
+                if (key.type != KeyType.NORMAL) {
+                    paintColor = colorFuncKey
+                    textColor = colorFuncText
+                } 
+            }
         }
 
         shadowPaint.color = Color.argb(30, 0, 0, 0)

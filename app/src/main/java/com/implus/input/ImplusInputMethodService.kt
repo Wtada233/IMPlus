@@ -16,6 +16,7 @@ import android.util.Log
 import com.implus.input.layout.*
 import com.implus.input.engine.*
 import com.implus.input.manager.ClipboardHistoryManager
+import com.implus.input.manager.PanelManager
 
 import android.content.SharedPreferences
 
@@ -37,10 +38,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     private lateinit var toolbarView: View
     private lateinit var candidateScroll: View
-    private lateinit var editPadView: View
-    private lateinit var clipboardView: View
-    private lateinit var clipboardList: ViewGroup
     private lateinit var pageIndicator: android.widget.LinearLayout
+    private lateinit var panelManager: PanelManager
 
     private val prefs by lazy { getSharedPreferences("implus_prefs", Context.MODE_PRIVATE) }
 
@@ -87,10 +86,13 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         btnClose = root.findViewById(R.id.btn_close_keyboard)
         toolbarView = root.findViewById(R.id.toolbar_view)
         candidateScroll = root.findViewById(R.id.candidate_scroll)
-        editPadView = root.findViewById(R.id.edit_pad_view)
-        clipboardView = root.findViewById(R.id.clipboard_view)
-        clipboardList = root.findViewById(R.id.clipboard_list)
         pageIndicator = root.findViewById(R.id.page_indicator)
+
+        panelManager = PanelManager(root, { text ->
+            currentInputConnection?.commitText(text, 1)
+        }, {
+            // Back to keyboard callback if needed
+        })
 
         setupToolbar(root)
         setupEditPad(root)
@@ -112,8 +114,6 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             val currentPage = allPages.find { it.id == currentId }
             
             if (currentPage != null) {
-                // Filter pages by group ID. If no group ID, only include pages with no group ID (or just itself)
-                // Here: If groupId is null, it's isolated (like 'main'). If set, it groups with others.
                 val groupPages = if (currentPage.groupId != null) {
                     allPages.filter { it.groupId == currentPage.groupId }
                 } else {
@@ -185,61 +185,15 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             startActivity(intent)
         }
         root.findViewById<View>(R.id.btn_edit_mode).setOnClickListener {
-            switchPanel(PanelType.EDIT)
+            panelManager.switchPanel(PanelManager.PanelType.EDIT)
         }
         root.findViewById<View>(R.id.btn_clipboard).setOnClickListener {
-            if (clipboardView.visibility == View.VISIBLE) {
-                switchPanel(PanelType.KEYBOARD)
+            // Toggle clipboard
+            val isCurrentlyClipboard = root.findViewById<View>(R.id.clipboard_view).visibility == View.VISIBLE
+            if (isCurrentlyClipboard) {
+                panelManager.switchPanel(PanelManager.PanelType.KEYBOARD)
             } else {
-                showClipboardHistory()
-            }
-        }
-    }
-
-    enum class PanelType { KEYBOARD, EDIT, CLIPBOARD }
-
-    private fun switchPanel(type: PanelType) {
-        keyboardView.visibility = if (type == PanelType.KEYBOARD) View.VISIBLE else View.GONE
-        editPadView.visibility = if (type == PanelType.EDIT) View.VISIBLE else View.GONE
-        clipboardView.visibility = if (type == PanelType.CLIPBOARD) View.VISIBLE else View.GONE
-    }
-
-    private fun showClipboardHistory() {
-        switchPanel(PanelType.CLIPBOARD)
-        
-        val btnClear = clipboardView.findViewById<View>(R.id.btn_clear_clipboard)
-        btnClear.setOnClickListener {
-            ClipboardHistoryManager.clear(this)
-            showClipboardHistory() // Refresh
-        }
-
-        clipboardList.removeAllViews()
-        val history = ClipboardHistoryManager.getHistory(this)
-        
-        if (history.isEmpty()) {
-            val emptyView = TextView(this)
-            emptyView.text = getString(R.string.clipboard_empty)
-            emptyView.setTextColor(android.graphics.Color.WHITE)
-            emptyView.setPadding(32, 32, 32, 32)
-            clipboardList.addView(emptyView)
-        } else {
-            for (text in history) {
-                val tv = TextView(this)
-                tv.text = text
-                tv.setTextColor(android.graphics.Color.WHITE)
-                tv.textSize = 16f
-                tv.setPadding(32, 12, 32, 12)
-                tv.setBackgroundResource(android.R.drawable.list_selector_background)
-                tv.setOnClickListener {
-                    currentInputConnection?.commitText(text, 1)
-                    switchPanel(PanelType.KEYBOARD)
-                }
-                clipboardList.addView(tv)
-                
-                val divider = View(this)
-                divider.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1)
-                divider.setBackgroundColor(getColor(R.color.divider_dark))
-                clipboardList.addView(divider)
+                panelManager.switchPanel(PanelManager.PanelType.CLIPBOARD)
             }
         }
     }
@@ -261,7 +215,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         setupRepeatKey(root.findViewById(R.id.btn_arrow_down), KeyEvent.KEYCODE_DPAD_DOWN)
         
         root.findViewById<View>(R.id.btn_back_to_keyboard).setOnClickListener {
-            switchPanel(PanelType.KEYBOARD)
+            panelManager.switchPanel(PanelManager.PanelType.KEYBOARD)
         }
     }
 
@@ -322,6 +276,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         currentLayout = LayoutManager.loadLayout(this, langId, fileName)
         currentLayout?.let { layout ->
             Log.d("Implus", "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
+            keyboardView.theme = layout.theme
             // Respect layout config for candidate container visibility
             candidateContainer.visibility = if (layout.showCandidates) View.VISIBLE else View.GONE
             
@@ -368,21 +323,24 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private fun handleKey(key: KeyboardKey) {
         val ic = currentInputConnection ?: return
 
+        // 1. 引擎优先：如果输入引擎（如拼音）截获了此键，则直接返回
         if (inputEngine.processKey(key, ic, activeStates)) {
             updateCandidates()
             return
         }
         
+        // 2. 状态切换逻辑 (完全数据驱动，基于 JSON 的 sticky 属性)
         if (key.sticky != null && key.id != null) {
-            val newState = !(activeStates[key.id] ?: false)
-            activeStates[key.id] = newState
+            val currentState = activeStates[key.id] ?: false
+            activeStates[key.id] = !currentState
             if (key.sticky == "transient") {
-                if (newState) activeTransientKeyIds.add(key.id) else activeTransientKeyIds.remove(key.id)
+                if (!currentState) activeTransientKeyIds.add(key.id) else activeTransientKeyIds.remove(key.id)
             }
             keyboardView.activeStates = activeStates
             return
         }
 
+        // 3. 确定最终生效的输入内容 (考虑 overrides)
         var effInput = key.text
         var effKeyCode = key.parsedKeyCode
         key.overrides?.forEach { (stateId, override) ->
@@ -394,44 +352,57 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             }
         }
 
-        // Optimized Meta State Calculation: 使用系统常量并自动补充掩码以提高兼容性
-        var totalMeta = 0
-        activeStates.forEach { (stateId, isActive) ->
-            if (isActive) {
-                metaStateMap[stateId]?.let { meta ->
-                    totalMeta = totalMeta or meta
-                    // 兼容性补充：如果开启了 Ctrl/Alt/Shift，同时开启对应的 LEFT 标志
-                    when (meta) {
-                        KeyEvent.META_CTRL_ON -> totalMeta = totalMeta or KeyEvent.META_CTRL_LEFT_ON
-                        KeyEvent.META_ALT_ON -> totalMeta = totalMeta or KeyEvent.META_ALT_LEFT_ON
-                        KeyEvent.META_SHIFT_ON -> totalMeta = totalMeta or KeyEvent.META_SHIFT_LEFT_ON
-                    }
-                }
-            }
-        }
+        // 4. 计算组合键状态 (Meta State)
+        val totalMeta = calculateTotalMetaState()
 
+        // 5. 执行动作或发送输入
         if (key.action != null) {
             handleAction(key.action)
         } else {
-            if (effKeyCode != KeyEvent.KEYCODE_UNKNOWN) {
-                sendKey(effKeyCode, totalMeta)
-            } else {
-                effInput?.let { input ->
-                    if (input.isJsonPrimitive && input.asJsonPrimitive.isString) {
-                        ic.commitText(input.asString, 1)
+            dispatchInput(effKeyCode, effInput, totalMeta, ic)
+        }
+
+        // 6. 行为后置处理：重置所有“瞬时”状态（如按完 Shift 后恢复）
+        resetTransientStates()
+        updateCandidates()
+    }
+
+    private fun calculateTotalMetaState(): Int {
+        var meta = 0
+        activeStates.forEach { (stateId, isActive) ->
+            if (isActive) {
+                metaStateMap[stateId]?.let { value ->
+                    meta = meta or value
+                    // Android 兼容性：补全左右掩码
+                    when (value) {
+                        KeyEvent.META_CTRL_ON -> meta = meta or KeyEvent.META_CTRL_LEFT_ON
+                        KeyEvent.META_ALT_ON -> meta = meta or KeyEvent.META_ALT_LEFT_ON
+                        KeyEvent.META_SHIFT_ON -> meta = meta or KeyEvent.META_SHIFT_LEFT_ON
                     }
                 }
             }
         }
+        return meta
+    }
 
-        // 优化：仅针对当前激活的 transient 键进行重置，避免 O(N) 遍历
+    private fun dispatchInput(keyCode: Int, text: com.google.gson.JsonElement?, meta: Int, ic: android.view.inputmethod.InputConnection) {
+        if (keyCode != KeyEvent.KEYCODE_UNKNOWN) {
+            sendKey(keyCode, meta)
+        } else {
+            text?.let { input ->
+                if (input.isJsonPrimitive && input.asJsonPrimitive.isString) {
+                    ic.commitText(input.asString, 1)
+                }
+            }
+        }
+    }
+
+    private fun resetTransientStates() {
         if (activeTransientKeyIds.isNotEmpty()) {
             activeTransientKeyIds.forEach { id -> activeStates[id] = false }
             activeTransientKeyIds.clear()
             keyboardView.activeStates = activeStates
         }
-        
-        updateCandidates()
     }
 
     private fun handleAction(action: String) {

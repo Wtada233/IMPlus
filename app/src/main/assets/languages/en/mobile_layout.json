@@ -2,6 +2,17 @@
   "name": "Mobile Layout",
   "defaultHeight": 250,
   "showCandidates": true,
+  "theme": {
+    "background": "#1A1C1E",
+    "keyBackground": "#303030",
+    "keyText": "#FFFFFF",
+    "functionKeyBackground": "#252525",
+    "functionKeyText": "#FFFFFF",
+    "stickyInactiveBackground": "#42474E",
+    "stickyActiveBackground": "#D1E4FF",
+    "stickyActiveText": "#000000",
+    "rippleColor": "#40FFFFFF"
+  },
   "pages": [
     {
       "id": "main",

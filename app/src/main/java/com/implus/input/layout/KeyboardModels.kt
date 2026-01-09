@@ -7,7 +7,20 @@ data class KeyboardLayout(
     @SerializedName("name") val name: String,
     @SerializedName("defaultHeight") val defaultHeight: Int = 250,
     @SerializedName("showCandidates") val showCandidates: Boolean = true,
+    @SerializedName("theme") val theme: KeyboardTheme? = null,
     @SerializedName("pages") val pages: List<KeyboardPage> = emptyList()
+)
+
+data class KeyboardTheme(
+    @SerializedName("background") val background: String? = null,
+    @SerializedName("keyBackground") val keyBackground: String? = null,
+    @SerializedName("keyText") val keyText: String? = null,
+    @SerializedName("functionKeyBackground") val functionKeyBackground: String? = null,
+    @SerializedName("functionKeyText") val functionKeyText: String? = null,
+    @SerializedName("stickyInactiveBackground") val stickyInactiveBackground: String? = null,
+    @SerializedName("stickyActiveBackground") val stickyActiveBackground: String? = null,
+    @SerializedName("stickyActiveText") val stickyActiveText: String? = null,
+    @SerializedName("rippleColor") val rippleColor: String? = null
 )
 
 data class LanguageConfig(
