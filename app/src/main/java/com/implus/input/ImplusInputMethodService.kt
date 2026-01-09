@@ -29,6 +29,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     
     // 框架核心状态：仅追踪 JSON 中定义的 ID
     private val activeStates = mutableMapOf<String, Boolean>()
+    // 缓存 StateID -> MetaValue 的映射，避免每次按键遍历全布局
+    private val metaStateMap = mutableMapOf<String, Int>()
 
     private lateinit var toolbarView: View
     private lateinit var candidateScroll: View
@@ -56,8 +58,9 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == "current_lang" || key?.startsWith("use_pc_layout_") == true) {
             reloadLanguage()
-        } else if (key == "height_percent" || key == "candidate_height" || key == "swipe_threshold") {
-            applyKeyboardHeight()
+        } else if (key == "height_percent" || key == "candidate_height" || key == "swipe_threshold" 
+                   || key == "horizontal_spacing" || key == "vertical_spacing") {
+            applyKeyboardSettings()
         }
     }
 
@@ -93,7 +96,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         root.findViewById<View>(R.id.keyboard_view).parent.let { (it as View).setOnClickListener { } }
 
         reloadLanguage()
-        applyKeyboardHeight()
+        applyKeyboardSettings()
 
         keyboardView.onKeyListener = { key -> handleKey(key) }
         
@@ -202,7 +205,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         
         if (history.isEmpty()) {
             val emptyView = TextView(this)
-            emptyView.text = "Clipboard is empty"
+            emptyView.text = getString(R.string.clipboard_empty)
             emptyView.setTextColor(android.graphics.Color.WHITE)
             emptyView.setPadding(32, 32, 32, 32)
             clipboardList.addView(emptyView)
@@ -223,14 +226,14 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                 
                 val divider = View(this)
                 divider.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1)
-                divider.setBackgroundColor(android.graphics.Color.parseColor("#404040"))
+                divider.setBackgroundColor(getColor(R.color.divider_dark))
                 clipboardList.addView(divider)
             }
         }
     }
 
     private fun setupEditPad(root: View) {
-        val ic = currentInputConnection
+        // Removed unused variable 'ic'
         root.findViewById<View>(R.id.btn_select_all).setOnClickListener {
             currentInputConnection?.performContextMenuAction(android.R.id.selectAll)
         }
@@ -287,8 +290,14 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             candidateContainer.visibility = if (layout.showCandidates) View.VISIBLE else View.GONE
             
             activeStates.clear()
+            metaStateMap.clear()
+            
             layout.pages.flatMap { it.rows }.flatMap { it.keys }.forEach { k ->
-                k.id?.let { activeStates[it] = false }
+                k.id?.let { 
+                    activeStates[it] = false
+                    // Cache meta value for this state ID
+                    k.metaValue?.let { meta -> metaStateMap[it] = meta }
+                }
             }
             keyboardView.activeStates = activeStates
             val mainPage = layout.pages.find { it.id == "main" }
@@ -322,10 +331,11 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             }
         }
 
+        // Optimized Meta State Calculation: Iterate only through active states
         var totalMeta = 0
-        currentLayout?.pages?.flatMap { it.rows }?.flatMap { it.keys }?.forEach { k ->
-            if (k.id != null && activeStates[k.id] == true) {
-                k.metaValue?.let { totalMeta = totalMeta or it }
+        activeStates.forEach { (stateId, isActive) ->
+            if (isActive) {
+                metaStateMap[stateId]?.let { totalMeta = totalMeta or it }
             }
         }
 
@@ -385,17 +395,20 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         }
     }
 
-    private fun applyKeyboardHeight() {
+    private fun applyKeyboardSettings() {
         if (!::keyboardView.isInitialized) return
         val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
         keyboardView.layoutParams.height = (resources.displayMetrics.heightPixels * (prefs.getInt("height_percent", 35) / 100f)).toInt()
         keyboardView.swipeThreshold = prefs.getInt("swipe_threshold", 50)
+        keyboardView.horizontalSpacing = prefs.getInt("horizontal_spacing", 6)
+        keyboardView.verticalSpacing = prefs.getInt("vertical_spacing", 6)
+        
         candidateContainer.layoutParams.height = (prefs.getInt("candidate_height", 48) * resources.displayMetrics.density).toInt()
         keyboardView.requestLayout(); candidateContainer.requestLayout()
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) { 
         super.onStartInputView(info, restarting)
-        applyKeyboardHeight() 
+        applyKeyboardSettings() 
     }
 }

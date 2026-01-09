@@ -16,9 +16,44 @@ class SettingsActivity : AppCompatActivity() {
 
         setupHeightControl()
         setupCandidateHeightControl()
+        setupSpacingControl()
         setupSwipeThresholdControl()
         setupCloseOutside()
         setupLanguageSettings()
+    }
+
+    private fun setupSpacingControl() {
+        val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
+        
+        // Horizontal Spacing
+        val seekBarH = findViewById<SeekBar>(R.id.seekbar_h_spacing)
+        val tvValH = findViewById<TextView>(R.id.tv_h_spacing_val)
+        val savedH = prefs.getInt("horizontal_spacing", 6)
+        seekBarH.progress = savedH
+        tvValH.text = "${savedH}px"
+        seekBarH.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                tvValH.text = "${progress}px"
+                prefs.edit().putInt("horizontal_spacing", progress).apply()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        // Vertical Spacing
+        val seekBarV = findViewById<SeekBar>(R.id.seekbar_v_spacing)
+        val tvValV = findViewById<TextView>(R.id.tv_v_spacing_val)
+        val savedV = prefs.getInt("vertical_spacing", 6)
+        seekBarV.progress = savedV
+        tvValV.text = "${savedV}px"
+        seekBarV.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                tvValV.text = "${progress}px"
+                prefs.edit().putInt("vertical_spacing", progress).apply()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
     }
 
     private fun setupSwipeThresholdControl() {

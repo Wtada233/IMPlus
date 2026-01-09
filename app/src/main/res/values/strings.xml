@@ -21,8 +21,19 @@
             <string name="pref_candidate_height_title">Candidate Bar Height</string>
                 <string name="pref_close_outside">Close keyboard when touching outside</string>
                 <string name="open_settings">Open Settings</string>
-            
-                <!-- Edit Pad Strings -->
+    
+    <string name="pref_swipe_threshold_title">Swipe Sensitivity (Lower is more sensitive)</string>
+    <string name="pref_category_language">Language Settings</string>
+    <string name="pref_enable_pc_layout">Enable PC Layout (5 Rows)</string>
+    <string name="pref_h_spacing_title">Horizontal Spacing</string>
+    <string name="pref_v_spacing_title">Vertical Spacing</string>
+    
+    <string name="clipboard_empty">Clipboard is empty</string>
+    <string name="menu_lang_default">System Default</string>
+    <string name="menu_lang_en">English</string>
+    <string name="menu_lang_zh">Chinese (Simplified)</string>
+
+    <!-- Edit Pad Strings -->
                 <string name="edit_select_all">Select All</string>
                 <string name="edit_copy">Copy</string>
                 <string name="edit_paste">Paste</string>

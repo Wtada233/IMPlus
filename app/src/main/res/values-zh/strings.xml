@@ -22,6 +22,17 @@
     <string name="pref_close_outside">点击外部关闭键盘</string>
     <string name="open_settings">打开设置</string>
 
+    <string name="pref_swipe_threshold_title">滑动灵敏度 (越小越灵敏)</string>
+    <string name="pref_category_language">语言相关设置</string>
+    <string name="pref_enable_pc_layout">启用 PC 布局 (五行)</string>
+    <string name="pref_h_spacing_title">按键水平间距</string>
+    <string name="pref_v_spacing_title">按键垂直间距</string>
+
+    <string name="clipboard_empty">剪贴板为空</string>
+    <string name="menu_lang_default">System Default (跟随系统)</string>
+    <string name="menu_lang_en">English</string>
+    <string name="menu_lang_zh">简体中文</string>
+
     <!-- 编辑面板字符串 -->
     <string name="edit_select_all">全选</string>
     <string name="edit_copy">复制</string>

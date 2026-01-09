@@ -79,10 +79,70 @@
             android:text="48dp" />
     </LinearLayout>
 
+    <!-- Horizontal Spacing -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="滑动灵敏度 (越小越灵敏)"
+        android:text="@string/pref_h_spacing_title"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <SeekBar
+            android:id="@+id/seekbar_h_spacing"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="20"
+            android:progress="6" />
+
+        <TextView
+            android:id="@+id/tv_h_spacing_val"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="6px" />
+    </LinearLayout>
+
+    <!-- Vertical Spacing -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_v_spacing_title"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <SeekBar
+            android:id="@+id/seekbar_v_spacing"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="20"
+            android:progress="6" />
+
+        <TextView
+            android:id="@+id/tv_v_spacing_val"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="6px" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_swipe_threshold_title"
         android:textStyle="bold"
         android:layout_marginTop="16dp" />
 
@@ -112,7 +172,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="语言相关设置"
+        android:text="@string/pref_category_language"
         android:textStyle="bold"
         android:layout_marginTop="16dp" />
 
@@ -126,7 +186,7 @@
         android:id="@+id/switch_pc_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="启用 PC 布局 (五行)"
+        android:text="@string/pref_enable_pc_layout"
         android:layout_marginTop="8dp" />
 
     <Space
