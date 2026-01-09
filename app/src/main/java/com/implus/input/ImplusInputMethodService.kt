@@ -59,7 +59,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         if (key == "current_lang" || key?.startsWith("use_pc_layout_") == true) {
             reloadLanguage()
         } else if (key == "height_percent" || key == "candidate_height" || key == "swipe_threshold" 
-                   || key == "horizontal_spacing" || key == "vertical_spacing") {
+                   || key == "horizontal_spacing" || key == "vertical_spacing"
+                   || key == "vibration_enabled" || key == "vibration_strength") {
             applyKeyboardSettings()
         }
     }
@@ -402,6 +403,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         keyboardView.swipeThreshold = prefs.getInt("swipe_threshold", 50)
         keyboardView.horizontalSpacing = prefs.getInt("horizontal_spacing", 6)
         keyboardView.verticalSpacing = prefs.getInt("vertical_spacing", 6)
+        keyboardView.vibrationEnabled = prefs.getBoolean("vibration_enabled", true)
+        keyboardView.vibrationStrength = prefs.getInt("vibration_strength", 30)
         
         candidateContainer.layoutParams.height = (prefs.getInt("candidate_height", 48) * resources.displayMetrics.density).toInt()
         keyboardView.requestLayout(); candidateContainer.requestLayout()

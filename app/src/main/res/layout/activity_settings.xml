@@ -189,6 +189,49 @@
         android:text="@string/pref_enable_pc_layout"
         android:layout_marginTop="8dp" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_category_feedback"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp" />
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switch_vibration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_vibration_enable"
+        android:layout_marginTop="8dp" />
+
+    <LinearLayout
+        android:id="@+id/container_vibration_strength"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_vibration_strength"
+            android:textSize="14sp" />
+
+        <SeekBar
+            android:id="@+id/seekbar_vibration_strength"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="30" />
+
+        <TextView
+            android:id="@+id/tv_vibration_strength_val"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:text="30ms" />
+    </LinearLayout>
+
     <Space
         android:layout_width="match_parent"
         android:layout_height="24dp" />

@@ -18,8 +18,40 @@ class SettingsActivity : AppCompatActivity() {
         setupCandidateHeightControl()
         setupSpacingControl()
         setupSwipeThresholdControl()
+        setupFeedbackControl()
         setupCloseOutside()
         setupLanguageSettings()
+    }
+
+    private fun setupFeedbackControl() {
+        val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
+        
+        val switchVib = findViewById<SwitchMaterial>(R.id.switch_vibration)
+        val seekVib = findViewById<SeekBar>(R.id.seekbar_vibration_strength)
+        val tvVibVal = findViewById<TextView>(R.id.tv_vibration_strength_val)
+        val containerVib = findViewById<View>(R.id.container_vibration_strength)
+
+        val vibEnabled = prefs.getBoolean("vibration_enabled", true)
+        switchVib.isChecked = vibEnabled
+        containerVib.visibility = if (vibEnabled) View.VISIBLE else View.GONE
+
+        switchVib.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("vibration_enabled", isChecked).apply()
+            containerVib.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+
+        val vibStrength = prefs.getInt("vibration_strength", 30)
+        seekVib.progress = vibStrength
+        tvVibVal.text = "${vibStrength}ms"
+
+        seekVib.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                tvVibVal.text = "${progress}ms"
+                prefs.edit().putInt("vibration_strength", progress).apply()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
     }
 
     private fun setupSpacingControl() {

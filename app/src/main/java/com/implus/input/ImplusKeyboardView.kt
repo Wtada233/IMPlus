@@ -39,6 +39,8 @@ class ImplusKeyboardView @JvmOverloads constructor(
     var swipeThreshold = 50 
     var horizontalSpacing = 6
     var verticalSpacing = 6
+    var vibrationEnabled = true
+    var vibrationStrength = 30
 
     enum class Direction { LEFT, RIGHT }
 
@@ -47,6 +49,8 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private var colorStickyTextActive = 0
     private var colorRipple = 0
     
+    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+
     private val shadowPaint = Paint()
     private val keyPaint = Paint()
     private val textPaint = Paint().apply { textAlign = Paint.Align.CENTER; isAntiAlias = true }
@@ -70,6 +74,16 @@ class ImplusKeyboardView @JvmOverloads constructor(
     init { applyTheme() }
 
     fun getCurrentPageId(): String? = currentPage?.id
+
+    private fun performVibration() {
+        if (!vibrationEnabled) return
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            vibrator.vibrate(android.os.VibrationEffect.createOneShot(vibrationStrength.toLong(), android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(vibrationStrength.toLong())
+        }
+    }
 
     private fun applyTheme() {
         val isDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -271,6 +285,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
                 pressedKey = keyDrawables.find { it.rect.contains(x, y) }
                 pressedKey?.let { 
                     it.onPressed(x, y)
+                    performVibration()
                     invalidate()
                 } 
             }
