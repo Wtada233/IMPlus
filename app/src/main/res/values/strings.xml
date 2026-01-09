@@ -5,8 +5,8 @@
     <string name="subtype_en_us">English (US)</string>
     
     <!-- MainActivity Strings -->
-    <string name="welcome_title">Welcome to Implus</string>
-    <string name="welcome_subtitle">Please follow these steps to enable the keyboard</string>
+    <string name="welcome_title">Implus Setup Guide</string>
+    <string name="welcome_subtitle">Follow these steps to activate and configure your keyboard</string>
     <string name="step_1_enable">1. Enable Implus in Settings</string>
     <string name="step_1_done">✅ 1. Implus Enabled</string>
     <string name="step_2_select">2. Switch to Implus</string>

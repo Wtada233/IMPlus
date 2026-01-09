@@ -5,8 +5,8 @@
     <string name="subtype_en_us">英语 (美国)</string>
     
     <!-- MainActivity Strings -->
-    <string name="welcome_title">欢迎使用 Implus</string>
-    <string name="welcome_subtitle">请按照以下步骤启用输入法</string>
+    <string name="welcome_title">Implus 配置引导</string>
+    <string name="welcome_subtitle">请按照以下步骤激活并配置您的输入法</string>
     <string name="step_1_enable">1. 在设置中启用 Implus</string>
     <string name="step_1_done">✅ 1. 输入法已启用</string>
     <string name="step_2_select">2. 切换为 Implus 输入法</string>

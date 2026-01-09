@@ -16,7 +16,8 @@ import androidx.core.os.LocaleListCompat
 import java.util.Locale
 
 /**
- * 引导界面 (Init 界面)
+ * MainActivity 是应用的引导和设置界面，而非输入法界面本身。
+ * 用户通过此界面完成输入法的启用和基本配置。
  */
 class MainActivity : AppCompatActivity() {
 
@@ -60,7 +61,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun showLanguageMenu(view: View) {
         val popup = PopupMenu(this, view)
-        // 动态添加菜单项
         popup.menu.add(0, 0, 0, getString(R.string.menu_lang_default))
         popup.menu.add(0, 1, 1, getString(R.string.menu_lang_en))
         popup.menu.add(0, 2, 2, getString(R.string.menu_lang_zh))

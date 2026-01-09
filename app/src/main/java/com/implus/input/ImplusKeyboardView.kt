@@ -278,41 +278,54 @@ class ImplusKeyboardView @JvmOverloads constructor(
         canvas.drawText(effectiveLabel, rect.centerX(), baseline, textPaint)
     }
 
-    private var pressedKey: KeyDrawable? = null
+    private val pointerMap = mutableMapOf<Int, KeyDrawable>()
+
     override fun onTouchEvent(e: MotionEvent): Boolean {
         if (gestureDetector.onTouchEvent(e)) return true
         
-        val x = e.x; val y = e.y
-        when (e.action) {
-            MotionEvent.ACTION_DOWN -> { 
-                pressedKey = keyDrawables.find { it.rect.contains(x, y) }
-                pressedKey?.let { 
+        val action = e.actionMasked
+        val index = e.actionIndex
+        val id = e.getPointerId(index)
+        val x = e.getX(index)
+        val y = e.getY(index)
+
+        when (action) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                val kd = keyDrawables.find { it.rect.contains(x, y) }
+                kd?.let {
+                    pointerMap[id] = it
                     it.onPressed(x, y)
                     performVibration()
                     invalidate()
-                } 
-            }
-            MotionEvent.ACTION_UP -> { 
-                pressedKey?.let { 
-                    if (it.rect.contains(x, y)) onKeyListener?.invoke(it.key)
-                    it.onReleased()
-                    pressedKey = null
-                    invalidate() 
-                } 
-            }
-            MotionEvent.ACTION_CANCEL -> {
-                pressedKey?.let { 
-                    it.onReleased()
-                    pressedKey = null
-                    invalidate() 
                 }
             }
-            MotionEvent.ACTION_MOVE -> { 
-                if (pressedKey != null && !pressedKey!!.rect.contains(x, y)) { 
-                    pressedKey!!.onReleased()
-                    pressedKey = null
-                    invalidate() 
-                } 
+            MotionEvent.ACTION_MOVE -> {
+                for (i in 0 until e.pointerCount) {
+                    val pid = e.getPointerId(i)
+                    val px = e.getX(i)
+                    val py = e.getY(i)
+                    val kd = pointerMap[pid]
+                    if (kd != null && !kd.rect.contains(px, py)) {
+                        kd.onReleased()
+                        pointerMap.remove(pid)
+                        invalidate()
+                    }
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                pointerMap[id]?.let {
+                    if (it.rect.contains(x, y)) {
+                        onKeyListener?.invoke(it.key)
+                    }
+                    it.onReleased()
+                    pointerMap.remove(id)
+                    invalidate()
+                }
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                pointerMap.values.forEach { it.onReleased() }
+                pointerMap.clear()
+                invalidate()
             }
         }
         return true

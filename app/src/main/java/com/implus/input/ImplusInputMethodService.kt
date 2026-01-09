@@ -453,7 +453,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         val ic = currentInputConnection ?: return
         val now = SystemClock.uptimeMillis()
         ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta))
-        ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta))
+        ic.sendKeyEvent(KeyEvent(now, now + 10, KeyEvent.ACTION_UP, code, 0, meta))
     }
 
     private fun updateCandidates() {
