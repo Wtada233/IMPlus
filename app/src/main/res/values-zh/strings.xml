@@ -21,4 +21,10 @@
     <string name="pref_candidate_height_title">候选栏高度</string>
     <string name="pref_close_outside">点击外部关闭键盘</string>
     <string name="open_settings">打开设置</string>
+
+    <!-- 编辑面板字符串 -->
+    <string name="edit_select_all">全选</string>
+    <string name="edit_copy">复制</string>
+    <string name="edit_paste">粘贴</string>
+    <string name="edit_back">返回</string>
 </resources>

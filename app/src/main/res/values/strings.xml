@@ -19,7 +19,12 @@
         <string name="pref_height_title">Keyboard Height</string>
             <string name="pref_height_summary">Adjust the keyboard height as a percentage of screen height</string>
             <string name="pref_candidate_height_title">Candidate Bar Height</string>
-            <string name="pref_close_outside">Close keyboard when touching outside</string>
-            <string name="open_settings">Open Settings</string>
-        </resources>
-        
+                <string name="pref_close_outside">Close keyboard when touching outside</string>
+                <string name="open_settings">Open Settings</string>
+            
+                <!-- Edit Pad Strings -->
+                <string name="edit_select_all">Select All</string>
+                <string name="edit_copy">Copy</string>
+                <string name="edit_paste">Paste</string>
+                <string name="edit_back">Back</string>
+            </resources>        

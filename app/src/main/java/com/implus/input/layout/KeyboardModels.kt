@@ -21,6 +21,7 @@ data class LanguageConfig(
 
 data class KeyboardPage(
     @SerializedName("id") val id: String = "main",
+    @SerializedName("groupId") val groupId: String? = null,
     @SerializedName("rows") val rows: List<KeyboardRow> = emptyList()
 )
 

@@ -21,7 +21,7 @@
             android:layout_height="48dp"
             android:background="#252525">
 
-            <!-- 工具栏 (Task 7) -->
+            <!-- 真正的工具栏: [设置] [编辑] [粘贴] -->
             <LinearLayout
                 android:id="@+id/toolbar_view"
                 android:layout_width="match_parent"
@@ -29,31 +29,38 @@
                 android:layout_toStartOf="@+id/btn_close_keyboard"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="8dp"
+                android:paddingStart="4dp"
                 android:visibility="visible">
                 
                 <ImageButton
-                    android:id="@+id/btn_nav_left"
-                    android:layout_width="40dp"
+                    android:id="@+id/btn_settings"
+                    android:layout_width="44dp"
                     android:layout_height="match_parent"
-                    android:src="@android:drawable/ic_media_previous"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Left" />
+                    android:src="@drawable/ic_settings"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Settings"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"/>
+
                 <ImageButton
-                    android:id="@+id/btn_nav_right"
-                    android:layout_width="40dp"
+                    android:id="@+id/btn_edit_mode"
+                    android:layout_width="44dp"
                     android:layout_height="match_parent"
-                    android:src="@android:drawable/ic_media_next"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Right" />
-                <Button
-                    android:id="@+id/btn_paste"
-                    android:layout_width="wrap_content"
+                    android:src="@drawable/ic_text_format"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Edit Mode"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"/>
+
+                <ImageButton
+                    android:id="@+id/btn_clipboard"
+                    android:layout_width="44dp"
                     android:layout_height="match_parent"
-                    android:text="Paste"
-                    android:textSize="12sp"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
-                <!-- 更多按钮在此处添加 -->
+                    android:src="@drawable/ic_assignment"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Clipboard"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"/>
             </LinearLayout>
 
             <HorizontalScrollView
@@ -85,10 +92,81 @@
                 android:padding="6dp" />
         </RelativeLayout>
 
-        <com.implus.input.ImplusKeyboardView
-            android:id="@+id/keyboard_view"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content">
+            
+            <com.implus.input.ImplusKeyboardView
+                android:id="@+id/keyboard_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="visible"/>
+
+            <!-- 页面指示器 -->
+            <LinearLayout
+                android:id="@+id/page_indicator"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="4dp"
+                android:visibility="gone"/>
+
+            <!-- 剪贴板历史面板 -->
+            <ScrollView
+                android:id="@+id/clipboard_view"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:background="#1A1C1E"
+                android:visibility="gone"
+                android:padding="8dp">
+                <LinearLayout
+                    android:id="@+id/clipboard_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </ScrollView>
+
+            <!-- 文本编辑面板 (隐藏) -->
+            <LinearLayout
+                android:id="@+id/edit_pad_view"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:orientation="vertical"
+                android:background="#1A1C1E"
+                android:visibility="gone"
+                android:padding="12dp">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+                    <Button android:id="@+id/btn_select_all" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="@string/edit_select_all" style="@style/Widget.Material3.Button.TonalButton" android:layout_margin="4dp" android:textColor="@android:color/white"/>
+                    <Button android:id="@+id/btn_copy" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="@string/edit_copy" style="@style/Widget.Material3.Button.TonalButton" android:layout_margin="4dp" android:textColor="@android:color/white"/>
+                    <Button android:id="@+id/btn_pad_paste" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="@string/edit_paste" style="@style/Widget.Material3.Button.TonalButton" android:layout_margin="4dp" android:textColor="@android:color/white"/>
+                </LinearLayout>
+
+                <GridLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="3"
+                    android:layout_gravity="center"
+                    android:columnCount="3"
+                    android:rowCount="2">
+                    
+                    <Space android:layout_width="60dp" android:layout_height="60dp"/>
+                    <ImageButton android:id="@+id/btn_arrow_up" android:src="@drawable/ic_keyboard_arrow_up" android:layout_width="60dp" android:layout_height="60dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:tint="@android:color/white"/>
+                    <Space android:layout_width="60dp" android:layout_height="60dp"/>
+                    
+                    <ImageButton android:id="@+id/btn_arrow_left" android:src="@drawable/ic_keyboard_arrow_left" android:layout_width="60dp" android:layout_height="60dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:tint="@android:color/white"/>
+                    <ImageButton android:id="@+id/btn_arrow_down" android:src="@drawable/ic_keyboard_arrow_down" android:layout_width="60dp" android:layout_height="60dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:tint="@android:color/white"/>
+                    <ImageButton android:id="@+id/btn_arrow_right" android:src="@drawable/ic_keyboard_arrow_right" android:layout_width="60dp" android:layout_height="60dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:tint="@android:color/white"/>
+                </GridLayout>
+                
+                <Button android:id="@+id/btn_back_to_keyboard" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/edit_back" style="@style/Widget.Material3.Button.OutlinedButton" android:textColor="@android:color/white"/>
+            </LinearLayout>
+        </FrameLayout>
 
     </LinearLayout>
 </FrameLayout>

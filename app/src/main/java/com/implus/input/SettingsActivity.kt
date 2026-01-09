@@ -16,8 +16,29 @@ class SettingsActivity : AppCompatActivity() {
 
         setupHeightControl()
         setupCandidateHeightControl()
+        setupSwipeThresholdControl()
         setupCloseOutside()
         setupLanguageSettings()
+    }
+
+    private fun setupSwipeThresholdControl() {
+        val seekBar = findViewById<SeekBar>(R.id.seekbar_swipe_threshold)
+        val tvVal = findViewById<TextView>(R.id.tv_swipe_threshold_val)
+        val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
+        
+        val saved = prefs.getInt("swipe_threshold", 50)
+        seekBar.progress = saved
+        tvVal.text = "${saved}px"
+
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val real = if (progress < 10) 10 else progress
+                tvVal.text = "${real}px"
+                prefs.edit().putInt("swipe_threshold", real).apply()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
     }
 
     private fun setupLanguageSettings() {
@@ -30,25 +51,30 @@ class SettingsActivity : AppCompatActivity() {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, names)
         spinner.adapter = adapter
 
-        val currentLangId = prefs.getString("current_lang", "en")
+        // Load current selected language from prefs
+        val currentLangId = prefs.getString("current_lang", "en") ?: "en"
         val currentIndex = languages.indexOfFirst { it.id == currentLangId }.coerceAtLeast(0)
         spinner.setSelection(currentIndex)
 
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selected = languages[position]
+                // Save global current language
                 prefs.edit().putString("current_lang", selected.id).apply()
                 
-                // 更新该语言的 PC 布局开关状态
-                switchPc.isChecked = prefs.getBoolean("use_pc_layout_${selected.id}", true)
+                // Update switch state to reflect THIS language's preference
+                val isPcEnabled = prefs.getBoolean("use_pc_layout_${selected.id}", true)
+                // Temporarily remove listener to avoid triggering it
+                switchPc.setOnCheckedChangeListener(null)
+                switchPc.isChecked = isPcEnabled
+                switchPc.setOnCheckedChangeListener { _, isChecked ->
+                    prefs.edit().putBoolean("use_pc_layout_${selected.id}", isChecked).apply()
+                }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
-
-        switchPc.setOnCheckedChangeListener { _, isChecked ->
-            val selectedLangId = languages[spinner.selectedItemPosition].id
-            prefs.edit().putBoolean("use_pc_layout_$selectedLangId", isChecked).apply()
-        }
+        
+        // Initial listener setup handled by onItemSelected
     }
 
     private fun setupCandidateHeightControl() {

@@ -3,6 +3,6 @@
   "name": "English",
   "engine": "raw",
   "pcLayout": "pc_layout.json",
-  "mobileLayout": "pc_layout.json",
+  "mobileLayout": "mobile_layout.json",
   "defaultPage": "main"
 }

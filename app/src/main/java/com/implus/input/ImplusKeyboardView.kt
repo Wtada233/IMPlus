@@ -1,5 +1,6 @@
 package com.implus.input
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Canvas
@@ -10,6 +11,7 @@ import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 import com.implus.input.layout.*
 import kotlin.math.abs
 
@@ -20,14 +22,20 @@ class ImplusKeyboardView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private var currentPage: KeyboardPage? = null
+    private var nextPage: KeyboardPage? = null
+    private var slideOffset = 0f // 0f = currentPage fully visible, -1f = sliding left, 1f = sliding right
+
     private val keyDrawables = mutableListOf<KeyDrawable>()
+    private val nextKeyDrawables = mutableListOf<KeyDrawable>()
     
-    // 核心状态：由 Service 注入并实时维护
     var activeStates: Map<String, Boolean> = emptyMap()
         set(value) { field = value; invalidate() }
         
     var onKeyListener: ((KeyboardKey) -> Unit)? = null
     var onSwipeListener: ((Direction) -> Unit)? = null
+
+    // 可配置的滑动阈值，默认 50px (更灵敏)
+    var swipeThreshold = 50 
 
     enum class Direction { LEFT, RIGHT }
 
@@ -42,7 +50,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
             if (e1 == null) return false
             val diffX = e2.x - e1.x
             val diffY = e2.y - e1.y
-            if (abs(diffX) > abs(diffY) && abs(diffX) > 100 && abs(velocityX) > 100) {
+            if (abs(diffX) > abs(diffY) && abs(diffX) > swipeThreshold && abs(velocityX) > 100) {
                 if (diffX > 0) onSwipeListener?.invoke(Direction.RIGHT)
                 else onSwipeListener?.invoke(Direction.LEFT)
                 return true
@@ -56,7 +64,6 @@ class ImplusKeyboardView @JvmOverloads constructor(
     fun getCurrentPageId(): String? = currentPage?.id
 
     private fun applyTheme() {
-        // TODO: 真正的 Material You 取色
         val isDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         if (isDark) {
             colorBg = Color.parseColor("#1A1C1E"); colorKey = Color.parseColor("#303030")
@@ -69,17 +76,47 @@ class ImplusKeyboardView @JvmOverloads constructor(
         }
     }
 
-    fun setPage(page: KeyboardPage) { this.currentPage = page; layoutKeys(width, height); invalidate() }
+    fun setPage(page: KeyboardPage, animateDirection: Direction? = null) {
+        if (animateDirection == null) {
+            this.currentPage = page
+            layoutKeys(page, keyDrawables, width, height)
+            invalidate()
+        } else {
+            this.nextPage = page
+            layoutKeys(page, nextKeyDrawables, width, height)
+            
+            val start = 0f
+            val end = if (animateDirection == Direction.LEFT) -1f else 1f // Left swipe means content moves left
+            
+            val animator = ValueAnimator.ofFloat(0f, 1f)
+            animator.duration = 200
+            animator.interpolator = DecelerateInterpolator()
+            animator.addUpdateListener { 
+                val fraction = it.animatedValue as Float
+                slideOffset = end * fraction
+                invalidate()
+            }
+            animator.start()
+            
+            // 动画结束后切换数据
+            postDelayed({
+                this.currentPage = page
+                layoutKeys(page, keyDrawables, width, height)
+                slideOffset = 0f
+                nextPage = null
+                invalidate()
+            }, 200)
+        }
+    }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
-        layoutKeys(width, height)
+        currentPage?.let { layoutKeys(it, keyDrawables, width, height) }
     }
 
-    private fun layoutKeys(w: Int, h: Int) {
+    private fun layoutKeys(page: KeyboardPage, targetList: MutableList<KeyDrawable>, w: Int, h: Int) {
         if (w <= 0 || h <= 0) return
-        keyDrawables.clear()
-        val page = currentPage ?: return
+        targetList.clear()
         val rowHeight = h / page.rows.size.toFloat()
         var curY = 0f
         for (row in page.rows) {
@@ -87,7 +124,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
             var curX = 0f
             for (key in row.keys) {
                 val keyW = key.weight * (w / totalWeight)
-                keyDrawables.add(KeyDrawable(key, RectF(curX + 6f, curY + 6f, curX + keyW - 6f, curY + rowHeight - 6f)))
+                targetList.add(KeyDrawable(key, RectF(curX + 6f, curY + 6f, curX + keyW - 6f, curY + rowHeight - 6f)))
                 curX += keyW
             }
             curY += rowHeight
@@ -98,7 +135,36 @@ class ImplusKeyboardView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawColor(colorBg)
-        for (kd in keyDrawables) drawKey(canvas, kd)
+
+        // 绘制当前页 (Current Page)
+        // slideOffset < 0 (向左滑): 当前页向左移 (-w * offset)
+        // slideOffset > 0 (向右滑): 当前页向右移 (+w * offset)
+        
+        val w = width.toFloat()
+        
+        if (slideOffset != 0f && nextPage != null) {
+            // 正在动画中
+            val currentTransX = slideOffset * w
+            
+            // 绘制当前页
+            canvas.save()
+            canvas.translate(currentTransX, 0f)
+            for (kd in keyDrawables) drawKey(canvas, kd)
+            canvas.restore()
+            
+            // 绘制下一页
+            // 如果 slideOffset < 0 (左移), next page 在右边 (w)
+            // 如果 slideOffset > 0 (右移), next page 在左边 (-w)
+            val nextStartX = if (slideOffset < 0) w else -w
+            canvas.save()
+            canvas.translate(nextStartX + currentTransX, 0f)
+            for (kd in nextKeyDrawables) drawKey(canvas, kd)
+            canvas.restore()
+            
+        } else {
+            // 静态绘制
+            for (kd in keyDrawables) drawKey(canvas, kd)
+        }
     }
 
     private fun drawKey(canvas: Canvas, kd: KeyDrawable) {
@@ -118,7 +184,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
 
         // 2. 确定颜色
         var paintColor = colorKey
-        var radius = 24f // 更现代的圆角
+        var radius = 24f 
         var textColor = colorText
 
         when (effectiveStyle) {
@@ -134,13 +200,12 @@ class ImplusKeyboardView @JvmOverloads constructor(
             else -> { if (key.type != KeyType.NORMAL) paintColor = colorFuncKey }
         }
 
-        // 3. 绘制阴影和按键主体
+        // 3. 绘制
         shadowPaint.color = Color.argb(30, 0, 0, 0)
         canvas.drawRoundRect(rect.left, rect.top + 3f, rect.right, rect.bottom + 3f, radius, radius, shadowPaint)
         keyPaint.color = paintColor
         canvas.drawRoundRect(rect, radius, radius, keyPaint)
         
-        // 绘制按压反馈 (Ripple 占位)
         if (kd.isPressed) {
             canvas.drawRoundRect(rect, radius, radius, ripplePaint)
         }
