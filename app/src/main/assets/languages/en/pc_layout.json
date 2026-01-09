@@ -110,7 +110,7 @@
         },
         {
            "keys": [
-            {"label": "\", "text": "BACKSLASH", "weight": 1},
+            {"label": "\\", "text": "BACKSLASH", "weight": 1},
             {"label": "<", "text": "COMMA", "overrides": {"shift": {"text": "COMMA"}}, "weight": 1},
             {"label": ">", "text": "PERIOD", "overrides": {"shift": {"text": "PERIOD"}}, "weight": 1},
             {"label": "=", "text": "EQUALS", "weight": 1},
