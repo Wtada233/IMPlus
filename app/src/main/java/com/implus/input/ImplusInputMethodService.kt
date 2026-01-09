@@ -206,6 +206,12 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private fun showClipboardHistory() {
         switchPanel(PanelType.CLIPBOARD)
         
+        val btnClear = clipboardView.findViewById<View>(R.id.btn_clear_clipboard)
+        btnClear.setOnClickListener {
+            ClipboardHistoryManager.clear(this)
+            showClipboardHistory() // Refresh
+        }
+
         clipboardList.removeAllViews()
         val history = ClipboardHistoryManager.getHistory(this)
         
@@ -238,7 +244,6 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     }
 
     private fun setupEditPad(root: View) {
-        // Removed unused variable 'ic'
         root.findViewById<View>(R.id.btn_select_all).setOnClickListener {
             currentInputConnection?.performContextMenuAction(android.R.id.selectAll)
         }
@@ -249,14 +254,44 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             currentInputConnection?.performContextMenuAction(android.R.id.paste)
         }
         
-        root.findViewById<View>(R.id.btn_arrow_left).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_LEFT, 0) }
-        root.findViewById<View>(R.id.btn_arrow_right).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_RIGHT, 0) }
-        root.findViewById<View>(R.id.btn_arrow_up).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_UP, 0) }
-        root.findViewById<View>(R.id.btn_arrow_down).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_DOWN, 0) }
+        setupRepeatKey(root.findViewById(R.id.btn_arrow_left), KeyEvent.KEYCODE_DPAD_LEFT)
+        setupRepeatKey(root.findViewById(R.id.btn_arrow_right), KeyEvent.KEYCODE_DPAD_RIGHT)
+        setupRepeatKey(root.findViewById(R.id.btn_arrow_up), KeyEvent.KEYCODE_DPAD_UP)
+        setupRepeatKey(root.findViewById(R.id.btn_arrow_down), KeyEvent.KEYCODE_DPAD_DOWN)
         
         root.findViewById<View>(R.id.btn_back_to_keyboard).setOnClickListener {
             switchPanel(PanelType.KEYBOARD)
         }
+    }
+
+    private fun setupRepeatKey(view: View, keyCode: Int) {
+        view.setOnTouchListener(object : View.OnTouchListener {
+            private var handler: android.os.Handler? = null
+            private val runnable = object : Runnable {
+                override fun run() {
+                    sendKey(keyCode, 0)
+                    handler?.postDelayed(this, 50)
+                }
+            }
+
+            override fun onTouch(v: View, event: android.view.MotionEvent): Boolean {
+                when (event.action) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        if (handler == null) handler = android.os.Handler(android.os.Looper.getMainLooper())
+                        sendKey(keyCode, 0)
+                        handler?.postDelayed(runnable, 400) // Initial delay
+                        v.isPressed = true
+                        return true
+                    }
+                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                        handler?.removeCallbacks(runnable)
+                        v.isPressed = false
+                        return true
+                    }
+                }
+                return false
+            }
+        })
     }
 
     private fun reloadLanguage() {
@@ -299,6 +334,12 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                     // Cache meta value for this state ID
                     k.metaValue?.let { meta -> metaStateMap[it] = meta }
                 }
+                
+                // Pre-parse KeyCodes for performance
+                k.parsedKeyCode = parseKeyCode(k.text)
+                k.overrides?.values?.forEach { override ->
+                    override.parsedKeyCode = parseKeyCode(override.text)
+                }
             }
             keyboardView.activeStates = activeStates
             val mainPage = layout.pages.find { it.id == "main" }
@@ -306,6 +347,20 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                 keyboardView.setPage(mainPage)
                 updatePageIndicator(mainPage)
             }
+        }
+    }
+
+    private fun parseKeyCode(text: com.google.gson.JsonElement?): Int {
+        if (text == null || !text.isJsonPrimitive) return KeyEvent.KEYCODE_UNKNOWN
+        val p = text.asJsonPrimitive
+        return if (p.isNumber) {
+            p.asInt
+        } else if (p.isString) {
+            val str = p.asString
+            val code = KeyEvent.keyCodeFromString("KEYCODE_${str.uppercase()}")
+            if (code != KeyEvent.KEYCODE_UNKNOWN) code else KeyEvent.KEYCODE_UNKNOWN
+        } else {
+            KeyEvent.KEYCODE_UNKNOWN
         }
     }
 
@@ -328,9 +383,13 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         }
 
         var effInput = key.text
+        var effKeyCode = key.parsedKeyCode
         key.overrides?.forEach { (stateId, override) ->
             if (activeStates[stateId] == true) {
-                override.text?.let { effInput = it }
+                override.text?.let { 
+                    effInput = it 
+                    effKeyCode = override.parsedKeyCode
+                }
             }
         }
 
@@ -353,21 +412,12 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         if (key.action != null) {
             handleAction(key.action)
         } else {
-            effInput?.let { input ->
-                if (input.isJsonPrimitive) {
-                    val p = input.asJsonPrimitive
-                    if (p.isNumber) {
-                        sendKey(p.asInt, totalMeta)
-                    } else if (p.isString) {
-                        val str = p.asString
-                        // 1. 尝试作为 KeyCode 处理 (支持 "A", "ENTER", "DEL", "COMMA" 等)
-                        val code = KeyEvent.keyCodeFromString("KEYCODE_${str.uppercase()}")
-                        if (code != KeyEvent.KEYCODE_UNKNOWN) {
-                            sendKey(code, totalMeta)
-                        } else {
-                            // 2. 作为字面量提交 (如 " ", "😊", "hello")
-                            ic.commitText(str, 1)
-                        }
+            if (effKeyCode != KeyEvent.KEYCODE_UNKNOWN) {
+                sendKey(effKeyCode, totalMeta)
+            } else {
+                effInput?.let { input ->
+                    if (input.isJsonPrimitive && input.asJsonPrimitive.isString) {
+                        ic.commitText(input.asString, 1)
                     }
                 }
             }
@@ -407,12 +457,32 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     private fun updateCandidates() {
         val candidates = inputEngine.getCandidates()
+        val candidateStrip = candidateContainer.findViewById<ViewGroup>(R.id.candidate_strip)
+        candidateStrip.removeAllViews()
+
         if (candidates.isEmpty()) {
             toolbarView.visibility = View.VISIBLE
             candidateScroll.visibility = View.GONE
         } else {
             toolbarView.visibility = View.GONE
             candidateScroll.visibility = View.VISIBLE
+            
+            for (candidate in candidates) {
+                val tv = TextView(this)
+                tv.text = candidate
+                tv.setTextColor(android.graphics.Color.WHITE)
+                tv.textSize = 18f
+                tv.setPadding(32, 0, 32, 0)
+                tv.gravity = android.view.Gravity.CENTER
+                tv.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                tv.setBackgroundResource(android.R.drawable.list_selector_background)
+                tv.setOnClickListener {
+                    currentInputConnection?.commitText(candidate, 1)
+                    inputEngine.processKey(KeyboardKey(action = "commit"), currentInputConnection!!, activeStates) // Notify engine
+                    updateCandidates()
+                }
+                candidateStrip.addView(tv)
+            }
         }
     }
 

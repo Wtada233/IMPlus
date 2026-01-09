@@ -41,13 +41,17 @@ data class KeyboardKey(
     @SerializedName("sticky") val sticky: String? = null,     // "transient", "permanent"
     @SerializedName("metaValue") val metaValue: Int? = null,  // 对应的 MetaState 位掩码
     
-    @SerializedName("overrides") val overrides: Map<String, KeyOverride>? = null
+    @SerializedName("overrides") val overrides: Map<String, KeyOverride>? = null,
+
+    @Transient var parsedKeyCode: Int = android.view.KeyEvent.KEYCODE_UNKNOWN
 )
 
 data class KeyOverride(
     @SerializedName("label") val label: String? = null,
     @SerializedName("text") val text: JsonElement? = null,
-    @SerializedName("style") val style: KeyStyle? = null
+    @SerializedName("style") val style: KeyStyle? = null,
+
+    @Transient var parsedKeyCode: Int = android.view.KeyEvent.KEYCODE_UNKNOWN
 )
 
 enum class KeyType {

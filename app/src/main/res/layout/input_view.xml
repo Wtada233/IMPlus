@@ -113,19 +113,46 @@
                 android:visibility="gone"/>
 
             <!-- 剪贴板历史面板 -->
-            <ScrollView
+            <LinearLayout
                 android:id="@+id/clipboard_view"
                 android:layout_width="match_parent"
                 android:layout_height="250dp"
                 android:background="#1A1C1E"
-                android:visibility="gone"
-                android:padding="8dp">
-                <LinearLayout
-                    android:id="@+id/clipboard_list"
+                android:orientation="vertical"
+                android:visibility="gone">
+                
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"/>
-            </ScrollView>
+                    android:padding="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/clipboard_title"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"/>
+                    <Button
+                        android:id="@+id/btn_clear_clipboard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_alignParentEnd="true"
+                        android:text="@string/clipboard_clear"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:textSize="12sp"/>
+                </RelativeLayout>
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:padding="8dp">
+                    <LinearLayout
+                        android:id="@+id/clipboard_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"/>
+                </ScrollView>
+            </LinearLayout>
 
             <!-- 文本编辑面板 (隐藏) -->
             <LinearLayout

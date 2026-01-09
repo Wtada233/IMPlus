@@ -134,15 +134,16 @@ class ImplusKeyboardView @JvmOverloads constructor(
                 slideOffset = end * fraction
                 invalidate()
             }
+            animator.addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    currentPage = page
+                    layoutKeys(page, keyDrawables, width, height)
+                    slideOffset = 0f
+                    nextPage = null
+                    invalidate()
+                }
+            })
             animator.start()
-            
-            postDelayed({
-                this.currentPage = page
-                layoutKeys(page, keyDrawables, width, height)
-                slideOffset = 0f
-                nextPage = null
-                invalidate()
-            }, 200)
         }
     }
 

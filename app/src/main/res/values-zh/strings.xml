@@ -33,6 +33,8 @@
     <string name="pref_vibration_strength">震动强度</string>
 
     <string name="clipboard_empty">剪贴板为空</string>
+    <string name="clipboard_title">剪贴板历史</string>
+    <string name="clipboard_clear">清除</string>
     <string name="menu_lang_default">System Default (跟随系统)</string>
     <string name="menu_lang_en">English</string>
     <string name="menu_lang_zh">简体中文</string>

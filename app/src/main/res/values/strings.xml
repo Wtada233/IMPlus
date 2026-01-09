@@ -35,6 +35,8 @@
     <string name="pref_swipe_threshold_title">Swipe Sensitivity (Lower is more sensitive)</string>
     
     <string name="clipboard_empty">Clipboard is empty</string>
+    <string name="clipboard_title">Clipboard History</string>
+    <string name="clipboard_clear">Clear</string>
     <string name="menu_lang_default">System Default</string>
     <string name="menu_lang_en">English</string>
     <string name="menu_lang_zh">Chinese (Simplified)</string>
