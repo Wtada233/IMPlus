@@ -12,6 +12,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import android.util.Log
 import com.implus.input.layout.*
 import com.implus.input.engine.*
 import com.implus.input.manager.ClipboardHistoryManager
@@ -29,6 +30,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     
     // 框架核心状态：仅追踪 JSON 中定义的 ID
     private val activeStates = mutableMapOf<String, Boolean>()
+    // 追踪当前处于激活状态的 transient (瞬时) 按键 ID，优化重置性能
+    private val activeTransientKeyIds = mutableSetOf<String>()
     // 缓存 StateID -> MetaValue 的映射，避免每次按键遍历全布局
     private val metaStateMap = mutableMapOf<String, Int>()
 
@@ -181,25 +184,27 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             startActivity(intent)
         }
         root.findViewById<View>(R.id.btn_edit_mode).setOnClickListener {
-            keyboardView.visibility = View.GONE
-            clipboardView.visibility = View.GONE
-            editPadView.visibility = View.VISIBLE
+            switchPanel(PanelType.EDIT)
         }
         root.findViewById<View>(R.id.btn_clipboard).setOnClickListener {
-            showClipboardHistory()
+            if (clipboardView.visibility == View.VISIBLE) {
+                switchPanel(PanelType.KEYBOARD)
+            } else {
+                showClipboardHistory()
+            }
         }
     }
 
+    enum class PanelType { KEYBOARD, EDIT, CLIPBOARD }
+
+    private fun switchPanel(type: PanelType) {
+        keyboardView.visibility = if (type == PanelType.KEYBOARD) View.VISIBLE else View.GONE
+        editPadView.visibility = if (type == PanelType.EDIT) View.VISIBLE else View.GONE
+        clipboardView.visibility = if (type == PanelType.CLIPBOARD) View.VISIBLE else View.GONE
+    }
+
     private fun showClipboardHistory() {
-        if (clipboardView.visibility == View.VISIBLE) {
-            clipboardView.visibility = View.GONE
-            keyboardView.visibility = View.VISIBLE
-            return
-        }
-        
-        keyboardView.visibility = View.GONE
-        editPadView.visibility = View.GONE
-        clipboardView.visibility = View.VISIBLE
+        switchPanel(PanelType.CLIPBOARD)
         
         clipboardList.removeAllViews()
         val history = ClipboardHistoryManager.getHistory(this)
@@ -220,8 +225,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                 tv.setBackgroundResource(android.R.drawable.list_selector_background)
                 tv.setOnClickListener {
                     currentInputConnection?.commitText(text, 1)
-                    clipboardView.visibility = View.GONE
-                    keyboardView.visibility = View.VISIBLE
+                    switchPanel(PanelType.KEYBOARD)
                 }
                 clipboardList.addView(tv)
                 
@@ -251,9 +255,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         root.findViewById<View>(R.id.btn_arrow_down).setOnClickListener { sendKey(KeyEvent.KEYCODE_DPAD_DOWN, 0) }
         
         root.findViewById<View>(R.id.btn_back_to_keyboard).setOnClickListener {
-            editPadView.visibility = View.GONE
-            clipboardView.visibility = View.GONE
-            keyboardView.visibility = View.VISIBLE
+            switchPanel(PanelType.KEYBOARD)
         }
     }
 
@@ -280,12 +282,15 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     }
 
     private fun loadLayout(langId: String, fileName: String) {
+        val startTime = SystemClock.elapsedRealtime()
         currentLayout = LayoutManager.loadLayout(this, langId, fileName)
         currentLayout?.let { layout ->
+            Log.d("Implus", "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
             // Respect layout config for candidate container visibility
             candidateContainer.visibility = if (layout.showCandidates) View.VISIBLE else View.GONE
             
             activeStates.clear()
+            activeTransientKeyIds.clear()
             metaStateMap.clear()
             
             layout.pages.flatMap { it.rows }.flatMap { it.keys }.forEach { k ->
@@ -313,7 +318,11 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         }
         
         if (key.sticky != null && key.id != null) {
-            activeStates[key.id] = !(activeStates[key.id] ?: false)
+            val newState = !(activeStates[key.id] ?: false)
+            activeStates[key.id] = newState
+            if (key.sticky == "transient") {
+                if (newState) activeTransientKeyIds.add(key.id) else activeTransientKeyIds.remove(key.id)
+            }
             keyboardView.activeStates = activeStates
             return
         }
@@ -325,7 +334,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             }
         }
 
-        // Optimized Meta State Calculation: 自动补充左右掩码以提高兼容性
+        // Optimized Meta State Calculation: 使用系统常量并自动补充掩码以提高兼容性
         var totalMeta = 0
         activeStates.forEach { (stateId, isActive) ->
             if (isActive) {
@@ -333,9 +342,9 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                     totalMeta = totalMeta or meta
                     // 兼容性补充：如果开启了 Ctrl/Alt/Shift，同时开启对应的 LEFT 标志
                     when (meta) {
-                        KeyEvent.META_CTRL_ON -> totalMeta = totalMeta or 0x2000 // META_CTRL_LEFT_ON
-                        KeyEvent.META_ALT_ON -> totalMeta = totalMeta or 0x10   // META_ALT_LEFT_ON
-                        KeyEvent.META_SHIFT_ON -> totalMeta = totalMeta or 0x40 // META_SHIFT_LEFT_ON
+                        KeyEvent.META_CTRL_ON -> totalMeta = totalMeta or KeyEvent.META_CTRL_LEFT_ON
+                        KeyEvent.META_ALT_ON -> totalMeta = totalMeta or KeyEvent.META_ALT_LEFT_ON
+                        KeyEvent.META_SHIFT_ON -> totalMeta = totalMeta or KeyEvent.META_SHIFT_LEFT_ON
                     }
                 }
             }
@@ -364,14 +373,12 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             }
         }
 
-        var stateChanged = false
-        currentLayout?.pages?.flatMap { it.rows }?.flatMap { it.keys }?.forEach { k ->
-            if (k.id != null && k.sticky == "transient" && activeStates[k.id] == true) {
-                activeStates[k.id] = false
-                stateChanged = true
-            }
+        // 优化：仅针对当前激活的 transient 键进行重置，避免 O(N) 遍历
+        if (activeTransientKeyIds.isNotEmpty()) {
+            activeTransientKeyIds.forEach { id -> activeStates[id] = false }
+            activeTransientKeyIds.clear()
+            keyboardView.activeStates = activeStates
         }
-        if (stateChanged) keyboardView.activeStates = activeStates
         
         updateCandidates()
     }

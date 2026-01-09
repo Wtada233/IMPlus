@@ -6,7 +6,6 @@ import com.implus.input.layout.KeyboardKey
 interface InputEngine {
     fun processKey(key: KeyboardKey, ic: InputConnection, activeStates: Map<String, Boolean>): Boolean
     fun getCandidates(): List<String>
-    fun clear()
 }
 
 class RawEngine : InputEngine {
@@ -16,5 +15,4 @@ class RawEngine : InputEngine {
     }
 
     override fun getCandidates(): List<String> = emptyList()
-    override fun clear() {}
 }

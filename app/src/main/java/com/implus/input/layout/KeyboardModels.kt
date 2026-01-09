@@ -53,8 +53,7 @@ data class KeyOverride(
 enum class KeyType {
     @SerializedName("normal") NORMAL,
     @SerializedName("modifier") MODIFIER,
-    @SerializedName("func") FUNC,
-    @SerializedName("placeholder") PLACEHOLDER
+    @SerializedName("func") FUNC
 }
 
 enum class KeyStyle {

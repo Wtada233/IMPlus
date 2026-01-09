@@ -248,23 +248,25 @@ class ImplusKeyboardView @JvmOverloads constructor(
         }
 
         shadowPaint.color = Color.argb(30, 0, 0, 0)
-        canvas.drawRoundRect(rect.left, rect.top + 3f, rect.right, rect.bottom + 3f, radius, radius, shadowPaint)
+        val shadowOffset = 3f
+        canvas.drawRoundRect(rect.left, rect.top + shadowOffset, rect.right, rect.bottom + shadowOffset, radius, radius, shadowPaint)
         keyPaint.color = paintColor
         canvas.drawRoundRect(rect, radius, radius, keyPaint)
         
         // Ripple Effect
         if (kd.rippleIntensity > 0f) {
             canvas.save()
-            clipPath.reset()
+            clipPath.rewind() // Use rewind for performance
             clipPath.addRoundRect(rect, radius, radius, Path.Direction.CW)
-            canvas.clipPath(clipPath)
-            
-            ripplePaint.color = colorRipple
-            // Scale the alpha based on intensity
-            val baseAlpha = Color.alpha(colorRipple)
-            ripplePaint.alpha = (baseAlpha * kd.rippleIntensity).toInt()
-            
-            canvas.drawCircle(kd.rippleX, kd.rippleY, kd.rippleRadius, ripplePaint)
+            try {
+                canvas.clipPath(clipPath)
+                ripplePaint.color = colorRipple
+                val baseAlpha = Color.alpha(colorRipple)
+                ripplePaint.alpha = (baseAlpha * kd.rippleIntensity).toInt()
+                canvas.drawCircle(kd.rippleX, kd.rippleY, kd.rippleRadius, ripplePaint)
+            } catch (e: Exception) {
+                // Fallback for some older devices where clipPath might fail on hardware canvas
+            }
             canvas.restore()
         }
 
