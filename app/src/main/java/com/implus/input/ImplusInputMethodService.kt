@@ -351,7 +351,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         }
 
         if (key.action != null) {
-            handleAction(key.action, totalMeta)
+            handleAction(key.action)
         } else {
             effInput?.let { input ->
                 if (input.isJsonPrimitive) {
@@ -383,7 +383,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         updateCandidates()
     }
 
-    private fun handleAction(action: String, totalMeta: Int) {
+    private fun handleAction(action: String) {
         val ic = currentInputConnection ?: return
         when {
             action.startsWith("switch_page:") -> {

@@ -49,7 +49,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private var colorStickyTextActive = 0
     private var colorRipple = 0
     
-    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+    private val vibrator = context.getSystemService(android.os.Vibrator::class.java)
 
     private val shadowPaint = Paint()
     private val keyPaint = Paint()
