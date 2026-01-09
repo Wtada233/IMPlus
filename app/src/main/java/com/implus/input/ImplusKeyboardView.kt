@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.GestureDetector
@@ -49,7 +50,8 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private val shadowPaint = Paint()
     private val keyPaint = Paint()
     private val textPaint = Paint().apply { textAlign = Paint.Align.CENTER; isAntiAlias = true }
-    private val ripplePaint = Paint()
+    private val ripplePaint = Paint().apply { isAntiAlias = true; style = Paint.Style.FILL }
+    private val clipPath = Path()
 
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
@@ -91,7 +93,6 @@ class ImplusKeyboardView @JvmOverloads constructor(
             colorStickyTextActive = context.getColor(R.color.sticky_text_active_light)
             colorRipple = context.getColor(R.color.ripple_light)
         }
-        ripplePaint.color = colorRipple
     }
 
     override fun onConfigurationChanged(newConfig: Configuration?) {
@@ -142,7 +143,6 @@ class ImplusKeyboardView @JvmOverloads constructor(
         val rowHeight = h / page.rows.size.toFloat()
         var curY = 0f
         
-        // Convert spacing from pixels (integer) to float for calculation
         val hSpacing = horizontalSpacing.toFloat()
         val vSpacing = verticalSpacing.toFloat()
 
@@ -152,12 +152,6 @@ class ImplusKeyboardView @JvmOverloads constructor(
             for (key in row.keys) {
                 val keyW = key.weight * (w / totalWeight)
                 
-                // Apply spacing: contract the rect by half the spacing on each side
-                // Logic: 
-                // Original: left = curX, right = curX + keyW
-                // With spacing: left = curX + hSpacing/2, right = curX + keyW - hSpacing/2
-                // Top = curY + vSpacing/2, Bottom = curY + rowHeight - vSpacing/2
-                
                 val rect = RectF(
                     curX + hSpacing / 2f, 
                     curY + vSpacing / 2f, 
@@ -165,8 +159,6 @@ class ImplusKeyboardView @JvmOverloads constructor(
                     curY + rowHeight - vSpacing / 2f
                 )
                 
-                // Pre-calculate text size
-                // Simple heuristic: 40% of row height, max constrained by width
                 var textSize = rowHeight * 0.4f
                 val label = key.label ?: ""
                 if (label.isNotEmpty()) {
@@ -217,9 +209,6 @@ class ImplusKeyboardView @JvmOverloads constructor(
         var effectiveLabel = key.label ?: ""
         var effectiveStyle = key.style
         
-        // Apply overrides
-        // Note: Performance could still be improved here by caching override result if activeStates didn't change often
-        // But removing measureText is the big win.
         key.overrides?.forEach { (stateId, override) ->
             if (activeStates[stateId] == true) {
                 override.label?.let { effectiveLabel = it }
@@ -249,15 +238,23 @@ class ImplusKeyboardView @JvmOverloads constructor(
         keyPaint.color = paintColor
         canvas.drawRoundRect(rect, radius, radius, keyPaint)
         
-        if (kd.isPressed) {
-            canvas.drawRoundRect(rect, radius, radius, ripplePaint)
+        // Ripple Effect
+        if (kd.rippleIntensity > 0f) {
+            canvas.save()
+            clipPath.reset()
+            clipPath.addRoundRect(rect, radius, radius, Path.Direction.CW)
+            canvas.clipPath(clipPath)
+            
+            ripplePaint.color = colorRipple
+            // Scale the alpha based on intensity
+            val baseAlpha = Color.alpha(colorRipple)
+            ripplePaint.alpha = (baseAlpha * kd.rippleIntensity).toInt()
+            
+            canvas.drawCircle(kd.rippleX, kd.rippleY, kd.rippleRadius, ripplePaint)
+            canvas.restore()
         }
 
         textPaint.color = textColor
-        // Use pre-calculated text size (or default if override changed length significantly? 
-        // For now, assuming overrides don't drastically change length (e.g. a -> A))
-        // If they do (e.g. shift -> SHIFT), we might need dynamic measure again OR pre-calc max.
-        // Let's stick to pre-calculated base size for now for performance.
         textPaint.textSize = kd.baseTextSize 
         
         val baseline = rect.centerY() - (textPaint.fontMetrics.bottom + textPaint.fontMetrics.top) / 2
@@ -272,22 +269,29 @@ class ImplusKeyboardView @JvmOverloads constructor(
         when (e.action) {
             MotionEvent.ACTION_DOWN -> { 
                 pressedKey = keyDrawables.find { it.rect.contains(x, y) }
-                pressedKey?.let { it.isPressed = true; invalidate() } 
+                pressedKey?.let { 
+                    it.onPressed(x, y)
+                    invalidate()
+                } 
             }
             MotionEvent.ACTION_UP -> { 
                 pressedKey?.let { 
                     if (it.rect.contains(x, y)) onKeyListener?.invoke(it.key)
-                    it.isPressed = false
+                    it.onReleased()
                     pressedKey = null
                     invalidate() 
                 } 
             }
             MotionEvent.ACTION_CANCEL -> {
-                pressedKey?.let { it.isPressed = false; pressedKey = null; invalidate() }
+                pressedKey?.let { 
+                    it.onReleased()
+                    pressedKey = null
+                    invalidate() 
+                }
             }
             MotionEvent.ACTION_MOVE -> { 
                 if (pressedKey != null && !pressedKey!!.rect.contains(x, y)) { 
-                    pressedKey!!.isPressed = false
+                    pressedKey!!.onReleased()
                     pressedKey = null
                     invalidate() 
                 } 
@@ -296,5 +300,59 @@ class ImplusKeyboardView @JvmOverloads constructor(
         return true
     }
     
-    private class KeyDrawable(val key: KeyboardKey, val rect: RectF, val baseTextSize: Float) { var isPressed = false }
+    private inner class KeyDrawable(val key: KeyboardKey, val rect: RectF, val baseTextSize: Float) { 
+        // Ripple State
+        var rippleX = 0f
+        var rippleY = 0f
+        var rippleRadius = 0f
+        var rippleIntensity = 0f // 0f to 1f
+        
+        private var radiusAnimator: ValueAnimator? = null
+        private var alphaAnimator: ValueAnimator? = null
+
+        fun onPressed(x: Float, y: Float) {
+            rippleX = x
+            rippleY = y
+            rippleRadius = 0f
+            rippleIntensity = 1f
+            
+            // Calculate max radius to cover the key
+            val maxRadius = Math.hypot(rect.width().toDouble(), rect.height().toDouble()).toFloat()
+            
+            radiusAnimator?.cancel()
+            radiusAnimator = ValueAnimator.ofFloat(0f, maxRadius).apply {
+                duration = 350
+                interpolator = DecelerateInterpolator()
+                addUpdateListener { 
+                    rippleRadius = it.animatedValue as Float
+                    invalidate()
+                }
+                start()
+            }
+            
+            // Should stay at max intensity while pressed, so we don't animate alpha down here.
+            alphaAnimator?.cancel()
+            alphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 50
+                addUpdateListener {
+                    rippleIntensity = it.animatedValue as Float
+                    invalidate()
+                }
+                start()
+            }
+        }
+        
+        fun onReleased() {
+            // Fade out
+            alphaAnimator?.cancel()
+            alphaAnimator = ValueAnimator.ofFloat(rippleIntensity, 0f).apply {
+                duration = 200
+                addUpdateListener {
+                    rippleIntensity = it.animatedValue as Float
+                    invalidate()
+                }
+                start()
+            }
+        }
+    }
 }
