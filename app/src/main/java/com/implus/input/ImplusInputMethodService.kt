@@ -80,7 +80,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     }
 
     override fun onCreateInputView(): View {
-        val root = layoutInflater.inflate(R.layout.input_view, null)
+        val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_Implus)
+        val root = android.view.LayoutInflater.from(themedContext).inflate(R.layout.input_view, null)
         keyboardView = root.findViewById(R.id.keyboard_view)
         candidateContainer = root.findViewById(R.id.candidate_container)
         btnClose = root.findViewById(R.id.btn_close_keyboard)
@@ -227,7 +228,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                 tv.text = text
                 tv.setTextColor(android.graphics.Color.WHITE)
                 tv.textSize = 16f
-                tv.setPadding(32, 24, 32, 24)
+                tv.setPadding(32, 12, 32, 12)
                 tv.setBackgroundResource(android.R.drawable.list_selector_background)
                 tv.setOnClickListener {
                     currentInputConnection?.commitText(text, 1)
