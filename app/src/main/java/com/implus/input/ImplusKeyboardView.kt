@@ -7,9 +7,11 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import com.implus.input.layout.*
+import kotlin.math.abs
 
 class ImplusKeyboardView @JvmOverloads constructor(
     context: Context,
@@ -25,16 +27,36 @@ class ImplusKeyboardView @JvmOverloads constructor(
         set(value) { field = value; invalidate() }
         
     var onKeyListener: ((KeyboardKey) -> Unit)? = null
+    var onSwipeListener: ((Direction) -> Unit)? = null
+
+    enum class Direction { LEFT, RIGHT }
 
     private var colorBg = 0; private var colorKey = 0; private var colorFuncKey = 0
     private var colorText = 0; private var colorSticky = 0; private var colorStickyActive = 0
     private val shadowPaint = Paint(); private val bgPaint = Paint(); private val keyPaint = Paint()
     private val textPaint = Paint().apply { textAlign = Paint.Align.CENTER; isAntiAlias = true }
-    private val ripplePaint = Paint().apply { color = Color.argb(40, 255, 255, 255) }
+    private val ripplePaint = Paint().apply { color = Color.argb(60, 255, 255, 255) }
+
+    private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+        override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+            if (e1 == null) return false
+            val diffX = e2.x - e1.x
+            val diffY = e2.y - e1.y
+            if (abs(diffX) > abs(diffY) && abs(diffX) > 100 && abs(velocityX) > 100) {
+                if (diffX > 0) onSwipeListener?.invoke(Direction.RIGHT)
+                else onSwipeListener?.invoke(Direction.LEFT)
+                return true
+            }
+            return false
+        }
+    })
 
     init { applyTheme() }
 
+    fun getCurrentPageId(): String? = currentPage?.id
+
     private fun applyTheme() {
+        // TODO: 真正的 Material You 取色
         val isDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         if (isDark) {
             colorBg = Color.parseColor("#1A1C1E"); colorKey = Color.parseColor("#303030")
@@ -96,30 +118,36 @@ class ImplusKeyboardView @JvmOverloads constructor(
 
         // 2. 确定颜色
         var paintColor = colorKey
-        var radius = 16f
+        var radius = 24f // 更现代的圆角
         var textColor = colorText
 
         when (effectiveStyle) {
-            KeyStyle.FUNCTION -> { paintColor = colorFuncKey; radius = 8f }
+            KeyStyle.FUNCTION -> { paintColor = colorFuncKey; radius = 12f }
             KeyStyle.STICKY -> {
                 val isActive = key.id?.let { activeStates[it] } ?: false
                 paintColor = if (isActive) colorStickyActive else colorSticky
-                if (isActive) textColor = if (paintColor == Color.parseColor("#D1E4FF")) Color.BLACK else Color.WHITE
-                radius = 4f
+                if (isActive) {
+                    textColor = if (paintColor == Color.parseColor("#D1E4FF")) Color.BLACK else Color.WHITE
+                }
+                radius = 12f
             }
             else -> { if (key.type != KeyType.NORMAL) paintColor = colorFuncKey }
         }
 
-        // 3. 绘制
-        shadowPaint.color = Color.argb(40, 0, 0, 0)
-        canvas.drawRoundRect(rect.left, rect.top + 2f, rect.right, rect.bottom + 2f, radius, radius, shadowPaint)
+        // 3. 绘制阴影和按键主体
+        shadowPaint.color = Color.argb(30, 0, 0, 0)
+        canvas.drawRoundRect(rect.left, rect.top + 3f, rect.right, rect.bottom + 3f, radius, radius, shadowPaint)
         keyPaint.color = paintColor
         canvas.drawRoundRect(rect, radius, radius, keyPaint)
-        if (kd.isPressed) canvas.drawRoundRect(rect, radius, radius, ripplePaint)
+        
+        // 绘制按压反馈 (Ripple 占位)
+        if (kd.isPressed) {
+            canvas.drawRoundRect(rect, radius, radius, ripplePaint)
+        }
 
         // 4. 文字缩放与绘制
         textPaint.color = textColor
-        val maxW = rect.width() * 0.85f
+        val maxW = rect.width() * 0.9f
         val oldSize = textPaint.textSize
         val measuredW = textPaint.measureText(effectiveLabel)
         if (measuredW > maxW) textPaint.textSize = oldSize * (maxW / measuredW)
@@ -131,11 +159,32 @@ class ImplusKeyboardView @JvmOverloads constructor(
 
     private var pressedKey: KeyDrawable? = null
     override fun onTouchEvent(e: MotionEvent): Boolean {
+        if (gestureDetector.onTouchEvent(e)) return true
+        
         val x = e.x; val y = e.y
         when (e.action) {
-            MotionEvent.ACTION_DOWN -> { pressedKey = keyDrawables.find { it.rect.contains(x, y) }; pressedKey?.let { it.isPressed = true; invalidate() } }
-            MotionEvent.ACTION_UP -> { pressedKey?.let { if (it.rect.contains(x, y)) onKeyListener?.invoke(it.key); it.isPressed = false; pressedKey = null; invalidate() } }
-            MotionEvent.ACTION_MOVE -> { if (pressedKey != null && !pressedKey!!.rect.contains(x, y)) { pressedKey!!.isPressed = false; pressedKey = null; invalidate() } }
+            MotionEvent.ACTION_DOWN -> { 
+                pressedKey = keyDrawables.find { it.rect.contains(x, y) }
+                pressedKey?.let { it.isPressed = true; invalidate() } 
+            }
+            MotionEvent.ACTION_UP -> { 
+                pressedKey?.let { 
+                    if (it.rect.contains(x, y)) onKeyListener?.invoke(it.key)
+                    it.isPressed = false
+                    pressedKey = null
+                    invalidate() 
+                } 
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                pressedKey?.let { it.isPressed = false; pressedKey = null; invalidate() }
+            }
+            MotionEvent.ACTION_MOVE -> { 
+                if (pressedKey != null && !pressedKey!!.rect.contains(x, y)) { 
+                    pressedKey!!.isPressed = false
+                    pressedKey = null
+                    invalidate() 
+                } 
+            }
         }
         return true
     }

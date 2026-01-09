@@ -9,6 +9,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import com.implus.input.layout.*
+import com.implus.input.engine.*
 
 class ImplusInputMethodService : InputMethodService() {
 
@@ -16,34 +17,92 @@ class ImplusInputMethodService : InputMethodService() {
     private lateinit var candidateContainer: RelativeLayout
     private lateinit var btnClose: ImageView
     private var currentLayout: KeyboardLayout? = null
+    private var currentLanguage: LanguageConfig? = null
+    private var inputEngine: InputEngine = RawEngine()
     
     // 框架核心状态：仅追踪 JSON 中定义的 ID
     private val activeStates = mutableMapOf<String, Boolean>()
+
+    private lateinit var toolbarView: View
+    private lateinit var candidateScroll: View
 
     override fun onCreateInputView(): View {
         val root = layoutInflater.inflate(R.layout.input_view, null)
         keyboardView = root.findViewById(R.id.keyboard_view)
         candidateContainer = root.findViewById(R.id.candidate_container)
         btnClose = root.findViewById(R.id.btn_close_keyboard)
+        toolbarView = root.findViewById(R.id.toolbar_view)
+        candidateScroll = root.findViewById(R.id.candidate_scroll)
 
+        setupToolbar(root)
+        
         root.findViewById<View>(R.id.root_container).setOnClickListener {
             if (getSharedPreferences("implus_prefs", Context.MODE_PRIVATE).getBoolean("close_outside", false)) requestHideSelf(0)
         }
         root.findViewById<View>(R.id.keyboard_view).parent.let { (it as View).setOnClickListener { } }
 
-        loadLayout("pc_layout.json")
+        reloadLanguage()
         applyKeyboardHeight()
 
         keyboardView.onKeyListener = { key -> handleKey(key) }
+        keyboardView.onSwipeListener = { direction ->
+            val pages = currentLayout?.pages ?: emptyList()
+            if (pages.size > 1) {
+                val currentIndex = pages.indexOfFirst { it.id == keyboardView.getCurrentPageId() }
+                if (direction == ImplusKeyboardView.Direction.LEFT) {
+                    val next = (currentIndex + 1) % pages.size
+                    keyboardView.setPage(pages[next])
+                } else {
+                    val prev = if (currentIndex - 1 < 0) pages.size - 1 else currentIndex - 1
+                    keyboardView.setPage(pages[prev])
+                }
+            }
+        }
         btnClose.setOnClickListener { requestHideSelf(0) }
         
         return root
     }
 
-    private fun loadLayout(name: String) {
-        currentLayout = LayoutManager.loadLayout(this, name)
+    private fun setupToolbar(root: View) {
+        root.findViewById<View>(R.id.btn_nav_left).setOnClickListener {
+            currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT))
+        }
+        root.findViewById<View>(R.id.btn_nav_right).setOnClickListener {
+            currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT))
+        }
+        root.findViewById<View>(R.id.btn_paste).setOnClickListener {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val item = clipboard.primaryClip?.getItemAt(0)
+            item?.text?.let { currentInputConnection?.commitText(it, 1) }
+        }
+    }
+
+    private fun reloadLanguage() {
+        val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
+        val langId = prefs.getString("current_lang", "en") ?: "en"
+        val isPcLayout = prefs.getBoolean("use_pc_layout_$langId", true)
+
+        val config = LayoutManager.loadLanguageConfig(this, langId)
+        if (config != null) {
+            currentLanguage = config
+            val layoutFile = if (isPcLayout) config.pcLayout else config.mobileLayout
+            loadLayout(langId, layoutFile)
+            setupEngine(config.engine)
+        }
+        updateCandidates()
+    }
+
+    private fun setupEngine(engineType: String) {
+        inputEngine = when (engineType) {
+            "raw" -> RawEngine()
+            else -> RawEngine()
+        }
+    }
+
+    private fun loadLayout(langId: String, fileName: String) {
+        currentLayout = LayoutManager.loadLayout(this, langId, fileName)
         currentLayout?.let { layout ->
-            candidateContainer.visibility = if (layout.showCandidates) View.VISIBLE else View.GONE
+            // candidateContainer 始终可见，内部切换内容
             activeStates.clear()
             // 预初始化所有具有 ID 的按键状态为 false
             layout.pages.flatMap { it.rows }.flatMap { it.keys }.forEach { k ->
@@ -56,6 +115,12 @@ class ImplusInputMethodService : InputMethodService() {
 
     private fun handleKey(key: KeyboardKey) {
         val ic = currentInputConnection ?: return
+
+        // 0. 让 Engine 先处理
+        if (inputEngine.processKey(key, ic, activeStates)) {
+            updateCandidates()
+            return
+        }
         
         // 1. 粘滞逻辑：完全由 JSON 的 id 和 sticky 属性驱动
         if (key.sticky != null && key.id != null) {
@@ -95,9 +160,12 @@ class ImplusInputMethodService : InputMethodService() {
                 when (effCode) {
                     67 -> ic.deleteSurroundingText(1, 0)
                     62 -> ic.commitText(" ", 1)
+                    -2 -> { /* Page switch handled via action */ }
                     else -> {
-                        ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, effCode, 0, totalMeta))
-                        ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, effCode, 0, totalMeta))
+                        if (effCode > 0) {
+                             ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, effCode, 0, totalMeta))
+                             ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, effCode, 0, totalMeta))
+                        }
                     }
                 }
             }
@@ -112,6 +180,9 @@ class ImplusInputMethodService : InputMethodService() {
             }
         }
         if (stateChanged) keyboardView.activeStates = activeStates
+        
+        // 6. 按键后可能需要更新候选词 (如果是 Raw 引擎通常清空)
+        updateCandidates()
     }
 
     private fun handleAction(action: String) {
@@ -119,6 +190,18 @@ class ImplusInputMethodService : InputMethodService() {
             val pageId = action.substringAfter("switch_page:")
             currentLayout?.pages?.find { it.id == pageId }?.let { keyboardView.setPage(it) }
         } else if (action == "hide") requestHideSelf(0)
+    }
+
+    private fun updateCandidates() {
+        val candidates = inputEngine.getCandidates()
+        if (candidates.isEmpty()) {
+            toolbarView.visibility = View.VISIBLE
+            candidateScroll.visibility = View.GONE
+        } else {
+            toolbarView.visibility = View.GONE
+            candidateScroll.visibility = View.VISIBLE
+            // 这里以后会渲染候选词按钮
+        }
     }
 
     private fun applyKeyboardHeight() {

@@ -14,20 +14,55 @@
         android:clickable="true"
         android:focusable="true">
 
-        <!-- 候选栏区域 -->
+        <!-- 候选栏/工具栏区域 -->
         <RelativeLayout
             android:id="@+id/candidate_container"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="#252525"
-            android:visibility="gone">
+            android:background="#252525">
+
+            <!-- 工具栏 (Task 7) -->
+            <LinearLayout
+                android:id="@+id/toolbar_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_toStartOf="@+id/btn_close_keyboard"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:visibility="visible">
+                
+                <ImageButton
+                    android:id="@+id/btn_nav_left"
+                    android:layout_width="40dp"
+                    android:layout_height="match_parent"
+                    android:src="@android:drawable/ic_media_previous"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Left" />
+                <ImageButton
+                    android:id="@+id/btn_nav_right"
+                    android:layout_width="40dp"
+                    android:layout_height="match_parent"
+                    android:src="@android:drawable/ic_media_next"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Right" />
+                <Button
+                    android:id="@+id/btn_paste"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="Paste"
+                    android:textSize="12sp"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
+                <!-- 更多按钮在此处添加 -->
+            </LinearLayout>
 
             <HorizontalScrollView
                 android:id="@+id/candidate_scroll"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_toStartOf="@+id/btn_close_keyboard"
-                android:scrollbars="none">
+                android:scrollbars="none"
+                android:visibility="gone">
 
                 <LinearLayout
                     android:id="@+id/candidate_strip"

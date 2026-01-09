@@ -79,6 +79,27 @@
             android:text="48dp" />
     </LinearLayout>
 
+    <!-- Language Specific Settings -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="语言相关设置"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp" />
+
+    <Spinner
+        android:id="@+id/spinner_languages"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp" />
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switch_pc_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="启用 PC 布局 (五行)"
+        android:layout_marginTop="8dp" />
+
     <Space
         android:layout_width="match_parent"
         android:layout_height="24dp" />

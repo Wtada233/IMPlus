@@ -9,6 +9,16 @@ data class KeyboardLayout(
     @SerializedName("pages") val pages: List<KeyboardPage> = emptyList()
 )
 
+data class LanguageConfig(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("engine") val engine: String = "raw",
+    @SerializedName("pcLayout") val pcLayout: String = "pc_layout.json",
+    @SerializedName("mobileLayout") val mobileLayout: String = "mobile_layout.json",
+    @SerializedName("defaultPage") val defaultPage: String = "main",
+    @SerializedName("engineConfig") val engineConfig: Map<String, String> = emptyMap()
+)
+
 data class KeyboardPage(
     @SerializedName("id") val id: String = "main",
     @SerializedName("rows") val rows: List<KeyboardRow> = emptyList()

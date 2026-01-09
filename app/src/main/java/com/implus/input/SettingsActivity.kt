@@ -2,10 +2,11 @@ package com.implus.input
 
 import android.content.Context
 import android.os.Bundle
-import android.widget.SeekBar
-import android.widget.TextView
+import android.view.View
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.switchmaterial.SwitchMaterial
+import com.implus.input.layout.*
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -16,6 +17,38 @@ class SettingsActivity : AppCompatActivity() {
         setupHeightControl()
         setupCandidateHeightControl()
         setupCloseOutside()
+        setupLanguageSettings()
+    }
+
+    private fun setupLanguageSettings() {
+        val spinner = findViewById<Spinner>(R.id.spinner_languages)
+        val switchPc = findViewById<SwitchMaterial>(R.id.switch_pc_layout)
+        val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
+
+        val languages = LayoutManager.getAvailableLanguages(this)
+        val names = languages.map { it.name }
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, names)
+        spinner.adapter = adapter
+
+        val currentLangId = prefs.getString("current_lang", "en")
+        val currentIndex = languages.indexOfFirst { it.id == currentLangId }.coerceAtLeast(0)
+        spinner.setSelection(currentIndex)
+
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val selected = languages[position]
+                prefs.edit().putString("current_lang", selected.id).apply()
+                
+                // 更新该语言的 PC 布局开关状态
+                switchPc.isChecked = prefs.getBoolean("use_pc_layout_${selected.id}", true)
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        switchPc.setOnCheckedChangeListener { _, isChecked ->
+            val selectedLangId = languages[spinner.selectedItemPosition].id
+            prefs.edit().putBoolean("use_pc_layout_$selectedLangId", isChecked).apply()
+        }
     }
 
     private fun setupCandidateHeightControl() {
