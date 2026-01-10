@@ -60,6 +60,8 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private val keyDrawables = mutableListOf<KeyDrawable>()
     private val nextKeyDrawables = mutableListOf<KeyDrawable>()
     
+    private var pageAnimator: ValueAnimator? = null
+
     var activeStates: Map<String, Boolean> = emptyMap()
         set(value) { field = value; invalidate() }
         
@@ -157,9 +159,12 @@ class ImplusKeyboardView @JvmOverloads constructor(
     }
 
     fun setPage(page: KeyboardPage, animateDirection: Direction? = null) {
+        pageAnimator?.cancel() // Cancel any ongoing animation
+
         if (animateDirection == null) {
             this.currentPage = page
             layoutKeys(page, keyDrawables, width, height)
+            slideOffset = 0f
             invalidate()
         } else {
             this.nextPage = page
@@ -168,6 +173,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
             val end = if (animateDirection == Direction.LEFT) -1f else 1f
             
             val animator = ValueAnimator.ofFloat(0f, 1f)
+            pageAnimator = animator
             animator.duration = animDuration
             animator.interpolator = DecelerateInterpolator()
             animator.addUpdateListener { 
@@ -177,11 +183,14 @@ class ImplusKeyboardView @JvmOverloads constructor(
             }
             animator.addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: android.animation.Animator) {
-                    currentPage = page
-                    layoutKeys(page, keyDrawables, width, height)
-                    slideOffset = 0f
-                    nextPage = null
-                    invalidate()
+                    if (pageAnimator == animation) {
+                        currentPage = page
+                        layoutKeys(page, keyDrawables, width, height)
+                        slideOffset = 0f
+                        nextPage = null
+                        pageAnimator = null
+                        invalidate()
+                    }
                 }
             })
             animator.start()

@@ -68,9 +68,9 @@ class AssetResourceManager(private val context: Context) {
             val inputStream = context.assets.open(path)
             val reader = InputStreamReader(inputStream)
             val type = object : TypeToken<Map<String, String>>() {}.type
-            val result: Map<String, String> = gson.fromJson(reader, type)
+            val result: Map<String, String>? = gson.fromJson(reader, type)
             reader.close()
-            result
+            result ?: emptyMap()
         } catch (e: java.io.IOException) {
             android.util.Log.e("AssetResourceManager", "IO error loading $path", e)
             emptyMap()

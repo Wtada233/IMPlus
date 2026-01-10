@@ -651,7 +651,11 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) { 
         super.onStartInputView(info, restarting)
         applyKeyboardSettings()
-        inputEngine.reset()
+        
+        // 只有在非重启（如切换输入框）时才重置引擎
+        if (!restarting) {
+            inputEngine.reset()
+        }
         updateCandidates()
         
         // 确保每次打开都显示键盘面板而非剪贴板/编辑面板

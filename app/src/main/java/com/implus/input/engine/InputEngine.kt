@@ -94,13 +94,7 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
     }
 
     private fun mapSuggestions(suggestions: List<String>): List<String> {
-        return suggestions.map { word ->
-            if (word.lowercase().startsWith(composingText.lowercase())) {
-                composingText + word.substring(composingText.length)
-            } else {
-                word
-            }
-        }
+        return suggestions // 目前直接返回词典词汇，保持其原始大小写
     }
 
     override fun getCandidates(): List<String> = candidates
