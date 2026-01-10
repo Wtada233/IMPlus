@@ -59,5 +59,11 @@
                 <string name="edit_select_all">Select All</string>
                 <string name="edit_copy">Copy</string>
                 <string name="edit_paste">Paste</string>
-                <string name="edit_back">Back</string>
-            </resources>        
+                    <string name="edit_back">Back</string>
+                
+                    <string name="unit_ms">ms</string>
+                    <string name="unit_px">px</string>
+                    <string name="unit_dp">dp</string>
+                    <string name="unit_sp">sp</string>
+                    <string name="unit_percent">%</string>
+                </resources>

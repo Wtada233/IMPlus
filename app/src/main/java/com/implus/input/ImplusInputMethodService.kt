@@ -170,6 +170,14 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         pageIndicator.visibility = View.VISIBLE
         val currentIndex = groupPages.indexOf(currentPage)
         
+        // 获取主题文字颜色用于指示器
+        val textColorStr = keyboardView.theme?.keyText
+        val textColor = try {
+            if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) else android.graphics.Color.WHITE
+        } catch (e: Exception) {
+            android.graphics.Color.WHITE
+        }
+
         for (i in groupPages.indices) {
             val dot = View(this)
             val size = (6 * resources.displayMetrics.density).toInt()
@@ -181,10 +189,10 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             val drawable = android.graphics.drawable.GradientDrawable()
             drawable.shape = android.graphics.drawable.GradientDrawable.OVAL
             if (i == currentIndex) {
-                drawable.setColor(android.graphics.Color.WHITE)
+                drawable.setColor(textColor)
                 drawable.alpha = 255
             } else {
-                drawable.setColor(android.graphics.Color.GRAY)
+                drawable.setColor(textColor)
                 drawable.alpha = 100
             }
             dot.background = drawable
@@ -292,6 +300,9 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         currentLayout?.let { layout ->
             Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
             keyboardView.theme = layout.theme
+            if (::panelManager.isInitialized) {
+                panelManager.theme = layout.theme
+            }
             // Respect layout config for candidate container visibility
             candidateContainer.visibility = if (layout.showCandidates) View.VISIBLE else View.GONE
             
@@ -320,10 +331,11 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                 }
             }
             keyboardView.activeStates = activeStates
-            val mainPage = layout.pages.find { it.id == "main" }
-            if (mainPage != null) {
-                keyboardView.setPage(mainPage)
-                updatePageIndicator(mainPage)
+            val defaultPageId = currentLanguage?.defaultPage ?: "main"
+            val startPage = layout.pages.find { it.id == defaultPageId } ?: layout.pages.firstOrNull()
+            if (startPage != null) {
+                keyboardView.setPage(startPage)
+                updatePageIndicator(startPage)
             }
         }
     }
@@ -545,7 +557,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         info?.let {
             val inputType = it.inputType and EditorInfo.TYPE_MASK_CLASS
             val isNumber = inputType == EditorInfo.TYPE_CLASS_NUMBER || inputType == EditorInfo.TYPE_CLASS_PHONE
-            val targetPageId = if (isNumber) "symbols" else "main"
+            val defaultPageId = currentLanguage?.defaultPage ?: "main"
+            val targetPageId = if (isNumber) "symbols" else defaultPageId
             
             currentLayout?.pages?.find { p -> p.id == targetPageId }?.let { page ->
                 keyboardView.setPage(page)

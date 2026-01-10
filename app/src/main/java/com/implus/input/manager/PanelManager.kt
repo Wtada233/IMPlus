@@ -14,6 +14,8 @@ class PanelManager(
     private val onCommitText: (String) -> Unit,
     private val onBackToKeyboard: () -> Unit
 ) {
+    var theme: com.implus.input.layout.KeyboardTheme? = null
+    
     private val keyboardView = root.findViewById<View>(R.id.keyboard_view)
     private val editPadView = root.findViewById<View>(R.id.edit_pad_view)
     private val clipboardView = root.findViewById<View>(R.id.clipboard_view)
@@ -35,6 +37,13 @@ class PanelManager(
         val context = root.context
         clipboardList.removeAllViews()
         
+        val textColorStr = theme?.keyText
+        val textColor = try {
+            if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) else android.graphics.Color.WHITE
+        } catch (e: Exception) {
+            android.graphics.Color.WHITE
+        }
+
         clipboardView.findViewById<View>(R.id.btn_clear_clipboard).setOnClickListener {
             ClipboardHistoryManager.clear(context)
             refreshClipboard()
@@ -44,7 +53,7 @@ class PanelManager(
         if (history.isEmpty()) {
             val emptyView = TextView(context).apply {
                 text = context.getString(R.string.clipboard_empty)
-                setTextColor(android.graphics.Color.WHITE)
+                setTextColor(textColor)
                 setPadding(32, 32, 32, 32)
             }
             clipboardList.addView(emptyView)
@@ -55,7 +64,7 @@ class PanelManager(
             for (text in history) {
                 val tv = TextView(context).apply {
                     this.text = text
-                    setTextColor(android.graphics.Color.WHITE)
+                    setTextColor(textColor)
                     textSize = 16f
                     setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical)
                     setBackgroundResource(android.R.drawable.list_selector_background)
@@ -68,7 +77,13 @@ class PanelManager(
                 
                 View(context).apply {
                     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1)
-                    setBackgroundColor(context.getColor(R.color.divider_dark))
+                    val dividerColor = try {
+                        if (theme?.background != null) {
+                            // 稍微比背景亮一点作为分割线，或者使用预定义的 divider_dark
+                            context.getColor(R.color.divider_dark)
+                        } else context.getColor(R.color.divider_dark)
+                    } catch (e: Exception) { context.getColor(R.color.divider_dark) }
+                    setBackgroundColor(dividerColor)
                     clipboardList.addView(this)
                 }
             }

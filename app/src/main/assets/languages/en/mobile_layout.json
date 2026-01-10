@@ -102,16 +102,16 @@
         },
         {
            "keys": [
-            {"label": "\\", "text": "BACKSLASH", "weight": 1},
-            {"label": "<", "text": "COMMA", "overrides": {"shift": {"text": "COMMA"}}, "weight": 1},
-            {"label": ">", "text": "PERIOD", "overrides": {"shift": {"text": "PERIOD"}}, "weight": 1},
-            {"label": "=", "text": "EQUALS", "weight": 1},
-            {"label": ":", "text": "SEMICOLON", "overrides": {"shift": {"text": "SEMICOLON"}}, "weight": 1},
-            {"label": ";", "text": "SEMICOLON", "weight": 1},
-            {"label": "'", "text": "APOSTROPHE", "weight": 1},
-            {"label": "\"", "text": "APOSTROPHE", "overrides": {"shift": {"text": "APOSTROPHE"}}, "weight": 1},
-            {"label": "*", "text": "STAR", "weight": 1},
-            {"label": "!", "text": "1", "overrides": {"shift": {"text": "1"}}, "weight": 1}
+            {"label": "\\", "text": "\\", "weight": 1},
+            {"label": "<", "text": "<", "weight": 1},
+            {"label": ">", "text": ">", "weight": 1},
+            {"label": "=", "text": "=", "weight": 1},
+            {"label": ":", "text": ":", "weight": 1},
+            {"label": ";", "text": ";", "weight": 1},
+            {"label": "'", "text": "'", "weight": 1},
+            {"label": "\"", "text": "\"", "weight": 1},
+            {"label": "*", "text": "*", "weight": 1},
+            {"label": "!", "text": "!", "weight": 1}
            ]
         },
         {

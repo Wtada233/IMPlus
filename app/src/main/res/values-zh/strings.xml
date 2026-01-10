@@ -58,4 +58,10 @@
     <string name="edit_copy">复制</string>
     <string name="edit_paste">粘贴</string>
     <string name="edit_back">返回</string>
+
+    <string name="unit_ms">毫秒</string>
+    <string name="unit_px">像素</string>
+    <string name="unit_dp">dp</string>
+    <string name="unit_sp">sp</string>
+    <string name="unit_percent">%</string>
 </resources>
