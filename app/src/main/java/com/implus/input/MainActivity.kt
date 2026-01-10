@@ -9,10 +9,12 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.PopupMenu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.implus.input.manager.AssetResourceManager
 import java.util.Locale
 
 /**
@@ -21,16 +23,29 @@ import java.util.Locale
  */
 class MainActivity : AppCompatActivity() {
 
+    private val assetRes by lazy { AssetResourceManager(this) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         setupButtons()
         setupLanguageSwitcher()
+        applyTexts()
         
         findViewById<Button>(R.id.btn_open_settings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+    }
+
+    private fun applyTexts() {
+        assetRes.refresh()
+        findViewById<TextView>(R.id.tv_welcome_title)?.text = assetRes.getString("welcome_title")
+        findViewById<TextView>(R.id.tv_welcome_subtitle)?.text = assetRes.getString("welcome_subtitle")
+        findViewById<TextView>(R.id.tv_test_label)?.text = assetRes.getString("test_input_label")
+        findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.layout_test_input)?.hint = assetRes.getString("test_input_hint")
+        findViewById<Button>(R.id.btn_open_settings)?.text = assetRes.getString("open_settings")
+        updateButtonStates()
     }
 
     private fun setupButtons() {
@@ -47,7 +62,7 @@ class MainActivity : AppCompatActivity() {
                 val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.showInputMethodPicker()
             } else {
-                Toast.makeText(this, R.string.toast_enable_first, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, assetRes.getString("toast_enable_first"), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -61,9 +76,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun showLanguageMenu(view: View) {
         val popup = PopupMenu(this, view)
-        popup.menu.add(0, 0, 0, getString(R.string.menu_lang_default))
-        popup.menu.add(0, 1, 1, getString(R.string.menu_lang_en))
-        popup.menu.add(0, 2, 2, getString(R.string.menu_lang_zh))
+        popup.menu.add(0, 0, 0, assetRes.getString("menu_lang_default"))
+        popup.menu.add(0, 1, 1, assetRes.getString("menu_lang_en"))
+        popup.menu.add(0, 2, 2, assetRes.getString("menu_lang_zh"))
 
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
@@ -91,19 +106,19 @@ class MainActivity : AppCompatActivity() {
         val btnSelect = findViewById<Button>(R.id.btn_select_ime)
 
         if (isImeEnabled()) {
-            btnEnable.text = getString(R.string.step_1_done)
-            btnEnable.isEnabled = false
+            btnEnable?.text = assetRes.getString("step_1_done")
+            btnEnable?.isEnabled = false
         } else {
-            btnEnable.text = getString(R.string.step_1_enable)
-            btnEnable.isEnabled = true
+            btnEnable?.text = assetRes.getString("step_1_enable")
+            btnEnable?.isEnabled = true
         }
 
         if (isImeSelected()) {
-            btnSelect.text = getString(R.string.step_2_done)
-            btnSelect.isEnabled = false
+            btnSelect?.text = assetRes.getString("step_2_done")
+            btnSelect?.isEnabled = false
         } else {
-            btnSelect.text = getString(R.string.step_2_select)
-            btnSelect.isEnabled = true
+            btnSelect?.text = assetRes.getString("step_2_select")
+            btnSelect?.isEnabled = true
         }
     }
 

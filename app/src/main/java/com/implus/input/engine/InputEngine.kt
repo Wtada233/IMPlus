@@ -6,13 +6,13 @@ import com.implus.input.layout.KeyboardKey
 import com.implus.input.manager.DictionaryManager
 
 interface InputEngine {
-    fun processKey(key: KeyboardKey, ic: InputConnection, activeStates: Map<String, Boolean>): Boolean
+    fun processKey(key: KeyboardKey, ic: InputConnection, metaState: Int): Boolean
     fun getCandidates(): List<String>
     fun reset()
 }
 
 class RawEngine : InputEngine {
-    override fun processKey(key: KeyboardKey, ic: InputConnection, activeStates: Map<String, Boolean>): Boolean {
+    override fun processKey(key: KeyboardKey, ic: InputConnection, metaState: Int): Boolean {
         return false
     }
 
@@ -24,70 +24,56 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
     private var composingText = ""
     private var candidates = listOf<String>()
 
-    override fun processKey(key: KeyboardKey, ic: InputConnection, activeStates: Map<String, Boolean>): Boolean {
-        // 如果是特殊的 commit 动作（点击候选词后）
+    override fun processKey(key: KeyboardKey, ic: InputConnection, metaState: Int): Boolean {
         if (key.action == "commit") {
             reset()
             return true
         }
 
-        // 处理退格
         if (key.action == "backspace") {
             if (composingText.isNotEmpty()) {
                 composingText = composingText.substring(0, composingText.length - 1)
                 updateCandidates(ic)
-                return composingText.isNotEmpty() // 如果还有内容，拦截退格不让系统删文字
+                return composingText.isNotEmpty()
             }
             return false
         }
 
-        // 确定最终生效的输入内容和 KeyCode
         var effText: String? = null
         if (key.text?.isJsonPrimitive == true && key.text.asJsonPrimitive.isString) {
             effText = key.text.asString
         }
-        var effKeyCode = key.parsedKeyCode
-
-        key.overrides?.forEach { (id, override) ->
-            if (activeStates[id] == true) {
-                override.text?.let { 
-                    effText = it.asString
-                    effKeyCode = override.parsedKeyCode
-                }
-            }
-        }
-
-        // 如果是字母键 A-Z
-        if (effKeyCode >= KeyEvent.KEYCODE_A && effKeyCode <= KeyEvent.KEYCODE_Z) {
-            val isShift = activeStates["shift"] == true
-            val isCaps = activeStates["caps"] == true
-            val isUpper = isShift xor isCaps
-            
-            val baseChar = 'a' + (effKeyCode - KeyEvent.KEYCODE_A)
-            val char = if (isUpper) baseChar.uppercaseChar() else baseChar
-            
-            composingText += char
-            updateCandidates(ic)
-            return true
-        } 
         
-        // 处理其他单字符输入（如数字、符号）
-        if (effText != null && effText!!.length == 1) {
-            val char = effText!![0]
-            if (char.isLetterOrDigit()) {
-                composingText += char
+        // 注意：此处不再处理 overrides，因为 Service 已经计算好了最终的 effText 和 keyCode
+        // 我们直接使用传入的 key 属性即可
+
+        if (effText != null && effText.length == 1) {
+            val char = effText[0]
+            if (char.isLetter()) {
+                // 使用 Android 标准的 metaState 判断大小写
+                val isShift = (metaState and android.view.KeyEvent.META_SHIFT_ON) != 0
+                val isCaps = (metaState and android.view.KeyEvent.META_CAPS_LOCK_ON) != 0
+                val finalChar = if (isShift xor isCaps) char.uppercaseChar() else char.lowercaseChar()
+                
+                composingText += finalChar
                 updateCandidates(ic)
                 return true
+            } else if (char.isDigit() || char.isWhitespace()) {
+                commitComposing(ic)
+                return false
             }
         }
 
-        // 如果按下了非组合键（如空格、回车），提交当前内容并重置
+        commitComposing(ic)
+        return false
+    }
+
+    private fun commitComposing(ic: InputConnection) {
         if (composingText.isNotEmpty()) {
             ic.commitText(composingText, 1)
             reset()
             ic.setComposingText("", 1)
         }
-        return false
     }
 
     private fun updateCandidates(ic: InputConnection) {

@@ -3,15 +3,26 @@
   "defaultHeight": 250,
   "showCandidates": true,
   "useDictionary": true,
-  "theme": {
+  "theme_light": {
+    "background": "#F0F0F0",
+    "keyBackground": "#FFFFFF",
+    "keyText": "#1C1B1F",
+    "functionKeyBackground": "#E1E2EC",
+    "functionKeyText": "#1C1B1F",
+    "stickyInactiveBackground": "#E1E2EC",
+    "stickyActiveBackground": "#3F51B5",
+    "stickyActiveText": "#FFFFFF",
+    "rippleColor": "#20000000"
+  },
+  "theme_dark": {
     "background": "#1A1C1E",
     "keyBackground": "#303030",
-    "keyText": "#FFFFFF",
+    "keyText": "#E2E2E6",
     "functionKeyBackground": "#252525",
-    "functionKeyText": "#FFFFFF",
+    "functionKeyText": "#E2E2E6",
     "stickyInactiveBackground": "#42474E",
     "stickyActiveBackground": "#D1E4FF",
-    "stickyActiveText": "#000000",
+    "stickyActiveText": "#00315E",
     "rippleColor": "#40FFFFFF"
   },
   "pages": [

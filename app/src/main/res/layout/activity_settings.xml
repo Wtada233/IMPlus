@@ -10,18 +10,18 @@
         android:padding="16dp">
 
         <TextView
+            android:id="@+id/tv_settings_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/settings_title"
             android:textSize="24sp"
             android:textStyle="bold"
             android:layout_marginBottom="24dp" />
 
         <!-- Existing Layout Settings -->
         <TextView
+            android:id="@+id/tv_height_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/pref_height_title"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -34,9 +34,9 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tv_candidate_height_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/pref_candidate_height_title"
             android:textStyle="bold"
             android:layout_marginTop="16dp" />
         <LinearLayout
@@ -50,35 +50,42 @@
 
         <!-- New Appearance Settings -->
         <TextView
+            android:id="@+id/tv_category_appearance"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/pref_category_appearance"
             android:textStyle="bold"
             android:layout_marginTop="24dp"
             android:textColor="?attr/colorPrimary"/>
 
         <!-- Key Radius -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_key_radius" android:layout_marginTop="8dp"/>
+        <TextView android:id="@+id/tv_key_radius_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
             <SeekBar android:id="@+id/seekbar_key_radius" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="50" android:progress="24" />
             <TextView android:id="@+id/tv_key_radius_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="24" />
         </LinearLayout>
 
         <!-- Shadow Alpha -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_shadow_alpha" android:layout_marginTop="8dp"/>
+        <TextView android:id="@+id/tv_shadow_alpha_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
             <SeekBar android:id="@+id/seekbar_shadow_alpha" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="255" android:progress="30" />
             <TextView android:id="@+id/tv_shadow_alpha_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="30" />
         </LinearLayout>
 
+        <!-- Shadow Offset -->
+        <TextView android:id="@+id/tv_shadow_offset_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <SeekBar android:id="@+id/seekbar_shadow_offset" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="30" android:progress="3" />
+            <TextView android:id="@+id/tv_shadow_offset_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="3px" />
+        </LinearLayout>
+
         <!-- Spacing Settings -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_h_spacing_title" android:layout_marginTop="8dp"/>
+        <TextView android:id="@+id/tv_h_spacing_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
             <SeekBar android:id="@+id/seekbar_h_spacing" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="20" android:progress="6" />
             <TextView android:id="@+id/tv_h_spacing_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="6px" />
         </LinearLayout>
 
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_v_spacing_title" android:layout_marginTop="8dp"/>
+        <TextView android:id="@+id/tv_v_spacing_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
             <SeekBar android:id="@+id/seekbar_v_spacing" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="20" android:progress="6" />
             <TextView android:id="@+id/tv_v_spacing_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="6px" />
@@ -86,22 +93,22 @@
 
         <!-- New Animation Settings -->
         <TextView
+            android:id="@+id/tv_category_animation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/pref_category_animation"
             android:textStyle="bold"
             android:layout_marginTop="24dp"
             android:textColor="?attr/colorPrimary"/>
 
         <!-- Anim Duration -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_anim_duration" android:layout_marginTop="8dp"/>
+        <TextView android:id="@+id/tv_anim_duration_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
             <SeekBar android:id="@+id/seekbar_anim_duration" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="1000" android:progress="200" />
             <TextView android:id="@+id/tv_anim_duration_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="200ms" />
         </LinearLayout>
 
         <!-- Ripple Duration -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_ripple_duration" android:layout_marginTop="8dp"/>
+        <TextView android:id="@+id/tv_ripple_duration_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
             <SeekBar android:id="@+id/seekbar_ripple_duration" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="1000" android:progress="350" />
             <TextView android:id="@+id/tv_ripple_duration_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="350ms" />
@@ -109,51 +116,51 @@
 
         <!-- Behavior Settings -->
         <TextView
+            android:id="@+id/tv_category_behavior"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/pref_category_behavior"
             android:textStyle="bold"
             android:layout_marginTop="24dp"
             android:textColor="?attr/colorPrimary"/>
 
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_swipe_threshold_title" android:layout_marginTop="8dp"/>
+        <TextView android:id="@+id/tv_swipe_threshold_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
             <SeekBar android:id="@+id/seekbar_swipe_threshold" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="1000" android:progress="50" />
             <TextView android:id="@+id/tv_swipe_threshold_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="50px" />
         </LinearLayout>
 
-        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_close_outside" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_close_outside" />
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_close_outside" android:layout_width="match_parent" android:layout_height="wrap_content" />
 
         <!-- Advanced Layout Settings -->
         <TextView
+            android:id="@+id/tv_category_advanced"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/pref_category_advanced"
             android:textStyle="bold"
             android:layout_marginTop="24dp"
             android:textColor="?attr/colorPrimary"/>
 
         <!-- Candidate Text Size -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_candidate_text_size" android:layout_marginTop="8dp"/>
+        <TextView android:id="@+id/tv_candidate_text_size_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
             <SeekBar android:id="@+id/seekbar_candidate_text_size" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:min="10" android:max="40" android:progress="18" />
             <TextView android:id="@+id/tv_candidate_text_size_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="18sp" />
         </LinearLayout>
 
         <!-- Candidate Padding -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_candidate_padding" android:layout_marginTop="8dp"/>
+        <TextView android:id="@+id/tv_candidate_padding_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
             <SeekBar android:id="@+id/seekbar_candidate_padding" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="64" android:progress="32" />
             <TextView android:id="@+id/tv_candidate_padding_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="32px" />
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tv_category_feedback"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/pref_category_feedback"
             android:textStyle="bold"
             android:layout_marginTop="24dp" />
-        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_vibration" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_vibration_enable" />
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_vibration" android:layout_width="match_parent" android:layout_height="wrap_content" />
         
         <LinearLayout
             android:id="@+id/container_vibration_strength"
@@ -161,19 +168,19 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/pref_vibration_strength" android:textSize="14sp" />
+            <TextView android:id="@+id/tv_vibration_strength_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="14sp" />
             <SeekBar android:id="@+id/seekbar_vibration_strength" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="100" android:progress="30" />
             <TextView android:id="@+id/tv_vibration_strength_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="30ms" />
         </LinearLayout>
         
         <TextView
+            android:id="@+id/tv_category_language"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/pref_category_language"
             android:textStyle="bold"
             android:layout_marginTop="24dp" />
         <Spinner android:id="@+id/spinner_languages" android:layout_width="match_parent" android:layout_height="48dp" />
-        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_pc_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_enable_pc_layout" />
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_pc_layout" android:layout_width="match_parent" android:layout_height="wrap_content" />
         
         <LinearLayout
             android:id="@+id/container_layout_settings"
@@ -181,8 +188,8 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginStart="16dp">
-            <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_dict_pc" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="PC 布局开启词典" android:textSize="14sp" />
-            <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_dict_mobile" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="手机布局开启词典" android:textSize="14sp" />
+            <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_dict_pc" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" />
+            <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_dict_mobile" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" />
         </LinearLayout>
 
         <Space android:layout_width="match_parent" android:layout_height="32dp" />

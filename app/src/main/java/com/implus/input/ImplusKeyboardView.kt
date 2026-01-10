@@ -14,6 +14,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import com.implus.input.layout.*
+import com.implus.input.manager.AssetResourceManager
 import kotlin.math.abs
 
 class ImplusKeyboardView @JvmOverloads constructor(
@@ -22,9 +23,24 @@ class ImplusKeyboardView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    private val assetRes by lazy { AssetResourceManager(context) }
+
+    var layoutThemeLight: KeyboardTheme? = null
+    var layoutThemeDark: KeyboardTheme? = null
+
     companion object {
         private const val TEXT_SIZE_RATIO = 0.4f
         private const val MAX_TEXT_WIDTH_RATIO = 0.8f
+    }
+
+    private fun performVibration() {
+        if (!vibrationEnabled) return
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            vibrator.vibrate(android.os.VibrationEffect.createOneShot(vibrationStrength.toLong(), android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(vibrationStrength.toLong())
+        }
     }
 
     // Appearance & Animation Properties (Configurable)
@@ -89,48 +105,28 @@ class ImplusKeyboardView @JvmOverloads constructor(
         }
     })
 
-    init { applyTheme() }
+    init { }
 
     fun getCurrentPageId(): String? = currentPage?.id
 
-    private fun performVibration() {
-        if (!vibrationEnabled) return
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            vibrator.vibrate(android.os.VibrationEffect.createOneShot(vibrationStrength.toLong(), android.os.VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(vibrationStrength.toLong())
-        }
-    }
-
     private fun applyTheme() {
         val isDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        
-        // 1. 设置默认颜色 (兜底方案)
-        if (isDark) {
-            colorBg = context.getColor(R.color.keyboard_bg_dark)
-            colorKey = context.getColor(R.color.key_bg_dark)
-            colorFuncKey = context.getColor(R.color.func_key_bg_dark)
-            colorText = context.getColor(R.color.text_dark)
-            colorFuncText = context.getColor(R.color.text_dark)
-            colorSticky = context.getColor(R.color.sticky_inactive_dark)
-            colorStickyActive = context.getColor(R.color.sticky_active_dark)
-            colorStickyTextActive = context.getColor(R.color.sticky_text_active_dark)
-            colorRipple = context.getColor(R.color.ripple_dark)
-        } else {
-            colorBg = context.getColor(R.color.keyboard_bg_light)
-            colorKey = context.getColor(R.color.key_bg_light)
-            colorFuncKey = context.getColor(R.color.func_key_bg_light)
-            colorText = context.getColor(R.color.text_light)
-            colorFuncText = context.getColor(R.color.text_light)
-            colorSticky = context.getColor(R.color.sticky_inactive_light)
-            colorStickyActive = context.getColor(R.color.sticky_active_light)
-            colorStickyTextActive = context.getColor(R.color.sticky_text_active_light)
-            colorRipple = context.getColor(R.color.ripple_light)
-        }
+        assetRes.refresh()
 
-        // 2. 覆盖 JSON 定义的颜色 (安全解析)
-        theme?.let { t ->
+        // 1. 设置默认颜色 (从 Assets 加载)
+        colorBg = assetRes.getColor("keyboard_background", Color.BLACK)
+        colorKey = assetRes.getColor("key_background", Color.DKGRAY)
+        colorFuncKey = assetRes.getColor("func_key_background", Color.GRAY)
+        colorText = assetRes.getColor("key_text", Color.WHITE)
+        colorFuncText = assetRes.getColor("func_key_text", Color.WHITE)
+        colorSticky = assetRes.getColor("sticky_inactive_background", Color.GRAY)
+        colorStickyActive = assetRes.getColor("sticky_active_background", Color.BLUE)
+        colorStickyTextActive = assetRes.getColor("sticky_active_text", Color.WHITE)
+        colorRipple = assetRes.getColor("ripple_color", Color.WHITE)
+
+        // 2. 根据当前模式选择 JSON 覆盖 (Layout 级别覆盖)
+        val activeTheme = if (isDark) layoutThemeDark ?: theme else layoutThemeLight ?: theme
+        activeTheme?.let { t ->
             fun parseSafe(c: String?, default: Int): Int = try {
                 if (c != null) Color.parseColor(c) else default
             } catch (e: Exception) { default }
@@ -306,7 +302,8 @@ class ImplusKeyboardView @JvmOverloads constructor(
 
         shadowPaint.color = Color.argb(shadowAlpha, 0, 0, 0)
         val shadowOff = shadowOffset
-        canvas.drawRoundRect(rect.left, rect.top + shadowOff, rect.right, rect.bottom + shadowOff, radius, radius, shadowPaint)
+        // 稍微在左右也扩出 1px，让阴影更丰满
+        canvas.drawRoundRect(rect.left - 1f, rect.top + shadowOff, rect.right + 1f, rect.bottom + shadowOff, radius, radius, shadowPaint)
         keyPaint.color = paintColor
         canvas.drawRoundRect(rect, radius, radius, keyPaint)
         

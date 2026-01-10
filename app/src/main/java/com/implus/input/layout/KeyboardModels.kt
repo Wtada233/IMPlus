@@ -7,8 +7,10 @@ data class KeyboardLayout(
     @SerializedName("name") val name: String,
     @SerializedName("defaultHeight") val defaultHeight: Int = 250,
     @SerializedName("showCandidates") val showCandidates: Boolean = true,
-    @SerializedName("useDictionary") val useDictionary: Boolean = false, // 是否开启词典
-    @SerializedName("theme") val theme: KeyboardTheme? = null,
+    @SerializedName("useDictionary") val useDictionary: Boolean = false,
+    @SerializedName("theme") val theme: KeyboardTheme? = null, // 旧版兼容
+    @SerializedName("theme_light") val themeLight: KeyboardTheme? = null,
+    @SerializedName("theme_dark") val themeDark: KeyboardTheme? = null,
     @SerializedName("pages") val pages: List<KeyboardPage> = emptyList()
 )
 

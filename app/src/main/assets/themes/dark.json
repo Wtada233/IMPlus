@@ -1,0 +1,15 @@
+{
+  "keyboard_background": "#1A1C1E",
+  "key_background": "#303030",
+  "key_text": "#E2E2E6",
+  "func_key_background": "#252525",
+  "func_key_text": "#E2E2E6",
+  "sticky_inactive_background": "#42474E",
+  "sticky_active_background": "#D1E4FF",
+  "sticky_active_text": "#00315E",
+  "ripple_color": "#66FFFFFF",
+  "toolbar_background": "#252525",
+  "panel_background": "#1A1C1E",
+  "divider_color": "#404040",
+  "accent_error": "#FFB4AB"
+}

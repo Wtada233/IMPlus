@@ -2,30 +2,29 @@ package com.implus.input
 
 import android.content.Context
 import android.content.Intent
-import android.content.ClipboardManager
+import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
 import android.os.SystemClock
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
-import android.util.Log
-import com.implus.input.layout.*
 import com.implus.input.engine.*
-import com.implus.input.manager.ClipboardHistoryManager
-import com.implus.input.manager.DictionaryManager
-import com.implus.input.manager.PanelManager
-import com.implus.input.manager.SettingsManager
+import com.implus.input.layout.*
+import com.implus.input.manager.*
 
-import android.content.SharedPreferences
-
-class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimaryClipChangedListener, SharedPreferences.OnSharedPreferenceChangeListener {
+class ImplusInputMethodService : InputMethodService(), android.content.ClipboardManager.OnPrimaryClipChangedListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
         private const val TAG = "ImplusInputMethodService"
+        private const val ACTION_SWITCH_PAGE = "switch_page:"
     }
 
     private lateinit var keyboardView: ImplusKeyboardView
@@ -35,6 +34,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private var currentLanguage: LanguageConfig? = null
     private var inputEngine: InputEngine = RawEngine()
     private val dictManager by lazy { DictionaryManager(this) }
+    
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
     
     // 框架核心状态：仅追踪 JSON 中定义的 ID
     private val activeStates = mutableMapOf<String, Boolean>()
@@ -52,19 +53,87 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private lateinit var panelManager: PanelManager
 
     private val settings by lazy { SettingsManager(this) }
+    private val assetRes by lazy { AssetResourceManager(this) }
 
     override fun onCreate() {
         super.onCreate()
-        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         cm.addPrimaryClipChangedListener(this)
         settings.registerListener(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         cm.removePrimaryClipChangedListener(this)
         settings.unregisterListener(this)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        assetRes.refresh()
+        applyThemeToStaticViews()
+    }
+
+    private fun applyThemeToStaticViews() {
+        if (!::candidateContainer.isInitialized) return
+        
+        val panelBg = assetRes.getColor("panel_background", android.graphics.Color.DKGRAY)
+        val toolbarBg = assetRes.getColor("toolbar_background", android.graphics.Color.BLACK)
+        val keyText = assetRes.getColor("key_text", android.graphics.Color.WHITE)
+        val rippleColor = assetRes.getColor("ripple_color", 0x40FFFFFF)
+        val accentError = assetRes.getColor("accent_error", android.graphics.Color.RED)
+        val dividerColor = assetRes.getColor("divider_color", android.graphics.Color.LTGRAY)
+
+        candidateContainer.setBackgroundColor(toolbarBg)
+        toolbarView.parent?.let { (it as View).setBackgroundColor(panelBg) }
+        findViewByIdInInputView<View>(R.id.clipboard_view)?.setBackgroundColor(panelBg)
+        findViewByIdInInputView<View>(R.id.edit_pad_view)?.setBackgroundColor(panelBg)
+        
+        // 更新按钮着色 (工具栏)
+        val toolbarButtons = listOf(R.id.btn_settings, R.id.btn_edit_mode, R.id.btn_clipboard, R.id.btn_close_keyboard)
+        toolbarButtons.forEach { id ->
+            findViewByIdInInputView<ImageView>(id)?.setColorFilter(keyText)
+        }
+
+        // 更新编辑面板 (方向键 & 功能键)
+        val editButtons = listOf(R.id.btn_arrow_up, R.id.btn_arrow_down, R.id.btn_arrow_left, R.id.btn_arrow_right)
+        editButtons.forEach { id ->
+            findViewByIdInInputView<ImageButton>(id)?.setColorFilter(keyText)
+        }
+
+        val materialButtons = listOf(R.id.btn_select_all, R.id.btn_copy, R.id.btn_pad_paste, R.id.btn_back_to_keyboard)
+        materialButtons.forEach { id ->
+            findViewByIdInInputView<com.google.android.material.button.MaterialButton>(id)?.let {
+                it.setTextColor(keyText)
+                it.rippleColor = android.content.res.ColorStateList.valueOf(rippleColor)
+                if (id == R.id.btn_back_to_keyboard) {
+                    it.strokeColor = android.content.res.ColorStateList.valueOf(dividerColor)
+                }
+            }
+        }
+        
+        // 更新面板文字
+        findViewByIdInInputView<TextView>(R.id.clipboard_title)?.let {
+            it.text = assetRes.getString("clipboard_title")
+            it.setTextColor(keyText)
+        }
+        findViewByIdInInputView<Button>(R.id.btn_clear_clipboard)?.let {
+            it.text = assetRes.getString("clipboard_clear")
+            it.setTextColor(accentError)
+        }
+
+        // 填充编辑面板按钮文字
+        findViewByIdInInputView<com.google.android.material.button.MaterialButton>(R.id.btn_select_all)?.text = assetRes.getString("edit_select_all")
+        findViewByIdInInputView<com.google.android.material.button.MaterialButton>(R.id.btn_copy)?.text = assetRes.getString("edit_copy")
+        findViewByIdInInputView<com.google.android.material.button.MaterialButton>(R.id.btn_pad_paste)?.text = assetRes.getString("edit_paste")
+        findViewByIdInInputView<com.google.android.material.button.MaterialButton>(R.id.btn_back_to_keyboard)?.text = assetRes.getString("edit_back")
+    }
+
+    private fun <T : View> findViewByIdInInputView(id: Int): T? {
+        return try {
+            (keyboardView.parent.parent as View).findViewById(id)
+        } catch (e: Exception) { null }
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
@@ -84,7 +153,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     }
 
     override fun onPrimaryClipChanged() {
-        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         val clip = cm.primaryClip
         if (clip != null && clip.itemCount > 0) {
             val text = clip.getItemAt(0).text
@@ -183,9 +252,9 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         // 获取主题文字颜色用于指示器
         val textColorStr = keyboardView.theme?.keyText
         val textColor = try {
-            if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) else android.graphics.Color.WHITE
+            if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) else assetRes.getColor("key_text", android.graphics.Color.WHITE)
         } catch (e: Exception) {
-            android.graphics.Color.WHITE
+            assetRes.getColor("key_text", android.graphics.Color.WHITE)
         }
 
         for (i in groupPages.indices) {
@@ -287,14 +356,19 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         val langId = settings.currentLangId
         val isPcLayout = settings.usePcLayout(langId)
 
-        val config = LayoutManager.loadLanguageConfig(this, langId)
-        if (config != null) {
-            currentLanguage = config
-            val layoutFile = if (isPcLayout) config.pcLayout else config.mobileLayout
-            setupEngine(langId, isPcLayout)
-            loadLayout(langId, layoutFile)
-        }
-        updateCandidates()
+        // 切换到后台线程处理加载逻辑
+        Thread {
+            val config = LayoutManager.loadLanguageConfig(this, langId)
+            mainHandler.post {
+                if (config != null) {
+                    currentLanguage = config
+                    val layoutFile = if (isPcLayout) config.pcLayout else config.mobileLayout
+                    setupEngine(langId, isPcLayout)
+                    loadLayout(langId, layoutFile)
+                }
+                updateCandidates()
+            }
+        }.start()
     }
 
     private fun setupEngine(langId: String, isPc: Boolean) {
@@ -310,59 +384,65 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     private fun loadLayout(langId: String, fileName: String) {
         val startTime = SystemClock.elapsedRealtime()
-        currentLayout = LayoutManager.loadLayout(this, langId, fileName)
-        currentLayout?.let { layout ->
-            Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
-            
-            // 预加载词典（如果当前引擎是 DictionaryEngine）
-            if (inputEngine is DictionaryEngine) {
-                currentLanguage?.dictionary?.let { dictFile ->
-                    dictManager.loadDictionary(langId, dictFile)
-                }
-            } else {
-                dictManager.clear()
-            }
-            inputEngine.reset()
+        
+        Thread {
+            val layout = LayoutManager.loadLayout(this, langId, fileName)
+            mainHandler.post {
+                layout?.let { loadedLayout ->
+                    currentLayout = loadedLayout
+                    Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
+                    
+                    // 异步加载词典
+                    if (inputEngine is DictionaryEngine) {
+                        Thread {
+                            currentLanguage?.dictionary?.let { dictFile ->
+                                dictManager.loadDictionary(langId, dictFile)
+                            }
+                        }.start()
+                    } else {
+                        dictManager.clear()
+                    }
+                    inputEngine.reset()
 
-            keyboardView.theme = layout.theme
-            if (::panelManager.isInitialized) {
-                panelManager.theme = layout.theme
-            }
-            // Respect layout config for candidate container visibility
-            candidateContainer.visibility = if (layout.showCandidates) View.VISIBLE else View.GONE
-            
-            activeStates.clear()
-            activeTransientKeyIds.clear()
-            metaStateMap.clear()
-            metaKeyCodeMap.clear()
-            
-            layout.pages.flatMap { it.rows }.flatMap { it.keys }.forEach { k ->
-                k.id?.let { id ->
-                    activeStates[id] = false
-                    // Cache meta value for this state ID
-                    k.metaValue?.let { meta -> metaStateMap[id] = meta }
-                }
-                
-                // Pre-parse KeyCodes for performance
-                k.parsedKeyCode = parseKeyCode(k.text)
-                
-                // 如果是修饰键且有 ID，记录其物理 KeyCode 用于后续模拟
-                if (k.type == KeyType.MODIFIER && k.id != null && k.parsedKeyCode != KeyEvent.KEYCODE_UNKNOWN) {
-                    metaKeyCodeMap[k.id] = k.parsedKeyCode
-                }
+                    keyboardView.theme = loadedLayout.theme
+                    keyboardView.layoutThemeLight = loadedLayout.themeLight
+                    keyboardView.layoutThemeDark = loadedLayout.themeDark
+                    keyboardView.invalidate() // 强制应用新主题
 
-                k.overrides?.values?.forEach { override ->
-                    override.parsedKeyCode = parseKeyCode(override.text)
+                    if (::panelManager.isInitialized) {
+                        panelManager.theme = loadedLayout.theme // TODO: 面板也应支持双主题
+                    }
+                    candidateContainer.visibility = if (loadedLayout.showCandidates) View.VISIBLE else View.GONE
+                    
+                    activeStates.clear()
+                    activeTransientKeyIds.clear()
+                    metaStateMap.clear()
+                    metaKeyCodeMap.clear()
+                    
+                    loadedLayout.pages.flatMap { it.rows }.flatMap { it.keys }.forEach { k ->
+                        k.id?.let { id ->
+                            activeStates[id] = false
+                            k.metaValue?.let { meta -> metaStateMap[id] = meta }
+                        }
+                        k.parsedKeyCode = parseKeyCode(k.text)
+                        if (k.type == KeyType.MODIFIER && k.id != null && k.parsedKeyCode != KeyEvent.KEYCODE_UNKNOWN) {
+                            metaKeyCodeMap[k.id] = k.parsedKeyCode
+                        }
+                        k.overrides?.values?.forEach { override ->
+                            override.parsedKeyCode = parseKeyCode(override.text)
+                        }
+                    }
+                    keyboardView.activeStates = activeStates
+                    val defaultPageId = currentLanguage?.defaultPage ?: "main"
+                    val startPage = loadedLayout.pages.find { it.id == defaultPageId } ?: loadedLayout.pages.firstOrNull()
+                    if (startPage != null) {
+                        keyboardView.setPage(startPage)
+                        updatePageIndicator(startPage)
+                    }
+                    applyThemeToStaticViews()
                 }
             }
-            keyboardView.activeStates = activeStates
-            val defaultPageId = currentLanguage?.defaultPage ?: "main"
-            val startPage = layout.pages.find { it.id == defaultPageId } ?: layout.pages.firstOrNull()
-            if (startPage != null) {
-                keyboardView.setPage(startPage)
-                updatePageIndicator(startPage)
-            }
-        }
+        }.start()
     }
 
     private fun parseKeyCode(text: com.google.gson.JsonElement?): Int {
@@ -383,7 +463,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         val ic = currentInputConnection ?: return
 
         // 1. 引擎优先：如果输入引擎（如拼音）截获了此键，则直接返回
-        if (inputEngine.processKey(key, ic, activeStates)) {
+        if (inputEngine.processKey(key, ic, calculateTotalMetaState())) {
             updateCandidates()
             resetTransientStates()
             return
@@ -419,7 +499,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         if (key.action != null) {
             handleAction(key.action)
             // 修复换页重置 Bug：如果是换页动作，不执行后续的瞬时状态重置
-            if (key.action.startsWith("switch_page:")) {
+            if (key.action.startsWith(ACTION_SWITCH_PAGE)) {
                 updateCandidates()
                 return
             }
@@ -466,8 +546,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     private fun handleAction(action: String) {
         when {
-            action.startsWith("switch_page:") -> {
-                val pageId = action.substringAfter("switch_page:")
+            action.startsWith(ACTION_SWITCH_PAGE) -> {
+                val pageId = action.substringAfter(ACTION_SWITCH_PAGE)
                 currentLayout?.pages?.find { it.id == pageId }?.let { 
                     keyboardView.setPage(it)
                     updatePageIndicator(it)
@@ -508,42 +588,55 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private fun updateCandidates() {
         if (!::candidateStrip.isInitialized) return
         val candidates = inputEngine.getCandidates()
-        candidateStrip.removeAllViews()
 
         if (candidates.isEmpty()) {
             toolbarView.visibility = View.VISIBLE
             candidateScroll.visibility = View.GONE
-        } else {
-            toolbarView.visibility = View.GONE
-            candidateScroll.visibility = View.VISIBLE
-            
-            // 获取当前主题中的文字颜色，如果没定义则默认为白色
-            val textColorStr = keyboardView.theme?.keyText
-            val textColor = try {
-                if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) else android.graphics.Color.WHITE
-            } catch (e: Exception) {
-                android.graphics.Color.WHITE
-            }
+            return
+        }
 
-            val textSize = settings.candidateTextSize
-            val padding = settings.candidatePadding
+        toolbarView.visibility = View.GONE
+        candidateScroll.visibility = View.VISIBLE
+        
+        val textColorStr = keyboardView.theme?.keyText
+        val textColor = try {
+            if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) else assetRes.getColor("key_text", android.graphics.Color.WHITE)
+        } catch (e: Exception) {
+            assetRes.getColor("key_text", android.graphics.Color.WHITE)
+        }
 
-            for (candidate in candidates) {
-                val tv = TextView(this)
+        val textSize = settings.candidateTextSize
+        val padding = settings.candidatePadding
+
+        // 视图复用逻辑
+        val currentChildCount = candidateStrip.childCount
+        for (i in 0 until maxOf(candidates.size, currentChildCount)) {
+            if (i < candidates.size) {
+                val candidate = candidates[i]
+                val tv = if (i < currentChildCount) {
+                    candidateStrip.getChildAt(i) as TextView
+                } else {
+                    val newTv = TextView(this)
+                    newTv.gravity = android.view.Gravity.CENTER
+                    newTv.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                    newTv.setBackgroundResource(android.R.drawable.list_selector_background)
+                    candidateStrip.addView(newTv)
+                    newTv
+                }
+                tv.visibility = View.VISIBLE
                 tv.text = candidate
                 tv.setTextColor(textColor)
                 tv.textSize = textSize
                 tv.setPadding(padding, 0, padding, 0)
-                tv.gravity = android.view.Gravity.CENTER
-                tv.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                tv.setBackgroundResource(android.R.drawable.list_selector_background)
                 tv.setOnClickListener {
                     currentInputConnection?.commitText(candidate, 1)
-                    inputEngine.processKey(KeyboardKey(action = "commit"), currentInputConnection!!, activeStates) // Notify engine
+                    inputEngine.processKey(KeyboardKey(action = "commit"), currentInputConnection!!, calculateTotalMetaState())
                     resetTransientStates()
                     updateCandidates()
                 }
-                candidateStrip.addView(tv)
+            } else {
+                // 隐藏多余的视图
+                candidateStrip.getChildAt(i).visibility = View.GONE
             }
         }
     }

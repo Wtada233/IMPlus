@@ -33,6 +33,16 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    sourceSets {
+        getByName("main") {
+            res.srcDirs(
+                "src/main/res",
+                "src/main/res-langs",
+                "src/main/res-colors"
+            )
+        }
+    }
 }
 
 dependencies {
