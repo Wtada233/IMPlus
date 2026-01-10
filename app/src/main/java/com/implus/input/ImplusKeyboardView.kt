@@ -13,8 +13,14 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
-import com.implus.input.layout.*
+import com.implus.input.layout.KeyboardKey
+import com.implus.input.layout.KeyboardPage
+import com.implus.input.layout.KeyboardRow
+import com.implus.input.layout.KeyboardTheme
+import com.implus.input.layout.KeyStyle
+import com.implus.input.layout.KeyType
 import com.implus.input.manager.AssetResourceManager
+import com.implus.input.utils.Constants
 import kotlin.math.abs
 
 class ImplusKeyboardView @JvmOverloads constructor(
@@ -31,6 +37,20 @@ class ImplusKeyboardView @JvmOverloads constructor(
     companion object {
         private const val TEXT_SIZE_RATIO = 0.4f
         private const val MAX_TEXT_WIDTH_RATIO = 0.8f
+        
+        private const val DEFAULT_KEY_RADIUS = 24f
+        private const val DEFAULT_FUNC_KEY_RADIUS = 12f
+        private const val DEFAULT_SHADOW_OFFSET = 3f
+        private const val DEFAULT_SHADOW_ALPHA = 30
+        private const val DEFAULT_ANIM_DURATION = 200L
+        private const val DEFAULT_RIPPLE_EXPAND_DURATION = 350L
+        private const val DEFAULT_RIPPLE_FADE_DURATION = 200L
+        
+        private const val DEFAULT_SWIPE_THRESHOLD = 50
+        private const val DEFAULT_SPACING = 6
+        private const val DEFAULT_VIBRATION_STRENGTH = 30
+        
+        private const val FLING_VELOCITY_THRESHOLD = 100
     }
 
     private fun performVibration() {
@@ -44,13 +64,13 @@ class ImplusKeyboardView @JvmOverloads constructor(
     }
 
     // Appearance & Animation Properties (Configurable)
-    var keyRadius = 24f
-    var funcKeyRadius = 12f
-    var shadowOffset = 3f
-    var shadowAlpha = 30
-    var animDuration = 200L
-    var rippleExpandDuration = 350L
-    var rippleFadeDuration = 200L
+    var keyRadius = DEFAULT_KEY_RADIUS
+    var funcKeyRadius = DEFAULT_FUNC_KEY_RADIUS
+    var shadowOffset = DEFAULT_SHADOW_OFFSET
+    var shadowAlpha = DEFAULT_SHADOW_ALPHA
+    var animDuration = DEFAULT_ANIM_DURATION
+    var rippleExpandDuration = DEFAULT_RIPPLE_EXPAND_DURATION
+    var rippleFadeDuration = DEFAULT_RIPPLE_FADE_DURATION
 
     private var currentPage: KeyboardPage? = null
     private var nextPage: KeyboardPage? = null
@@ -69,11 +89,11 @@ class ImplusKeyboardView @JvmOverloads constructor(
     var onSwipeListener: ((Direction) -> Unit)? = null
 
     // Settings
-    var swipeThreshold = 50 
-    var horizontalSpacing = 6
-    var verticalSpacing = 6
+    var swipeThreshold = DEFAULT_SWIPE_THRESHOLD 
+    var horizontalSpacing = DEFAULT_SPACING
+    var verticalSpacing = DEFAULT_SPACING
     var vibrationEnabled = true
-    var vibrationStrength = 30
+    var vibrationStrength = DEFAULT_VIBRATION_STRENGTH
 
     enum class Direction { LEFT, RIGHT }
 
@@ -93,19 +113,19 @@ class ImplusKeyboardView @JvmOverloads constructor(
 
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-            if (e1 == null) return false
-            val diffX = e2.x - e1.x
-            val diffY = e2.y - e1.y
-            if (abs(diffX) > abs(diffY) && abs(diffX) > swipeThreshold && abs(velocityX) > 100) {
-                if (diffX > 0) onSwipeListener?.invoke(Direction.RIGHT)
-                else onSwipeListener?.invoke(Direction.LEFT)
-                return true
+            var handled = false
+            if (e1 != null) {
+                val diffX = e2.x - e1.x
+                val diffY = e2.y - e1.y
+                if (abs(diffX) > abs(diffY) && abs(diffX) > swipeThreshold && abs(velocityX) > FLING_VELOCITY_THRESHOLD) {
+                    if (diffX > 0) onSwipeListener?.invoke(Direction.RIGHT)
+                    else onSwipeListener?.invoke(Direction.LEFT)
+                    handled = true
+                }
             }
-            return false
+            return handled
         }
     })
-
-    init { }
 
     fun getCurrentPageId(): String? = currentPage?.id
 
@@ -127,21 +147,27 @@ class ImplusKeyboardView @JvmOverloads constructor(
         // 2. 根据当前模式选择 JSON 覆盖 (Layout 级别覆盖)
         val activeTheme = if (isDark) layoutThemeDark ?: theme else layoutThemeLight ?: theme
         activeTheme?.let { t ->
-            fun parseSafe(c: String?, default: Int): Int = try {
-                if (c != null) Color.parseColor(c) else default
-            } catch (e: Exception) { default }
-
-            colorBg = parseSafe(t.background, colorBg)
-            colorKey = parseSafe(t.keyBackground, colorKey)
-            colorText = parseSafe(t.keyText, colorText)
-            colorFuncKey = parseSafe(t.functionKeyBackground, colorFuncKey)
-            colorFuncText = parseSafe(t.functionKeyText, colorFuncText)
-            colorSticky = parseSafe(t.stickyInactiveBackground, colorSticky)
-            colorStickyActive = parseSafe(t.stickyActiveBackground, colorStickyActive)
-            colorStickyTextActive = parseSafe(t.stickyActiveText, colorStickyTextActive)
-            colorRipple = parseSafe(t.rippleColor, colorRipple)
+            colorBg = parseSafeColor(t.background, colorBg)
+            colorKey = parseSafeColor(t.keyBackground, colorKey)
+            colorText = parseSafeColor(t.keyText, colorText)
+            colorFuncKey = parseSafeColor(t.functionKeyBackground, colorFuncKey)
+            colorFuncText = parseSafeColor(t.functionKeyText, colorFuncText)
+            colorSticky = parseSafeColor(t.stickyInactiveBackground, colorSticky)
+            colorStickyActive = parseSafeColor(t.stickyActiveBackground, colorStickyActive)
+            colorStickyTextActive = parseSafeColor(t.stickyActiveText, colorStickyTextActive)
+            colorRipple = parseSafeColor(t.rippleColor, colorRipple)
         }
     }
+
+    private fun parseSafeColor(colorStr: String?, default: Int): Int {
+        return try {
+            if (colorStr != null) Color.parseColor(colorStr) else default
+        } catch (e: IllegalArgumentException) {
+            android.util.Log.e("ImplusKeyboardView", "Color parse error: $colorStr", e)
+            default
+        }
+    }
+
 
     override fun onConfigurationChanged(newConfig: Configuration?) {
         super.onConfigurationChanged(newConfig)
@@ -189,50 +215,53 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private fun layoutKeys(page: KeyboardPage, targetList: MutableList<KeyDrawable>, w: Int, h: Int) {
         if (w <= 0 || h <= 0 || page.rows.isEmpty()) return
         
-        // Cancel existing animations before clearing
-        for (kd in targetList) kd.cancelAnimators()
+        targetList.forEach { it.cancelAnimators() }
         targetList.clear()
         
         val rowHeight = h / page.rows.size.toFloat()
         var curY = 0f
         
-        val hSpacing = horizontalSpacing.toFloat()
-        val vSpacing = verticalSpacing.toFloat()
-
         for (row in page.rows) {
-            val totalWeight = row.keys.sumOf { it.weight.toDouble() }.toFloat()
-            if (totalWeight <= 0f) {
-                curY += rowHeight
-                continue
-            }
-            
-            var curX = 0f
-            for (key in row.keys) {
-                val keyW = key.weight * (w / totalWeight)
-                
-                val rect = RectF(
-                    curX + hSpacing / 2f, 
-                    curY + vSpacing / 2f, 
-                    curX + keyW - hSpacing / 2f, 
-                    curY + rowHeight - vSpacing / 2f
-                )
-                
-                var textSize = rowHeight * TEXT_SIZE_RATIO
-                val label = key.label ?: ""
-                if (label.isNotEmpty()) {
-                    textPaint.textSize = textSize
-                    val textW = textPaint.measureText(label)
-                    val maxTextW = rect.width() * MAX_TEXT_WIDTH_RATIO
-                    if (textW > maxTextW) {
-                        textSize *= (maxTextW / textW)
-                    }
-                }
-                
-                targetList.add(KeyDrawable(key, rect, textSize))
-                curX += keyW
-            }
+            layoutRow(row, targetList, curY, rowHeight, w)
             curY += rowHeight
         }
+    }
+
+    private fun layoutRow(row: KeyboardRow, targetList: MutableList<KeyDrawable>, curY: Float, rowHeight: Float, w: Int) {
+        val totalWeight = row.keys.sumOf { it.weight.toDouble() }.toFloat()
+        if (totalWeight <= 0f) return
+        
+        var curX = 0f
+        val hSpacing = horizontalSpacing.toFloat()
+        val vSpacing = verticalSpacing.toFloat()
+        val spacingDivider = 2f
+
+        for (key in row.keys) {
+            val keyW = key.weight * (w / totalWeight)
+            val rect = RectF(
+                curX + hSpacing / spacingDivider, 
+                curY + vSpacing / spacingDivider, 
+                curX + keyW - hSpacing / spacingDivider, 
+                curY + rowHeight - vSpacing / spacingDivider
+            )
+            
+            targetList.add(createKeyDrawable(key, rect, rowHeight))
+            curX += keyW
+        }
+    }
+
+    private fun createKeyDrawable(key: KeyboardKey, rect: RectF, rowHeight: Float): KeyDrawable {
+        var textSize = rowHeight * TEXT_SIZE_RATIO
+        val label = key.label ?: ""
+        if (label.isNotEmpty()) {
+            textPaint.textSize = textSize
+            val textW = textPaint.measureText(label)
+            val maxTextW = rect.width() * MAX_TEXT_WIDTH_RATIO
+            if (textW > maxTextW) {
+                textSize *= (maxTextW / textW)
+            }
+        }
+        return KeyDrawable(key, rect, textSize)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -264,21 +293,26 @@ class ImplusKeyboardView @JvmOverloads constructor(
         val key = kd.key
         val rect = kd.rect
         
-        var effectiveLabel = key.label ?: ""
-        var effectiveStyle = key.style
+        // Resolve Effective Appearance (Inlined)
+        var label = key.label ?: ""
+        var style = key.style
         
-        key.overrides?.forEach { (stateId, override) ->
-            if (activeStates[stateId] == true) {
-                override.label?.let { effectiveLabel = it }
-                override.style?.let { effectiveStyle = it }
+        // 使用 for 循环避免 forEach 的迭代器分配 (虽然 Kotlin 编译器可能优化，但手动更稳)
+        key.overrides?.let { overrides ->
+            for ((stateId, override) in overrides) {
+                if (activeStates[stateId] == true) {
+                    override.label?.let { label = it }
+                    override.style?.let { style = it }
+                }
             }
         }
 
+        // Calculate Paint Config (Inlined)
         var paintColor = colorKey
         var radius = keyRadius 
         var textColor = colorText
 
-        when (effectiveStyle) {
+        when (style) {
             KeyStyle.FUNCTION -> { 
                 paintColor = colorFuncKey
                 textColor = colorFuncText
@@ -287,9 +321,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
             KeyStyle.STICKY -> {
                 val isActive = key.id?.let { activeStates[it] } ?: false
                 paintColor = if (isActive) colorStickyActive else colorSticky
-                if (isActive) {
-                    textColor = colorStickyTextActive
-                }
+                if (isActive) textColor = colorStickyTextActive
                 radius = funcKeyRadius
             }
             else -> { 
@@ -300,35 +332,49 @@ class ImplusKeyboardView @JvmOverloads constructor(
             }
         }
 
-        shadowPaint.color = Color.argb(shadowAlpha, 0, 0, 0)
-        val shadowOff = shadowOffset
-        // 稍微在左右也扩出 1px，让阴影更丰满
-        canvas.drawRoundRect(rect.left - 1f, rect.top + shadowOff, rect.right + 1f, rect.bottom + shadowOff, radius, radius, shadowPaint)
-        keyPaint.color = paintColor
-        canvas.drawRoundRect(rect, radius, radius, keyPaint)
-        
-        // Ripple Effect
-        if (kd.rippleIntensity > 0f) {
-            canvas.save()
-            clipPath.rewind() 
-            clipPath.addRoundRect(rect, radius, radius, Path.Direction.CW)
-            try {
-                canvas.clipPath(clipPath)
-                ripplePaint.color = colorRipple
-                val baseAlpha = Color.alpha(colorRipple)
-                ripplePaint.alpha = (baseAlpha * kd.rippleIntensity).toInt()
-                canvas.drawCircle(kd.rippleX, kd.rippleY, kd.rippleRadius, ripplePaint)
-            } catch (e: Exception) {
-                // Fallback for some older devices where clipPath might fail on hardware canvas
-            }
-            canvas.restore()
-        }
+        drawKeyShadow(canvas, rect, radius)
+        drawKeyBackground(canvas, rect, radius, paintColor)
+        drawRippleEffect(canvas, rect, radius, kd)
+        drawKeyLabel(canvas, rect, label, textColor, kd.baseTextSize)
+    }
 
-        textPaint.color = textColor
-        textPaint.textSize = kd.baseTextSize 
+    private fun drawKeyShadow(canvas: Canvas, rect: RectF, radius: Float) {
+        val shadowColorAlpha = shadowAlpha
+        shadowPaint.color = Color.argb(shadowColorAlpha, 0, 0, 0)
+        val shadowOff = shadowOffset
+        val horizontalExtra = 1f
+        canvas.drawRoundRect(rect.left - horizontalExtra, rect.top + shadowOff, rect.right + horizontalExtra, rect.bottom + shadowOff, radius, radius, shadowPaint)
+    }
+
+    private fun drawKeyBackground(canvas: Canvas, rect: RectF, radius: Float, color: Int) {
+        keyPaint.color = color
+        canvas.drawRoundRect(rect, radius, radius, keyPaint)
+    }
+
+    private fun drawRippleEffect(canvas: Canvas, rect: RectF, radius: Float, kd: KeyDrawable) {
+        if (kd.rippleIntensity <= 0f) return
         
-        val baseline = rect.centerY() - (textPaint.fontMetrics.bottom + textPaint.fontMetrics.top) / 2
-        canvas.drawText(effectiveLabel, rect.centerX(), baseline, textPaint)
+        canvas.save()
+        clipPath.rewind() 
+        clipPath.addRoundRect(rect, radius, radius, Path.Direction.CW)
+        try {
+            canvas.clipPath(clipPath)
+            ripplePaint.color = colorRipple
+            val baseAlpha = Color.alpha(colorRipple)
+            ripplePaint.alpha = (baseAlpha * kd.rippleIntensity).toInt()
+            canvas.drawCircle(kd.rippleX, kd.rippleY, kd.rippleRadius, ripplePaint)
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            android.util.Log.e("ImplusKeyboardView", "Ripple clip error", e)
+        }
+        canvas.restore()
+    }
+
+    private fun drawKeyLabel(canvas: Canvas, rect: RectF, label: String, color: Int, textSize: Float) {
+        textPaint.color = color
+        textPaint.textSize = textSize 
+        val baselineModifier = 2f
+        val baseline = rect.centerY() - (textPaint.fontMetrics.bottom + textPaint.fontMetrics.top) / baselineModifier
+        canvas.drawText(label, rect.centerX(), baseline, textPaint)
     }
 
     private val pointerMap = mutableMapOf<Int, KeyDrawable>()
@@ -415,8 +461,9 @@ class ImplusKeyboardView @JvmOverloads constructor(
             }
             
             alphaAnimator?.cancel()
+            val quickFadeMs = 50L
             alphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-                duration = 50
+                duration = quickFadeMs
                 addUpdateListener {
                     rippleIntensity = it.animatedValue as Float
                     invalidate()
@@ -444,3 +491,4 @@ class ImplusKeyboardView @JvmOverloads constructor(
         }
     }
 }
+

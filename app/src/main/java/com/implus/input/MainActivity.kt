@@ -136,3 +136,4 @@ class MainActivity : AppCompatActivity() {
         return currentImeId?.contains(packageName) == true
     }
 }
+

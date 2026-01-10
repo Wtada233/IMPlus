@@ -10,9 +10,16 @@ import com.implus.input.R
  */
 class PanelManager(
     private val root: View,
-    private val onCommitText: (String) -> Unit,
-    private val onBackToKeyboard: () -> Unit
+    private val onCommitText: (String) -> Unit
 ) {
+    companion object {
+        private const val EMPTY_VIEW_PADDING = 32
+        private const val ITEM_PADDING_HORIZONTAL = 16
+        private const val ITEM_PADDING_VERTICAL = 12
+        private const val ITEM_TEXT_SIZE = 16f
+        private const val DIVIDER_HEIGHT = 1
+    }
+
     var theme: com.implus.input.layout.KeyboardTheme? = null
     var themeLight: com.implus.input.layout.KeyboardTheme? = null
     var themeDark: com.implus.input.layout.KeyboardTheme? = null
@@ -43,11 +50,7 @@ class PanelManager(
         val activeTheme = if (isDark) themeDark ?: theme else themeLight ?: theme
 
         val textColorStr = activeTheme?.keyText
-        val textColor = try {
-            if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) else assetRes.getColor("key_text", android.graphics.Color.WHITE)
-        } catch (e: Exception) {
-            assetRes.getColor("key_text", android.graphics.Color.WHITE)
-        }
+        val textColor = parseTextColor(textColorStr)
 
         clipboardView.findViewById<View>(R.id.btn_clear_clipboard)?.setOnClickListener {
             ClipboardHistoryManager.clear(context)
@@ -56,37 +59,57 @@ class PanelManager(
 
         val history = ClipboardHistoryManager.getHistory(context)
         if (history.isEmpty()) {
-            val emptyView = TextView(context).apply {
-                text = assetRes.getString("clipboard_empty")
-                setTextColor(textColor)
-                setPadding(32, 32, 32, 32)
-            }
-            clipboardList.addView(emptyView)
+            addEmptyView(context, textColor)
         } else {
-            val paddingHorizontal = (16 * context.resources.displayMetrics.density).toInt()
-            val paddingVertical = (12 * context.resources.displayMetrics.density).toInt()
+            addHistoryItems(context, history, textColor)
+        }
+    }
 
-            for (text in history) {
-                val tv = TextView(context).apply {
-                    this.text = text
-                    setTextColor(textColor)
-                    textSize = 16f
-                    setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical)
-                    setBackgroundResource(android.R.drawable.list_selector_background)
-                    setOnClickListener {
-                        onCommitText(text)
-                        switchPanel(PanelType.KEYBOARD)
-                    }
-                }
-                clipboardList.addView(tv)
-                
-                View(context).apply {
-                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1)
-                    val dividerColor = assetRes.getColor("divider_color", android.graphics.Color.LTGRAY)
-                    setBackgroundColor(dividerColor)
-                    clipboardList.addView(this)
+    private fun parseTextColor(textColorStr: String?): Int {
+        return try {
+            if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) 
+            else assetRes.getColor("key_text", android.graphics.Color.WHITE)
+        } catch (e: IllegalArgumentException) {
+            android.util.Log.e("PanelManager", "Color parse error: $textColorStr", e)
+            assetRes.getColor("key_text", android.graphics.Color.WHITE)
+        }
+    }
+
+    private fun addEmptyView(context: android.content.Context, textColor: Int) {
+        val emptyView = TextView(context).apply {
+            text = assetRes.getString("clipboard_empty")
+            setTextColor(textColor)
+            setPadding(EMPTY_VIEW_PADDING, EMPTY_VIEW_PADDING, EMPTY_VIEW_PADDING, EMPTY_VIEW_PADDING)
+        }
+        clipboardList.addView(emptyView)
+    }
+
+    private fun addHistoryItems(context: android.content.Context, history: List<String>, textColor: Int) {
+        val density = context.resources.displayMetrics.density
+        val padH = (ITEM_PADDING_HORIZONTAL * density).toInt()
+        val padV = (ITEM_PADDING_VERTICAL * density).toInt()
+
+        for (text in history) {
+            val tv = TextView(context).apply {
+                this.text = text
+                setTextColor(textColor)
+                textSize = ITEM_TEXT_SIZE
+                setPadding(padH, padV, padH, padV)
+                setBackgroundResource(android.R.drawable.list_selector_background)
+                setOnClickListener {
+                    onCommitText(text)
+                    switchPanel(PanelType.KEYBOARD)
                 }
             }
+            clipboardList.addView(tv)
+            
+            val divider = View(context).apply {
+                layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, DIVIDER_HEIGHT)
+                val dividerColor = assetRes.getColor("divider_color", android.graphics.Color.LTGRAY)
+                setBackgroundColor(dividerColor)
+            }
+            clipboardList.addView(divider)
         }
     }
 }
+

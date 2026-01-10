@@ -60,12 +60,13 @@ class AssetResourceManager(private val context: Context) {
 
     private fun loadJson(path: String): Map<String, String> {
         return try {
-            val reader = InputStreamReader(context.assets.open(path))
+            val inputStream = context.assets.open(path)
+            val reader = InputStreamReader(inputStream)
             val type = object : TypeToken<Map<String, String>>() {}.type
             val result: Map<String, String> = gson.fromJson(reader, type)
             reader.close()
             result
-        } catch (e: Exception) {
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
             emptyMap()
         }
     }
@@ -74,7 +75,8 @@ class AssetResourceManager(private val context: Context) {
         val template = strings[key] ?: key
         return try {
             String.format(template, *args)
-        } catch (e: Exception) {
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            android.util.Log.e("AssetResourceManager", "Format error for key $key", e)
             template
         }
     }
@@ -83,8 +85,11 @@ class AssetResourceManager(private val context: Context) {
         val hex = colors[key] ?: return default
         return try {
             android.graphics.Color.parseColor(hex)
-        } catch (e: Exception) {
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            android.util.Log.e("AssetResourceManager", "Color parse error: $hex", e)
             default
         }
     }
 }
+
+

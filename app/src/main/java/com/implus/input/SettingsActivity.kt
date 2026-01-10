@@ -2,12 +2,17 @@ package com.implus.input
 
 import android.os.Bundle
 import android.view.View
-import android.widget.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.SeekBar
+import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.switchmaterial.SwitchMaterial
-import com.implus.input.layout.*
+import com.implus.input.layout.LayoutManager
 import com.implus.input.manager.SettingsManager
 import com.implus.input.manager.AssetResourceManager
+import com.implus.input.utils.Constants
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -65,42 +70,31 @@ class SettingsActivity : AppCompatActivity() {
         val savedRadius = settings.keyRadius.toInt()
         seekRadius.progress = savedRadius
         tvRadius.text = assetRes.getString("unit_px", savedRadius)
-        seekRadius.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvRadius.text = assetRes.getString("unit_px", progress)
-                settings.putInt(SettingsManager.KEY_KEY_RADIUS, progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekRadius.onProgressChanged { progress ->
+            tvRadius.text = assetRes.getString("unit_px", progress)
+            settings.putInt(SettingsManager.KEY_KEY_RADIUS, progress)
+        }
 
         val seekAlpha = findViewById<SeekBar>(R.id.seekbar_shadow_alpha)
         val tvAlpha = findViewById<TextView>(R.id.tv_shadow_alpha_val)
         val savedAlpha = settings.shadowAlpha
         seekAlpha.progress = savedAlpha
-        tvAlpha.text = assetRes.getString("unit_percent", (savedAlpha * 100 / 255))
-        seekAlpha.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvAlpha.text = assetRes.getString("unit_percent", (progress * 100 / 255))
-                settings.putInt(SettingsManager.KEY_SHADOW_ALPHA, progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        tvAlpha.text = assetRes.getString("unit_percent", (savedAlpha * Constants.MAX_PERCENT / Constants.ALPHA_OPAQUE))
+        seekAlpha.onProgressChanged { progress ->
+            val percent = progress * Constants.MAX_PERCENT / Constants.ALPHA_OPAQUE
+            tvAlpha.text = assetRes.getString("unit_percent", percent)
+            settings.putInt(SettingsManager.KEY_SHADOW_ALPHA, progress)
+        }
 
         val seekOffset = findViewById<SeekBar>(R.id.seekbar_shadow_offset)
         val tvOffset = findViewById<TextView>(R.id.tv_shadow_offset_val)
         val savedOffset = settings.shadowOffset.toInt()
         seekOffset.progress = savedOffset
         tvOffset.text = assetRes.getString("unit_px", savedOffset)
-        seekOffset.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvOffset.text = assetRes.getString("unit_px", progress)
-                settings.putInt(SettingsManager.KEY_SHADOW_OFFSET, progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekOffset.onProgressChanged { progress ->
+            tvOffset.text = assetRes.getString("unit_px", progress)
+            settings.putInt(SettingsManager.KEY_SHADOW_OFFSET, progress)
+        }
     }
 
     private fun setupAnimationControl() {
@@ -109,30 +103,22 @@ class SettingsActivity : AppCompatActivity() {
         val savedAnim = settings.animDuration.toInt()
         seekAnim.progress = savedAnim
         tvAnim.text = assetRes.getString("unit_ms", savedAnim)
-        seekAnim.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val real = if (progress < 10) 10 else progress
-                tvAnim.text = assetRes.getString("unit_ms", real)
-                settings.putInt(SettingsManager.KEY_ANIM_DURATION, real)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekAnim.onProgressChanged { progress ->
+            val real = if (progress < Constants.MIN_ANIM_DURATION_MS) Constants.MIN_ANIM_DURATION_MS else progress
+            tvAnim.text = assetRes.getString("unit_ms", real)
+            settings.putInt(SettingsManager.KEY_ANIM_DURATION, real)
+        }
 
         val seekRipple = findViewById<SeekBar>(R.id.seekbar_ripple_duration)
         val tvRipple = findViewById<TextView>(R.id.tv_ripple_duration_val)
         val savedRipple = settings.rippleDuration.toInt()
         seekRipple.progress = savedRipple
         tvRipple.text = assetRes.getString("unit_ms", savedRipple)
-        seekRipple.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val real = if (progress < 10) 10 else progress
-                tvRipple.text = assetRes.getString("unit_ms", real)
-                settings.putInt(SettingsManager.KEY_RIPPLE_DURATION, real)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekRipple.onProgressChanged { progress ->
+            val real = if (progress < Constants.MIN_ANIM_DURATION_MS) Constants.MIN_ANIM_DURATION_MS else progress
+            tvRipple.text = assetRes.getString("unit_ms", real)
+            settings.putInt(SettingsManager.KEY_RIPPLE_DURATION, real)
+        }
     }
 
     private fun setupAdvancedLayoutControl() {
@@ -141,28 +127,20 @@ class SettingsActivity : AppCompatActivity() {
         val savedSize = settings.candidateTextSize.toInt()
         seekSize.progress = savedSize
         tvSize.text = assetRes.getString("unit_sp", savedSize)
-        seekSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvSize.text = assetRes.getString("unit_sp", progress)
-                settings.putInt(SettingsManager.KEY_CANDIDATE_TEXT_SIZE, progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekSize.onProgressChanged { progress ->
+            tvSize.text = assetRes.getString("unit_sp", progress)
+            settings.putInt(SettingsManager.KEY_CANDIDATE_TEXT_SIZE, progress)
+        }
 
         val seekPadding = findViewById<SeekBar>(R.id.seekbar_candidate_padding)
         val tvPadding = findViewById<TextView>(R.id.tv_candidate_padding_val)
         val savedPadding = settings.candidatePadding
         seekPadding.progress = savedPadding
         tvPadding.text = assetRes.getString("unit_px", savedPadding)
-        seekPadding.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvPadding.text = assetRes.getString("unit_px", progress)
-                settings.putInt(SettingsManager.KEY_CANDIDATE_PADDING, progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekPadding.onProgressChanged { progress ->
+            tvPadding.text = assetRes.getString("unit_px", progress)
+            settings.putInt(SettingsManager.KEY_CANDIDATE_PADDING, progress)
+        }
     }
 
     private fun setupFeedbackControl() {
@@ -184,14 +162,10 @@ class SettingsActivity : AppCompatActivity() {
         seekVib.progress = vibStrength
         tvVibVal.text = assetRes.getString("unit_ms", vibStrength)
 
-        seekVib.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvVibVal.text = assetRes.getString("unit_ms", progress)
-                settings.putInt(SettingsManager.KEY_VIBRATION_STRENGTH, progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekVib.onProgressChanged { progress ->
+            tvVibVal.text = assetRes.getString("unit_ms", progress)
+            settings.putInt(SettingsManager.KEY_VIBRATION_STRENGTH, progress)
+        }
     }
 
     private fun setupSpacingControl() {
@@ -200,28 +174,20 @@ class SettingsActivity : AppCompatActivity() {
         val savedH = settings.horizontalSpacing
         seekBarH.progress = savedH
         tvValH.text = assetRes.getString("unit_px", savedH)
-        seekBarH.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvValH.text = assetRes.getString("unit_px", progress)
-                settings.putInt(SettingsManager.KEY_H_SPACING, progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekBarH.onProgressChanged { progress ->
+            tvValH.text = assetRes.getString("unit_px", progress)
+            settings.putInt(SettingsManager.KEY_H_SPACING, progress)
+        }
 
         val seekBarV = findViewById<SeekBar>(R.id.seekbar_v_spacing)
         val tvValV = findViewById<TextView>(R.id.tv_v_spacing_val)
         val savedV = settings.verticalSpacing
         seekBarV.progress = savedV
         tvValV.text = assetRes.getString("unit_px", savedV)
-        seekBarV.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvValV.text = assetRes.getString("unit_px", progress)
-                settings.putInt(SettingsManager.KEY_V_SPACING, progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekBarV.onProgressChanged { progress ->
+            tvValV.text = assetRes.getString("unit_px", progress)
+            settings.putInt(SettingsManager.KEY_V_SPACING, progress)
+        }
     }
 
     private fun setupSwipeThresholdControl() {
@@ -232,15 +198,11 @@ class SettingsActivity : AppCompatActivity() {
         seekBar.progress = saved
         tvVal.text = assetRes.getString("unit_px", saved)
 
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val real = if (progress < 10) 10 else progress
-                tvVal.text = assetRes.getString("unit_px", real)
-                settings.putInt(SettingsManager.KEY_SWIPE_THRESHOLD, real)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekBar.onProgressChanged { progress ->
+            val real = if (progress < Constants.MIN_SWIPE_THRESHOLD) Constants.MIN_SWIPE_THRESHOLD else progress
+            tvVal.text = assetRes.getString("unit_px", real)
+            settings.putInt(SettingsManager.KEY_SWIPE_THRESHOLD, real)
+        }
     }
 
     private fun setupLanguageSettings() {
@@ -300,15 +262,11 @@ class SettingsActivity : AppCompatActivity() {
         seekBar.progress = saved
         tvVal.text = assetRes.getString("unit_dp", saved)
 
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val real = if (progress < 30) 30 else progress
-                tvVal.text = assetRes.getString("unit_dp", real)
-                settings.putInt(SettingsManager.KEY_CANDIDATE_HEIGHT, real)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekBar.onProgressChanged { progress ->
+            val real = if (progress < Constants.MIN_CANDIDATE_HEIGHT_DP) Constants.MIN_CANDIDATE_HEIGHT_DP else progress
+            tvVal.text = assetRes.getString("unit_dp", real)
+            settings.putInt(SettingsManager.KEY_CANDIDATE_HEIGHT, real)
+        }
     }
 
     private fun setupHeightControl() {
@@ -319,15 +277,11 @@ class SettingsActivity : AppCompatActivity() {
         seekBar.progress = savedPercent
         tvVal.text = assetRes.getString("unit_percent", savedPercent)
 
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val realProgress = if (progress < 20) 20 else progress
-                tvVal.text = assetRes.getString("unit_percent", realProgress)
-                settings.putInt(SettingsManager.KEY_HEIGHT_PERCENT, realProgress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        seekBar.onProgressChanged { progress ->
+            val realProgress = if (progress < Constants.MIN_HEIGHT_PERCENT) Constants.MIN_HEIGHT_PERCENT else progress
+            tvVal.text = assetRes.getString("unit_percent", realProgress)
+            settings.putInt(SettingsManager.KEY_HEIGHT_PERCENT, realProgress)
+        }
     }
 
     private fun setupCloseOutside() {
@@ -339,4 +293,19 @@ class SettingsActivity : AppCompatActivity() {
             settings.putBoolean(SettingsManager.KEY_CLOSE_OUTSIDE, isChecked)
         }
     }
+
+    private fun SeekBar.onProgressChanged(block: (Int) -> Unit) {
+        this.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) block(progress)
+            }
+            @Suppress("EmptyFunctionBlock")
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            @Suppress("EmptyFunctionBlock")
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+    }
 }
+
+
+

@@ -17,6 +17,7 @@ class RawEngine : InputEngine {
     }
 
     override fun getCandidates(): List<String> = emptyList()
+    @Suppress("EmptyFunctionBlock")
     override fun reset() {}
 }
 
@@ -25,40 +26,45 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
     private var candidates = listOf<String>()
 
     override fun processKey(key: KeyboardKey, effText: String?, effKeyCode: Int, ic: InputConnection, metaState: Int): Boolean {
-        if (key.action == "commit") {
-            reset()
-            return true
-        }
-
-        if (key.action == "backspace") {
-            if (composingText.isNotEmpty()) {
-                composingText = composingText.substring(0, composingText.length - 1)
+        var handled = true
+        when {
+            key.action == "commit" -> reset()
+            key.action == "backspace" -> handled = handleBackspace(ic)
+            shouldProcessAsComposing(key, effText) -> {
+                composingText += effText
                 updateCandidates(ic)
-                return true 
             }
-            reset() // 如果退格导致前缀为空，重置引擎状态
-            return false
+            else -> {
+                commitComposing(ic)
+                handled = false
+            }
         }
+        return handled
+    }
 
-        // 只有在非 Action 按键且有文本输入时才加入联想
-        if (key.action == null && effText != null && effText.length == 1 && !effText[0].isWhitespace()) {
-            composingText += effText
+    private fun shouldProcessAsComposing(key: KeyboardKey, effText: String?): Boolean {
+        return key.action == null && 
+               effText?.length == 1 && 
+               !effText[0].isWhitespace()
+    }
+
+    private fun handleBackspace(ic: InputConnection): Boolean {
+        return if (composingText.isNotEmpty()) {
+            composingText = composingText.substring(0, composingText.length - 1)
             updateCandidates(ic)
-            return true
+            true
+        } else {
+            reset()
+            false
         }
-
-        // 其他按键（如回车、空格等）触发提交
-        commitComposing(ic)
-        return false
     }
 
     private fun commitComposing(ic: InputConnection?) {
-        if (ic == null) return
-        if (composingText.isNotEmpty()) {
-            ic.commitText(composingText, 1)
-            ic.setComposingText("", 1)
-            reset()
-        }
+        if (ic == null || composingText.isEmpty()) return
+        val cursorPosition = 1
+        ic.commitText(composingText, cursorPosition)
+        ic.setComposingText("", cursorPosition)
+        reset()
     }
 
     private fun updateCandidates(ic: InputConnection?) {
@@ -67,29 +73,33 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
             return
         }
         
+        val cursorPosition = 1
         if (composingText.isNotEmpty()) {
             try {
-                ic.setComposingText(composingText, 1)
+                ic.setComposingText(composingText, cursorPosition)
                 val suggestions = dictManager.getSuggestions(composingText)
-                
-                // 核心拦截逻辑：保留用户输入的原始前缀，仅附加词典的剩余部分
-                candidates = suggestions.map { word ->
-                    if (word.lowercase().startsWith(composingText.lowercase())) {
-                        composingText + word.substring(composingText.length)
-                    } else {
-                        word
-                    }
-                }
+                candidates = mapSuggestions(suggestions)
                 
                 if (candidates.none { it.equals(composingText, ignoreCase = true) }) {
                     candidates = listOf(composingText) + candidates
                 }
-            } catch (e: Exception) {
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                android.util.Log.e("DictionaryEngine", "Candidate update error", e)
                 candidates = listOf(composingText)
             }
         } else {
             candidates = emptyList()
-            ic.setComposingText("", 1)
+            ic.setComposingText("", cursorPosition)
+        }
+    }
+
+    private fun mapSuggestions(suggestions: List<String>): List<String> {
+        return suggestions.map { word ->
+            if (word.lowercase().startsWith(composingText.lowercase())) {
+                composingText + word.substring(composingText.length)
+            } else {
+                word
+            }
         }
     }
 

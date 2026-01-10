@@ -77,13 +77,14 @@ class SettingsManager(context: Context) {
     fun usePcLayout(langId: String): Boolean = getBoolean(KEY_USE_PC_LAYOUT_PREFIX + langId, true)
     
     fun isDictEnabled(langId: String, isPc: Boolean): Boolean {
-        val key = "${KEY_DICT_ENABLED_PREFIX}${langId}_${if (isPc) "pc" else "mobile"}"
-        // 默认值参考：通常建议开启
+        val type = if (isPc) "pc" else "mobile"
+        val key = "${KEY_DICT_ENABLED_PREFIX}${langId}_$type"
         return getBoolean(key, true)
     }
 
     fun setDictEnabled(langId: String, isPc: Boolean, enabled: Boolean) {
-        val key = "${KEY_DICT_ENABLED_PREFIX}${langId}_${if (isPc) "pc" else "mobile"}"
+        val type = if (isPc) "pc" else "mobile"
+        val key = "${KEY_DICT_ENABLED_PREFIX}${langId}_$type"
         putBoolean(key, enabled)
     }
     
@@ -106,3 +107,4 @@ class SettingsManager(context: Context) {
     val candidateTextSize: Float get() = getInt(KEY_CANDIDATE_TEXT_SIZE, DEFAULT_CANDIDATE_TEXT_SIZE).toFloat()
     val candidatePadding: Int get() = getInt(KEY_CANDIDATE_PADDING, DEFAULT_CANDIDATE_PADDING)
 }
+

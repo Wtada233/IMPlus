@@ -15,12 +15,9 @@ object LayoutManager {
         try {
             val langDirs = context.assets.list(LANGUAGES_DIR) ?: emptyArray()
             for (langDir in langDirs) {
-                val config = loadLanguageConfig(context, langDir)
-                if (config != null) {
-                    languages.add(config)
-                }
+                loadLanguageConfig(context, langDir)?.let { languages.add(it) }
             }
-        } catch (e: Exception) {
+        } catch (e: java.io.IOException) {
             Log.e(TAG, "Error listing languages", e)
         }
         return languages
@@ -29,13 +26,13 @@ object LayoutManager {
     fun loadLanguageConfig(context: Context, langId: String): LanguageConfig? {
         val configPath = "$LANGUAGES_DIR/$langId/config.json"
         return try {
-            val inputStream = context.assets.open(configPath)
-            val reader = InputStreamReader(inputStream)
-            val config = gson.fromJson(reader, LanguageConfig::class.java)
-            reader.close()
-            config
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load config for $langId: ${e.message}")
+            context.assets.open(configPath).use { inputStream ->
+                InputStreamReader(inputStream).use { reader ->
+                    gson.fromJson(reader, LanguageConfig::class.java)
+                }
+            }
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            Log.e(TAG, "Failed to load config for $langId", e)
             null
         }
     }
@@ -44,19 +41,19 @@ object LayoutManager {
         val layoutPath = "$LANGUAGES_DIR/$langId/$fileName"
         Log.d(TAG, "Attempting to load layout: $layoutPath")
         return try {
-            val inputStream = context.assets.open(layoutPath)
-            val reader = InputStreamReader(inputStream)
-            val layout = gson.fromJson(reader, KeyboardLayout::class.java)
-            reader.close()
-            if (layout == null) {
-                Log.e(TAG, "Parsed layout is null for $layoutPath")
-                return null
+            context.assets.open(layoutPath).use { inputStream ->
+                InputStreamReader(inputStream).use { reader ->
+                    gson.fromJson(reader, KeyboardLayout::class.java).also {
+                        if (it == null) Log.e(TAG, "Parsed layout is null for $layoutPath")
+                        else Log.d(TAG, "Successfully loaded layout: ${it.name}")
+                    }
+                }
             }
-            Log.d(TAG, "Successfully loaded layout: ${layout.name} from $layoutPath")
-            layout
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load layout $layoutPath: ${e.message}", e)
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            Log.e(TAG, "Failed to load layout $layoutPath", e)
             null
         }
     }
 }
+
+
