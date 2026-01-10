@@ -12,10 +12,6 @@ class PanelManager(
     private val root: View,
     private val onCommitText: (String) -> Unit
 ) {
-    companion object {
-        // Constants moved to Constants.kt
-    }
-
     var theme: com.implus.input.layout.KeyboardTheme? = null
     var themeLight: com.implus.input.layout.KeyboardTheme? = null
     var themeDark: com.implus.input.layout.KeyboardTheme? = null
