@@ -39,6 +39,20 @@
     <string name="menu_lang_en">English</string>
     <string name="menu_lang_zh">简体中文</string>
 
+    <string name="pref_category_appearance">外观自定义</string>
+    <string name="pref_key_radius">普通按键圆角</string>
+    <string name="pref_func_key_radius">功能按键圆角</string>
+    <string name="pref_shadow_offset">阴影偏移量</string>
+    <string name="pref_shadow_alpha">阴影透明度</string>
+    
+    <string name="pref_category_animation">动画控制</string>
+    <string name="pref_anim_duration">翻页动画时长</string>
+    <string name="pref_ripple_duration">按键涟漪时长</string>
+
+    <string name="pref_category_advanced">高级布局</string>
+    <string name="pref_candidate_text_size">候选词字号</string>
+    <string name="pref_candidate_padding">候选词水平间距</string>
+
     <!-- 编辑面板字符串 -->
     <string name="edit_select_all">全选</string>
     <string name="edit_copy">复制</string>

@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:orientation="vertical"
-        android:background="#1A1C1E"
+        android:background="@color/panel_bg"
         android:clickable="true"
         android:focusable="true">
 
@@ -20,7 +20,7 @@
             android:id="@+id/candidate_container"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="#252525">
+            android:background="@color/toolbar_bg">
 
             <!-- 真正的工具栏: [设置] [编辑] [粘贴] -->
             <LinearLayout
@@ -118,7 +118,7 @@
                 android:id="@+id/clipboard_view"
                 android:layout_width="match_parent"
                 android:layout_height="250dp"
-                android:background="#1A1C1E"
+                android:background="@color/panel_bg"
                 android:orientation="vertical"
                 android:visibility="gone">
                 
@@ -139,7 +139,7 @@
                         android:layout_alignParentEnd="true"
                         android:text="@string/clipboard_clear"
                         style="@style/Widget.Material3.Button.TextButton"
-                        android:textColor="#FFB4AB"
+                        android:textColor="@color/accent_error"
                         android:textSize="12sp"/>
                 </RelativeLayout>
 
@@ -162,7 +162,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="250dp"
                 android:orientation="vertical"
-                android:background="#1A1C1E"
+                android:background="@color/panel_bg"
                 android:visibility="gone"
                 android:padding="12dp">
                 
@@ -184,7 +184,7 @@
                         android:paddingVertical="0dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        app:rippleColor="#40FFFFFF"/>
+                        app:rippleColor="@color/ripple_white"/>
                     <com.google.android.material.button.MaterialButton 
                         android:id="@+id/btn_copy" 
                         android:layout_width="0dp" 
@@ -198,7 +198,7 @@
                         android:paddingVertical="0dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        app:rippleColor="#40FFFFFF"/>
+                        app:rippleColor="@color/ripple_white"/>
                     <com.google.android.material.button.MaterialButton 
                         android:id="@+id/btn_pad_paste" 
                         android:layout_width="0dp" 
@@ -212,7 +212,7 @@
                         android:paddingVertical="0dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        app:rippleColor="#40FFFFFF"/>
+                        app:rippleColor="@color/ripple_white"/>
                 </LinearLayout>
 
                 <GridLayout
@@ -243,9 +243,9 @@
                     android:paddingVertical="0dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    app:strokeColor="#40FFFFFF"
+                    app:strokeColor="@color/ripple_white"
                     app:strokeWidth="1dp"
-                    app:rippleColor="#40FFFFFF"/>
+                    app:rippleColor="@color/ripple_white"/>
             </LinearLayout>
         </FrameLayout>
 

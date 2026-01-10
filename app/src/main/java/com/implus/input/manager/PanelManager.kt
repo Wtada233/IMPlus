@@ -49,12 +49,15 @@ class PanelManager(
             }
             clipboardList.addView(emptyView)
         } else {
+            val paddingHorizontal = (16 * context.resources.displayMetrics.density).toInt()
+            val paddingVertical = (12 * context.resources.displayMetrics.density).toInt()
+
             for (text in history) {
                 val tv = TextView(context).apply {
                     this.text = text
                     setTextColor(android.graphics.Color.WHITE)
                     textSize = 16f
-                    setPadding(32, 12, 32, 12)
+                    setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical)
                     setBackgroundResource(android.R.drawable.list_selector_background)
                     setOnClickListener {
                         onCommitText(text)

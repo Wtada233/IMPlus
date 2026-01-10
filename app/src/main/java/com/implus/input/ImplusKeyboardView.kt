@@ -22,6 +22,20 @@ class ImplusKeyboardView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    companion object {
+        private const val TEXT_SIZE_RATIO = 0.4f
+        private const val MAX_TEXT_WIDTH_RATIO = 0.8f
+    }
+
+    // Appearance & Animation Properties (Configurable)
+    var keyRadius = 24f
+    var funcKeyRadius = 12f
+    var shadowOffset = 3f
+    var shadowAlpha = 30
+    var animDuration = 200L
+    var rippleExpandDuration = 350L
+    var rippleFadeDuration = 200L
+
     private var currentPage: KeyboardPage? = null
     private var nextPage: KeyboardPage? = null
     private var slideOffset = 0f // 0f = currentPage fully visible, -1f = sliding left, 1f = sliding right
@@ -151,7 +165,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
             val end = if (animateDirection == Direction.LEFT) -1f else 1f
             
             val animator = ValueAnimator.ofFloat(0f, 1f)
-            animator.duration = 200
+            animator.duration = animDuration
             animator.interpolator = DecelerateInterpolator()
             animator.addUpdateListener { 
                 val fraction = it.animatedValue as Float
@@ -207,12 +221,12 @@ class ImplusKeyboardView @JvmOverloads constructor(
                     curY + rowHeight - vSpacing / 2f
                 )
                 
-                var textSize = rowHeight * 0.4f
+                var textSize = rowHeight * TEXT_SIZE_RATIO
                 val label = key.label ?: ""
                 if (label.isNotEmpty()) {
                     textPaint.textSize = textSize
                     val textW = textPaint.measureText(label)
-                    val maxTextW = rect.width() * 0.8f
+                    val maxTextW = rect.width() * MAX_TEXT_WIDTH_RATIO
                     if (textW > maxTextW) {
                         textSize *= (maxTextW / textW)
                     }
@@ -265,14 +279,14 @@ class ImplusKeyboardView @JvmOverloads constructor(
         }
 
         var paintColor = colorKey
-        var radius = 24f 
+        var radius = keyRadius 
         var textColor = colorText
 
         when (effectiveStyle) {
             KeyStyle.FUNCTION -> { 
                 paintColor = colorFuncKey
                 textColor = colorFuncText
-                radius = 12f 
+                radius = funcKeyRadius 
             }
             KeyStyle.STICKY -> {
                 val isActive = key.id?.let { activeStates[it] } ?: false
@@ -280,7 +294,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
                 if (isActive) {
                     textColor = colorStickyTextActive
                 }
-                radius = 12f
+                radius = funcKeyRadius
             }
             else -> { 
                 if (key.type != KeyType.NORMAL) {
@@ -290,9 +304,9 @@ class ImplusKeyboardView @JvmOverloads constructor(
             }
         }
 
-        shadowPaint.color = Color.argb(30, 0, 0, 0)
-        val shadowOffset = 3f
-        canvas.drawRoundRect(rect.left, rect.top + shadowOffset, rect.right, rect.bottom + shadowOffset, radius, radius, shadowPaint)
+        shadowPaint.color = Color.argb(shadowAlpha, 0, 0, 0)
+        val shadowOff = shadowOffset
+        canvas.drawRoundRect(rect.left, rect.top + shadowOff, rect.right, rect.bottom + shadowOff, radius, radius, shadowPaint)
         keyPaint.color = paintColor
         canvas.drawRoundRect(rect, radius, radius, keyPaint)
         
@@ -394,7 +408,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
             
             radiusAnimator?.cancel()
             radiusAnimator = ValueAnimator.ofFloat(0f, maxRadius).apply {
-                duration = 350
+                duration = rippleExpandDuration
                 interpolator = DecelerateInterpolator()
                 addUpdateListener { 
                     rippleRadius = it.animatedValue as Float
@@ -418,7 +432,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
             // Fade out
             alphaAnimator?.cancel()
             alphaAnimator = ValueAnimator.ofFloat(rippleIntensity, 0f).apply {
-                duration = 200
+                duration = rippleFadeDuration
                 addUpdateListener {
                     rippleIntensity = it.animatedValue as Float
                     invalidate()

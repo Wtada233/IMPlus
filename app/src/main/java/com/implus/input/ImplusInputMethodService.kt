@@ -17,10 +17,17 @@ import com.implus.input.layout.*
 import com.implus.input.engine.*
 import com.implus.input.manager.ClipboardHistoryManager
 import com.implus.input.manager.PanelManager
+import com.implus.input.manager.SettingsManager
 
 import android.content.SharedPreferences
 
 class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimaryClipChangedListener, SharedPreferences.OnSharedPreferenceChangeListener {
+
+    companion object {
+        private const val TAG = "ImplusInputMethodService"
+        private const val CANDIDATE_TEXT_SIZE = 18f
+        private const val CANDIDATE_PADDING_HORIZONTAL = 32
+    }
 
     private lateinit var keyboardView: ImplusKeyboardView
     private lateinit var candidateContainer: RelativeLayout
@@ -42,29 +49,33 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private lateinit var pageIndicator: android.widget.LinearLayout
     private lateinit var panelManager: PanelManager
 
-    private val prefs by lazy { getSharedPreferences("implus_prefs", Context.MODE_PRIVATE) }
+    private val settings by lazy { SettingsManager(this) }
 
     override fun onCreate() {
         super.onCreate()
         val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cm.addPrimaryClipChangedListener(this)
-        prefs.registerOnSharedPreferenceChangeListener(this)
+        settings.registerListener(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cm.removePrimaryClipChangedListener(this)
-        prefs.unregisterOnSharedPreferenceChangeListener(this)
+        settings.unregisterListener(this)
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == "current_lang" || key?.startsWith("use_pc_layout_") == true) {
-            reloadLanguage()
-        } else if (key == "height_percent" || key == "candidate_height" || key == "swipe_threshold" 
-                   || key == "horizontal_spacing" || key == "vertical_spacing"
-                   || key == "vibration_enabled" || key == "vibration_strength") {
-            applyKeyboardSettings()
+        when {
+            key == SettingsManager.KEY_CURRENT_LANG || key?.startsWith(SettingsManager.KEY_USE_PC_LAYOUT_PREFIX) == true -> {
+                reloadLanguage()
+            }
+            key == SettingsManager.KEY_HEIGHT_PERCENT || key == SettingsManager.KEY_CANDIDATE_HEIGHT || 
+            key == SettingsManager.KEY_SWIPE_THRESHOLD || key == SettingsManager.KEY_H_SPACING || 
+            key == SettingsManager.KEY_V_SPACING || key == SettingsManager.KEY_VIBRATION_ENABLED || 
+            key == SettingsManager.KEY_VIBRATION_STRENGTH -> {
+                applyKeyboardSettings()
+            }
         }
     }
 
@@ -100,7 +111,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         setupEditPad(root)
         
         root.findViewById<View>(R.id.root_container).setOnClickListener {
-            if (getSharedPreferences("implus_prefs", Context.MODE_PRIVATE).getBoolean("close_outside", false)) requestHideSelf(0)
+            if (settings.closeOutside) requestHideSelf(0)
         }
         root.findViewById<View>(R.id.keyboard_view).parent.let { (it as View).setOnClickListener { } }
 
@@ -254,9 +265,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     }
 
     private fun reloadLanguage() {
-        val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
-        val langId = prefs.getString("current_lang", "en") ?: "en"
-        val isPcLayout = prefs.getBoolean("use_pc_layout_$langId", true)
+        val langId = settings.currentLangId
+        val isPcLayout = settings.usePcLayout(langId)
 
         val config = LayoutManager.loadLanguageConfig(this, langId)
         if (config != null) {
@@ -279,7 +289,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         val startTime = SystemClock.elapsedRealtime()
         currentLayout = LayoutManager.loadLayout(this, langId, fileName)
         currentLayout?.let { layout ->
-            Log.d("Implus", "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
+            Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
             keyboardView.theme = layout.theme
             // Respect layout config for candidate container visibility
             candidateContainer.visibility = if (layout.showCandidates) View.VISIBLE else View.GONE
@@ -470,8 +480,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                 val tv = TextView(this)
                 tv.text = candidate
                 tv.setTextColor(android.graphics.Color.WHITE)
-                tv.textSize = 18f
-                tv.setPadding(32, 0, 32, 0)
+                tv.textSize = CANDIDATE_TEXT_SIZE
+                tv.setPadding(CANDIDATE_PADDING_HORIZONTAL, 0, CANDIDATE_PADDING_HORIZONTAL, 0)
                 tv.gravity = android.view.Gravity.CENTER
                 tv.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
                 tv.setBackgroundResource(android.R.drawable.list_selector_background)
@@ -488,15 +498,22 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     private fun applyKeyboardSettings() {
         if (!::keyboardView.isInitialized) return
-        val prefs = getSharedPreferences("implus_prefs", Context.MODE_PRIVATE)
-        keyboardView.layoutParams.height = (resources.displayMetrics.heightPixels * (prefs.getInt("height_percent", 35) / 100f)).toInt()
-        keyboardView.swipeThreshold = prefs.getInt("swipe_threshold", 50)
-        keyboardView.horizontalSpacing = prefs.getInt("horizontal_spacing", 6)
-        keyboardView.verticalSpacing = prefs.getInt("vertical_spacing", 6)
-        keyboardView.vibrationEnabled = prefs.getBoolean("vibration_enabled", true)
-        keyboardView.vibrationStrength = prefs.getInt("vibration_strength", 30)
+        keyboardView.layoutParams.height = (resources.displayMetrics.heightPixels * (settings.heightPercent / 100f)).toInt()
+        keyboardView.swipeThreshold = settings.swipeThreshold
+        keyboardView.horizontalSpacing = settings.horizontalSpacing
+        keyboardView.verticalSpacing = settings.verticalSpacing
+        keyboardView.vibrationEnabled = settings.vibrationEnabled
+        keyboardView.vibrationStrength = settings.vibrationStrength
         
-        candidateContainer.layoutParams.height = (prefs.getInt("candidate_height", 48) * resources.displayMetrics.density).toInt()
+        // New appearance/animation settings
+        keyboardView.keyRadius = settings.keyRadius
+        keyboardView.funcKeyRadius = settings.funcKeyRadius
+        keyboardView.shadowOffset = settings.shadowOffset
+        keyboardView.shadowAlpha = settings.shadowAlpha
+        keyboardView.animDuration = settings.animDuration
+        keyboardView.rippleExpandDuration = settings.rippleDuration
+        
+        candidateContainer.layoutParams.height = (settings.candidateHeight * resources.displayMetrics.density).toInt()
         keyboardView.requestLayout(); candidateContainer.requestLayout()
     }
 

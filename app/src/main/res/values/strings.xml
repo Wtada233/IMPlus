@@ -41,6 +41,20 @@
     <string name="menu_lang_en">English</string>
     <string name="menu_lang_zh">Chinese (Simplified)</string>
 
+    <string name="pref_category_appearance">Appearance</string>
+    <string name="pref_key_radius">Key Corner Radius</string>
+    <string name="pref_func_key_radius">Function Key Radius</string>
+    <string name="pref_shadow_offset">Shadow Offset</string>
+    <string name="pref_shadow_alpha">Shadow Alpha</string>
+    
+    <string name="pref_category_animation">Animations</string>
+    <string name="pref_anim_duration">Page Switch Duration</string>
+    <string name="pref_ripple_duration">Ripple Expand Duration</string>
+
+    <string name="pref_category_advanced">Advanced Layout</string>
+    <string name="pref_candidate_text_size">Candidate Text Size</string>
+    <string name="pref_candidate_padding">Candidate Spacing</string>
+
     <!-- Edit Pad Strings -->
                 <string name="edit_select_all">Select All</string>
                 <string name="edit_copy">Copy</string>
