@@ -40,6 +40,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private val activeTransientKeyIds = mutableSetOf<String>()
     // 缓存 StateID -> MetaValue 的映射，避免每次按键遍历全布局
     private val metaStateMap = mutableMapOf<String, Int>()
+    // 缓存 StateID -> 物理 KeyCode 的映射，用于 sendKey 时模拟物理按下
+    private val metaKeyCodeMap = mutableMapOf<String, Int>()
 
     private lateinit var toolbarView: View
     private lateinit var candidateScroll: View
@@ -101,6 +103,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
         panelManager = PanelManager(root, { text ->
             currentInputConnection?.commitText(text, 1)
+            updateCandidates()
         }, {
             // Back to keyboard callback if needed
         })
@@ -295,16 +298,23 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             activeStates.clear()
             activeTransientKeyIds.clear()
             metaStateMap.clear()
+            metaKeyCodeMap.clear()
             
             layout.pages.flatMap { it.rows }.flatMap { it.keys }.forEach { k ->
-                k.id?.let { 
-                    activeStates[it] = false
+                k.id?.let { id ->
+                    activeStates[id] = false
                     // Cache meta value for this state ID
-                    k.metaValue?.let { meta -> metaStateMap[it] = meta }
+                    k.metaValue?.let { meta -> metaStateMap[id] = meta }
                 }
                 
                 // Pre-parse KeyCodes for performance
                 k.parsedKeyCode = parseKeyCode(k.text)
+                
+                // 如果是修饰键且有 ID，记录其物理 KeyCode 用于后续模拟
+                if (k.type == KeyType.MODIFIER && k.id != null && k.parsedKeyCode != KeyEvent.KEYCODE_UNKNOWN) {
+                    metaKeyCodeMap[k.id] = k.parsedKeyCode
+                }
+
                 k.overrides?.values?.forEach { override ->
                     override.parsedKeyCode = parseKeyCode(override.text)
                 }
@@ -391,12 +401,6 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             if (isActive) {
                 metaStateMap[stateId]?.let { value ->
                     meta = meta or value
-                    // 补全所有相关的掩码，确保应用能正确识别 Shift/Ctrl/Alt 状态
-                    when (value) {
-                        KeyEvent.META_SHIFT_ON -> meta = meta or (KeyEvent.META_SHIFT_LEFT_ON or KeyEvent.META_SHIFT_ON)
-                        KeyEvent.META_CTRL_ON -> meta = meta or (KeyEvent.META_CTRL_LEFT_ON or KeyEvent.META_CTRL_ON)
-                        KeyEvent.META_ALT_ON -> meta = meta or (KeyEvent.META_ALT_LEFT_ON or KeyEvent.META_ALT_ON)
-                    }
                 }
             }
         }
@@ -424,7 +428,6 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     }
 
     private fun handleAction(action: String) {
-        val ic = currentInputConnection ?: return
         when {
             action.startsWith("switch_page:") -> {
                 val pageId = action.substringAfter("switch_page:")
@@ -433,7 +436,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                     updatePageIndicator(it)
                 }
             }
-            action == "backspace" -> ic.deleteSurroundingText(1, 0) // 保持语义化的退格，比 KeyCode 兼容性更好
+            // 修复：退格键应通过 KeyCode 发送，以正确处理选中文本的删除逻辑
+            action == "backspace" -> sendKey(KeyEvent.KEYCODE_DEL, 0)
             action == "hide" -> requestHideSelf(0)
         }
     }
@@ -442,14 +446,15 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         val ic = currentInputConnection ?: return
         val now = SystemClock.uptimeMillis()
         
-        // 1. 模拟物理修饰键按下 (基于当前 meta 状态)
-        // 很多应用(如 Chrome, Termux) 依赖于收到真实的修饰键 KeyEvent 序列来维护内部状态
-        val modifiers = mutableListOf<Int>()
-        if ((meta and KeyEvent.META_SHIFT_ON) != 0) modifiers.add(KeyEvent.KEYCODE_SHIFT_LEFT)
-        if ((meta and KeyEvent.META_CTRL_ON) != 0) modifiers.add(KeyEvent.KEYCODE_CTRL_LEFT)
-        if ((meta and KeyEvent.META_ALT_ON) != 0) modifiers.add(KeyEvent.KEYCODE_ALT_LEFT)
+        // 1. 模拟物理修饰键按下 (基于当前激活的状态 ID 自动查找物理按键)
+        val activeModifiers = mutableListOf<Int>()
+        activeStates.forEach { (id, isActive) ->
+            if (isActive) {
+                metaKeyCodeMap[id]?.let { activeModifiers.add(it) }
+            }
+        }
 
-        modifiers.forEach { modCode ->
+        activeModifiers.forEach { modCode ->
             ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, modCode, 0, 0))
         }
 
@@ -458,7 +463,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         ic.sendKeyEvent(KeyEvent(now, now + 10, KeyEvent.ACTION_UP, code, 0, meta))
 
         // 3. 模拟物理修饰键抬起
-        modifiers.forEach { modCode ->
+        activeModifiers.forEach { modCode ->
             ic.sendKeyEvent(KeyEvent(now, now + 20, KeyEvent.ACTION_UP, modCode, 0, 0))
         }
     }
@@ -529,6 +534,23 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) { 
         super.onStartInputView(info, restarting)
-        applyKeyboardSettings() 
+        applyKeyboardSettings()
+        
+        // 确保每次打开都显示键盘面板而非剪贴板/编辑面板
+        if (::panelManager.isInitialized) {
+            panelManager.switchPanel(PanelManager.PanelType.KEYBOARD)
+        }
+        
+        // 自动适配输入框类型：如果是数字或电话，自动切换到 symbols 页面
+        info?.let {
+            val inputType = it.inputType and EditorInfo.TYPE_MASK_CLASS
+            val isNumber = inputType == EditorInfo.TYPE_CLASS_NUMBER || inputType == EditorInfo.TYPE_CLASS_PHONE
+            val targetPageId = if (isNumber) "symbols" else "main"
+            
+            currentLayout?.pages?.find { p -> p.id == targetPageId }?.let { page ->
+                keyboardView.setPage(page)
+                updatePageIndicator(page)
+            }
+        }
     }
 }

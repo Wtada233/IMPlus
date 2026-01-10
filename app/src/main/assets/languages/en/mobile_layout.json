@@ -46,7 +46,7 @@
         },
         {
           "keys": [
-            {"id": "shift", "label": "Shift", "sticky": "transient", "metaValue": 1, "weight": 1.5, "type": "modifier", "style": "sticky", "overrides": {"shift": {"label": "SHIFT"}}},
+            {"id": "shift", "label": "Shift", "sticky": "transient", "text": "SHIFT_LEFT", "metaValue": 65, "weight": 1.5, "type": "modifier", "style": "sticky", "overrides": {"shift": {"label": "SHIFT"}}},
             {"label": "z", "text": "Z", "weight": 1, "overrides": {"shift": {"label": "Z"}, "caps": {"label": "Z"}}},
             {"label": "x", "text": "X", "weight": 1, "overrides": {"shift": {"label": "X"}, "caps": {"label": "X"}}},
             {"label": "c", "text": "C", "weight": 1, "overrides": {"shift": {"label": "C"}, "caps": {"label": "C"}}},
