@@ -6,7 +6,9 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 class DictionaryManager(private val context: Context) {
-    private var words = listOf<String>()
+    data class Word(val text: String, val freq: Int)
+
+    private var words = listOf<Word>()
     private var currentDictPath: String? = null
 
     fun loadDictionary(langId: String, fileName: String) {
@@ -16,9 +18,22 @@ class DictionaryManager(private val context: Context) {
         try {
             val inputStream = context.assets.open(path)
             val reader = BufferedReader(InputStreamReader(inputStream))
-            words = reader.readLines().filter { it.isNotBlank() }.sorted()
+            val loadedWords = mutableListOf<Word>()
+            
+            reader.forEachLine { line ->
+                val parts = line.split("\t", "=", " ", limit = 2)
+                if (parts.isNotEmpty()) {
+                    val word = parts[0].trim()
+                    val freq = if (parts.size > 1) parts[1].trim().toIntOrNull() ?: 0 else 0
+                    if (word.isNotEmpty()) {
+                        loadedWords.add(Word(word, freq))
+                    }
+                }
+            }
+            // 必须按字母顺序排序，以便进行二分查找前缀
+            words = loadedWords.sortedBy { it.text.lowercase() }
             currentDictPath = path
-            Log.d("DictionaryManager", "Loaded ${words.size} words from $path")
+            Log.d("DictionaryManager", "Loaded ${words.size} words with frequencies from $path")
         } catch (e: Exception) {
             Log.e("DictionaryManager", "Failed to load dictionary: $path", e)
             words = emptyList()
@@ -27,15 +42,44 @@ class DictionaryManager(private val context: Context) {
     }
 
     fun getSuggestions(prefix: String, limit: Int = 10): List<String> {
-        if (prefix.isBlank()) return emptyList()
+        if (prefix.isBlank() || words.isEmpty()) return emptyList()
         val lowerPrefix = prefix.lowercase()
         
-        // 简单的过滤逻辑，对于测试用的 100 词库足够快
-        // 如果词库变大（如 10w 词），这里应该换成二分查找找到范围
-        return words.asSequence()
-            .filter { it.lowercase().startsWith(lowerPrefix) }
+        // 1. 使用二分查找定位第一个可能匹配的索引
+        var low = 0
+        var high = words.size - 1
+        var firstMatchIndex = -1
+        
+        while (low <= high) {
+            val mid = (low + high) / 2
+            val midWord = words[mid].text.lowercase()
+            if (midWord.startsWith(lowerPrefix)) {
+                firstMatchIndex = mid
+                high = mid - 1 // 继续向左找，确保找到第一个
+            } else if (midWord < lowerPrefix) {
+                low = mid + 1
+            } else {
+                high = mid - 1
+            }
+        }
+
+        if (firstMatchIndex == -1) return emptyList()
+
+        // 2. 从第一个匹配项开始向后收集所有前缀匹配的词
+        val matches = mutableListOf<Word>()
+        for (i in firstMatchIndex until words.size) {
+            val w = words[i]
+            if (w.text.lowercase().startsWith(lowerPrefix)) {
+                matches.add(w)
+            } else {
+                break // 字母序已过，不再匹配
+            }
+        }
+
+        // 3. 按频率降序排列并返回前 limit 个结果
+        return matches.sortedByDescending { it.freq }
             .take(limit)
-            .toList()
+            .map { it.text }
     }
     
     fun clear() {

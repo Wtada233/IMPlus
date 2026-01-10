@@ -209,6 +209,11 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupLanguageSettings() {
         val spinner = findViewById<Spinner>(R.id.spinner_languages)
         val switchPc = findViewById<SwitchMaterial>(R.id.switch_pc_layout)
+        val switchDictPc = findViewById<SwitchMaterial>(R.id.switch_dict_pc)
+        val switchDictMobile = findViewById<SwitchMaterial>(R.id.switch_dict_mobile)
+        
+        switchDictPc.text = getString(R.string.pref_dict_pc_enable)
+        switchDictMobile.text = getString(R.string.pref_dict_mobile_enable)
 
         val languages = LayoutManager.getAvailableLanguages(this)
         val names = languages.map { it.name }
@@ -226,16 +231,31 @@ class SettingsActivity : AppCompatActivity() {
                 // Save global current language
                 settings.putString(SettingsManager.KEY_CURRENT_LANG, selected.id)
                 
-                // Update switch state to reflect THIS language's preference
-                val isPcEnabled = settings.usePcLayout(selected.id)
-                // Temporarily remove listener to avoid triggering it
+                // Update PC layout switch
                 switchPc.setOnCheckedChangeListener(null)
-                switchPc.isChecked = isPcEnabled
+                switchPc.isChecked = settings.usePcLayout(selected.id)
                 switchPc.setOnCheckedChangeListener { _, isChecked ->
                     settings.putBoolean(SettingsManager.KEY_USE_PC_LAYOUT_PREFIX + selected.id, isChecked)
                 }
+
+                // Update dictionary switches for THIS language
+                updateDictSwitches(selected.id, switchDictPc, switchDictMobile)
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+
+    private fun updateDictSwitches(langId: String, swPc: SwitchMaterial, swMobile: SwitchMaterial) {
+        swPc.setOnCheckedChangeListener(null)
+        swPc.isChecked = settings.isDictEnabled(langId, true)
+        swPc.setOnCheckedChangeListener { _, isChecked ->
+            settings.setDictEnabled(langId, true, isChecked)
+        }
+
+        swMobile.setOnCheckedChangeListener(null)
+        swMobile.isChecked = settings.isDictEnabled(langId, false)
+        swMobile.setOnCheckedChangeListener { _, isChecked ->
+            settings.setDictEnabled(langId, false, isChecked)
         }
     }
 

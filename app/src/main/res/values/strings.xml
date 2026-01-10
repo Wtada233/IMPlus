@@ -57,7 +57,10 @@
     <string name="pref_candidate_padding">Candidate Spacing</string>
 
     <!-- Edit Pad Strings -->
-                <string name="edit_select_all">Select All</string>
+                <string name="pref_dict_pc_enable">Enable Dictionary for PC Layout</string>
+    <string name="pref_dict_mobile_enable">Enable Dictionary for Mobile Layout</string>
+
+    <string name="edit_select_all">Select All</string>
                 <string name="edit_copy">Copy</string>
                 <string name="edit_paste">Paste</string>
                     <string name="edit_back">Back</string>

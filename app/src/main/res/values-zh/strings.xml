@@ -54,6 +54,9 @@
     <string name="pref_candidate_text_size">候选词字号</string>
     <string name="pref_candidate_padding">候选词水平间距</string>
 
+    <string name="pref_dict_pc_enable">PC 布局开启词典</string>
+    <string name="pref_dict_mobile_enable">手机布局开启词典</string>
+
     <!-- 编辑面板字符串 -->
     <string name="edit_select_all">全选</string>
     <string name="edit_copy">复制</string>

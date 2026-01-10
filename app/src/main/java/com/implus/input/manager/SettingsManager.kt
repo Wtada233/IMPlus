@@ -20,6 +20,9 @@ class SettingsManager(context: Context) {
         const val KEY_VIBRATION_STRENGTH = "vibration_strength"
         const val KEY_CLOSE_OUTSIDE = "close_outside"
         
+        // Layout-specific keys
+        const val KEY_DICT_ENABLED_PREFIX = "dict_enabled_" // + lang + _ + pc/mobile
+
         // Appearance & Animation Keys
         const val KEY_KEY_RADIUS = "key_radius"
         const val KEY_FUNC_KEY_RADIUS = "func_key_radius"
@@ -72,6 +75,17 @@ class SettingsManager(context: Context) {
     }
 
     fun usePcLayout(langId: String): Boolean = getBoolean(KEY_USE_PC_LAYOUT_PREFIX + langId, true)
+    
+    fun isDictEnabled(langId: String, isPc: Boolean): Boolean {
+        val key = "${KEY_DICT_ENABLED_PREFIX}${langId}_${if (isPc) "pc" else "mobile"}"
+        // 默认值参考：通常建议开启
+        return getBoolean(key, true)
+    }
+
+    fun setDictEnabled(langId: String, isPc: Boolean, enabled: Boolean) {
+        val key = "${KEY_DICT_ENABLED_PREFIX}${langId}_${if (isPc) "pc" else "mobile"}"
+        putBoolean(key, enabled)
+    }
     
     val currentLangId: String get() = getString(KEY_CURRENT_LANG, DEFAULT_LANG)
     val heightPercent: Int get() = getInt(KEY_HEIGHT_PERCENT, DEFAULT_HEIGHT_PERCENT)

@@ -308,10 +308,13 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         currentLayout?.let { layout ->
             Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
             
-            // 配置引擎
-            inputEngine.enabled = layout.useDictionary
+            // 配置引擎：优先使用用户在设置中对该布局的具体配置
+            val isPc = fileName == currentLanguage?.pcLayout
+            val dictEnabledByUser = settings.isDictEnabled(langId, isPc)
+            
+            inputEngine.enabled = dictEnabledByUser
             currentLanguage?.dictionary?.let { dictFile ->
-                if (layout.useDictionary) {
+                if (dictEnabledByUser) {
                     dictManager.loadDictionary(langId, dictFile)
                 }
             }
