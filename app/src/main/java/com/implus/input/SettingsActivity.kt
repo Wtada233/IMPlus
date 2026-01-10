@@ -232,8 +232,9 @@ class SettingsActivity : AppCompatActivity() {
                 settings.putString(SettingsManager.KEY_CURRENT_LANG, selected.id)
                 
                 // Update PC layout switch
+                val isPcEnabled = settings.usePcLayout(selected.id)
                 switchPc.setOnCheckedChangeListener(null)
-                switchPc.isChecked = settings.usePcLayout(selected.id)
+                switchPc.isChecked = isPcEnabled
                 switchPc.setOnCheckedChangeListener { _, isChecked ->
                     settings.putBoolean(SettingsManager.KEY_USE_PC_LAYOUT_PREFIX + selected.id, isChecked)
                 }
@@ -246,14 +247,16 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun updateDictSwitches(langId: String, swPc: SwitchMaterial, swMobile: SwitchMaterial) {
+        val isDictPcEnabled = settings.isDictEnabled(langId, true)
         swPc.setOnCheckedChangeListener(null)
-        swPc.isChecked = settings.isDictEnabled(langId, true)
+        swPc.isChecked = isDictPcEnabled
         swPc.setOnCheckedChangeListener { _, isChecked ->
             settings.setDictEnabled(langId, true, isChecked)
         }
 
+        val isDictMobileEnabled = settings.isDictEnabled(langId, false)
         swMobile.setOnCheckedChangeListener(null)
-        swMobile.isChecked = settings.isDictEnabled(langId, false)
+        swMobile.isChecked = isDictMobileEnabled
         swMobile.setOnCheckedChangeListener { _, isChecked ->
             settings.setDictEnabled(langId, false, isChecked)
         }

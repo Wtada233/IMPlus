@@ -1,3 +1,5 @@
+package com.implus.input.engine
+
 import android.view.inputmethod.InputConnection
 import com.implus.input.layout.KeyboardKey
 import com.implus.input.manager.DictionaryManager

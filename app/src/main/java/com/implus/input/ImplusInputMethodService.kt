@@ -16,6 +16,7 @@ import android.util.Log
 import com.implus.input.layout.*
 import com.implus.input.engine.*
 import com.implus.input.manager.ClipboardHistoryManager
+import com.implus.input.manager.DictionaryManager
 import com.implus.input.manager.PanelManager
 import com.implus.input.manager.SettingsManager
 
