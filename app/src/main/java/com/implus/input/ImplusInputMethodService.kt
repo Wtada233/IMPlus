@@ -291,17 +291,20 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         if (config != null) {
             currentLanguage = config
             val layoutFile = if (isPcLayout) config.pcLayout else config.mobileLayout
+            setupEngine(langId, isPcLayout)
             loadLayout(langId, layoutFile)
-            setupEngine(config.engine)
         }
         updateCandidates()
     }
 
-    private fun setupEngine(engineType: String) {
-        inputEngine = when (engineType) {
-            "dictionary" -> DictionaryEngine(dictManager)
-            "raw" -> RawEngine()
-            else -> RawEngine()
+    private fun setupEngine(langId: String, isPc: Boolean) {
+        val config = currentLanguage ?: return
+        val dictEnabled = settings.isDictEnabled(langId, isPc)
+        
+        inputEngine = if (config.engine == "dictionary" && dictEnabled) {
+            DictionaryEngine(dictManager)
+        } else {
+            RawEngine()
         }
     }
 
@@ -311,17 +314,13 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         currentLayout?.let { layout ->
             Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
             
-            // 配置引擎：优先使用用户在设置中对该布局的具体配置
-            val isPc = fileName == currentLanguage?.pcLayout
-            val dictEnabledByUser = settings.isDictEnabled(langId, isPc)
-            
-            inputEngine.enabled = dictEnabledByUser
-            currentLanguage?.dictionary?.let { dictFile ->
-                if (dictEnabledByUser) {
+            // 预加载词典（如果当前引擎是 DictionaryEngine）
+            if (inputEngine is DictionaryEngine) {
+                currentLanguage?.dictionary?.let { dictFile ->
                     dictManager.loadDictionary(langId, dictFile)
-                } else {
-                    dictManager.clear()
                 }
+            } else {
+                dictManager.clear()
             }
             inputEngine.reset()
 

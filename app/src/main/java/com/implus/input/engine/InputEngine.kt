@@ -6,16 +6,13 @@ import com.implus.input.layout.KeyboardKey
 import com.implus.input.manager.DictionaryManager
 
 interface InputEngine {
-    var enabled: Boolean
     fun processKey(key: KeyboardKey, ic: InputConnection, activeStates: Map<String, Boolean>): Boolean
     fun getCandidates(): List<String>
     fun reset()
 }
 
 class RawEngine : InputEngine {
-    override var enabled: Boolean = true
     override fun processKey(key: KeyboardKey, ic: InputConnection, activeStates: Map<String, Boolean>): Boolean {
-        // RawEngine 不拦截按键，交给 Service 处理标准输出
         return false
     }
 
@@ -24,13 +21,10 @@ class RawEngine : InputEngine {
 }
 
 class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine {
-    override var enabled: Boolean = true
     private var composingText = ""
     private var candidates = listOf<String>()
 
     override fun processKey(key: KeyboardKey, ic: InputConnection, activeStates: Map<String, Boolean>): Boolean {
-        if (!enabled) return false
-
         // 如果是特殊的 commit 动作（点击候选词后）
         if (key.action == "commit") {
             reset()
@@ -110,7 +104,7 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
         }
     }
 
-    override fun getCandidates(): List<String> = if (enabled) candidates else emptyList()
+    override fun getCandidates(): List<String> = candidates
 
     override fun reset() {
         composingText = ""
