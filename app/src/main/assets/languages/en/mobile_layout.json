@@ -2,6 +2,7 @@
   "name": "Mobile Layout",
   "defaultHeight": 250,
   "showCandidates": true,
+  "useDictionary": true,
   "theme": {
     "background": "#1A1C1E",
     "keyBackground": "#303030",

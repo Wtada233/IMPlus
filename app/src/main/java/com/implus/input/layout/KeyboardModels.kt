@@ -7,6 +7,7 @@ data class KeyboardLayout(
     @SerializedName("name") val name: String,
     @SerializedName("defaultHeight") val defaultHeight: Int = 250,
     @SerializedName("showCandidates") val showCandidates: Boolean = true,
+    @SerializedName("useDictionary") val useDictionary: Boolean = false, // 是否开启词典
     @SerializedName("theme") val theme: KeyboardTheme? = null,
     @SerializedName("pages") val pages: List<KeyboardPage> = emptyList()
 )
@@ -27,6 +28,7 @@ data class LanguageConfig(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
     @SerializedName("engine") val engine: String = "raw",
+    @SerializedName("dictionary") val dictionary: String? = null, // 词典文件名
     @SerializedName("pcLayout") val pcLayout: String = "pc_layout.json",
     @SerializedName("mobileLayout") val mobileLayout: String = "mobile_layout.json",
     @SerializedName("defaultPage") val defaultPage: String = "main",

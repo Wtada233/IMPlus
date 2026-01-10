@@ -33,6 +33,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private var currentLayout: KeyboardLayout? = null
     private var currentLanguage: LanguageConfig? = null
     private var inputEngine: InputEngine = RawEngine()
+    private val dictManager by lazy { DictionaryManager(this) }
     
     // 框架核心状态：仅追踪 JSON 中定义的 ID
     private val activeStates = mutableMapOf<String, Boolean>()
@@ -151,6 +152,12 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         btnClose.setOnClickListener { requestHideSelf(0) }
         
         return root
+    }
+
+    override fun onFinishInput() {
+        super.onFinishInput()
+        inputEngine.reset()
+        updateCandidates()
     }
 
     private fun updatePageIndicator(currentPage: KeyboardPage) {
@@ -289,6 +296,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     private fun setupEngine(engineType: String) {
         inputEngine = when (engineType) {
+            "dictionary" -> DictionaryEngine(dictManager)
             "raw" -> RawEngine()
             else -> RawEngine()
         }
@@ -299,6 +307,16 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         currentLayout = LayoutManager.loadLayout(this, langId, fileName)
         currentLayout?.let { layout ->
             Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
+            
+            // 配置引擎
+            inputEngine.enabled = layout.useDictionary
+            currentLanguage?.dictionary?.let { dictFile ->
+                if (layout.useDictionary) {
+                    dictManager.loadDictionary(langId, dictFile)
+                }
+            }
+            inputEngine.reset()
+
             keyboardView.theme = layout.theme
             if (::panelManager.isInitialized) {
                 panelManager.theme = layout.theme
@@ -547,6 +565,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) { 
         super.onStartInputView(info, restarting)
         applyKeyboardSettings()
+        inputEngine.reset()
+        updateCandidates()
         
         // 确保每次打开都显示键盘面板而非剪贴板/编辑面板
         if (::panelManager.isInitialized) {

@@ -1,7 +1,8 @@
 {
   "id": "en",
   "name": "English",
-  "engine": "raw",
+  "engine": "dictionary",
+  "dictionary": "en_US.dict",
   "pcLayout": "pc_layout.json",
   "mobileLayout": "mobile_layout.json",
   "defaultPage": "main"
