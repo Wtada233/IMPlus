@@ -14,6 +14,8 @@ class PanelManager(
     private val onBackToKeyboard: () -> Unit
 ) {
     var theme: com.implus.input.layout.KeyboardTheme? = null
+    var themeLight: com.implus.input.layout.KeyboardTheme? = null
+    var themeDark: com.implus.input.layout.KeyboardTheme? = null
     private val assetRes by lazy { AssetResourceManager(root.context) }
     
     private val keyboardView = root.findViewById<View>(R.id.keyboard_view)
@@ -37,7 +39,10 @@ class PanelManager(
         val context = root.context
         clipboardList.removeAllViews()
         
-        val textColorStr = theme?.keyText
+        val isDark = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val activeTheme = if (isDark) themeDark ?: theme else themeLight ?: theme
+
+        val textColorStr = activeTheme?.keyText
         val textColor = try {
             if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) else assetRes.getColor("key_text", android.graphics.Color.WHITE)
         } catch (e: Exception) {

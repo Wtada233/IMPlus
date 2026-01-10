@@ -11,6 +11,7 @@ class AssetResourceManager(private val context: Context) {
     private val gson = Gson()
     private var strings: Map<String, String> = emptyMap()
     private var colors: Map<String, String> = emptyMap()
+    private val jsonCache = mutableMapOf<String, Map<String, String>>()
 
     init {
         refresh()
@@ -20,8 +21,11 @@ class AssetResourceManager(private val context: Context) {
      * 根据当前系统语言和深浅色模式刷新缓存
      */
     fun refresh() {
+        // 清理缓存以允许重新加载（如果文件可能变动），或者根据需要保留
+        // 这里我们选择保留缓存，仅在 refresh 时重新组合逻辑
+        
         // 1. 加载语言：先加载 en.json 作为兜底，再叠加当前语言
-        val baseStrings = loadJson("i18n/en.json")
+        val baseStrings = getOrLoadJson("i18n/en.json")
         
         val locale = context.resources.configuration.locales[0]
         val langCode = locale.language
@@ -33,8 +37,8 @@ class AssetResourceManager(private val context: Context) {
         val langMatch = "$langCode.json"
         
         val currentStrings = when {
-            availableI18n.contains(fullMatch) -> loadJson("i18n/$fullMatch")
-            availableI18n.contains(langMatch) -> loadJson("i18n/$langMatch")
+            availableI18n.contains(fullMatch) -> getOrLoadJson("i18n/$fullMatch")
+            availableI18n.contains(langMatch) -> getOrLoadJson("i18n/$langMatch")
             else -> emptyMap()
         }
         
@@ -42,12 +46,16 @@ class AssetResourceManager(private val context: Context) {
         strings = baseStrings.toMutableMap().apply { putAll(currentStrings) }
 
         // 2. 加载主题：默认加载 light.json 兜底
-        val baseColors = loadJson("themes/light.json")
+        val baseColors = getOrLoadJson("themes/light.json")
         val isDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         
-        val currentColors = if (isDark) loadJson("themes/dark.json") else emptyMap()
+        val currentColors = if (isDark) getOrLoadJson("themes/dark.json") else emptyMap()
         
         colors = baseColors.toMutableMap().apply { putAll(currentColors) }
+    }
+
+    private fun getOrLoadJson(path: String): Map<String, String> {
+        return jsonCache.getOrPut(path) { loadJson(path) }
     }
 
     private fun loadJson(path: String): Map<String, String> {

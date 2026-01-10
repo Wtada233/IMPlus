@@ -34,46 +34,58 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
             if (composingText.isNotEmpty()) {
                 composingText = composingText.substring(0, composingText.length - 1)
                 updateCandidates(ic)
-                return true // 只要之前有联想词，就拦截退格动作，防止 Service 重复删除
+                return true 
             }
+            reset() // 如果退格导致前缀为空，重置引擎状态
             return false
         }
 
-        // 直接拦截 Service 传来的 effText
-        if (effText != null && effText.length == 1 && !effText[0].isWhitespace()) {
+        // 只有在非 Action 按键且有文本输入时才加入联想
+        if (key.action == null && effText != null && effText.length == 1 && !effText[0].isWhitespace()) {
             composingText += effText
             updateCandidates(ic)
             return true
         }
 
+        // 其他按键（如回车、空格等）触发提交
         commitComposing(ic)
         return false
     }
 
-    private fun commitComposing(ic: InputConnection) {
+    private fun commitComposing(ic: InputConnection?) {
+        if (ic == null) return
         if (composingText.isNotEmpty()) {
             ic.commitText(composingText, 1)
-            reset()
             ic.setComposingText("", 1)
+            reset()
         }
     }
 
-    private fun updateCandidates(ic: InputConnection) {
+    private fun updateCandidates(ic: InputConnection?) {
+        if (ic == null) {
+            candidates = emptyList()
+            return
+        }
+        
         if (composingText.isNotEmpty()) {
-            ic.setComposingText(composingText, 1)
-            val suggestions = dictManager.getSuggestions(composingText)
-            
-            // 核心拦截逻辑：保留用户输入的原始前缀，仅附加词典的剩余部分
-            candidates = suggestions.map { word ->
-                if (word.length >= composingText.length) {
-                    composingText + word.substring(composingText.length)
-                } else {
-                    word
+            try {
+                ic.setComposingText(composingText, 1)
+                val suggestions = dictManager.getSuggestions(composingText)
+                
+                // 核心拦截逻辑：保留用户输入的原始前缀，仅附加词典的剩余部分
+                candidates = suggestions.map { word ->
+                    if (word.lowercase().startsWith(composingText.lowercase())) {
+                        composingText + word.substring(composingText.length)
+                    } else {
+                        word
+                    }
                 }
-            }
-            
-            if (!candidates.contains(composingText)) {
-                candidates = listOf(composingText) + candidates
+                
+                if (candidates.none { it.equals(composingText, ignoreCase = true) }) {
+                    candidates = listOf(composingText) + candidates
+                }
+            } catch (e: Exception) {
+                candidates = listOf(composingText)
             }
         } else {
             candidates = emptyList()

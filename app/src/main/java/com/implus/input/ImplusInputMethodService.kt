@@ -52,6 +52,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     private lateinit var candidateStrip: android.view.ViewGroup
     private lateinit var pageIndicator: android.widget.LinearLayout
     private lateinit var panelManager: PanelManager
+    private var inputRootView: View? = null
 
     private val settings by lazy { SettingsManager(this) }
     private val assetRes by lazy { AssetResourceManager(this) }
@@ -77,6 +78,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     }
 
     private fun applyThemeToStaticViews() {
+        val root = inputRootView ?: return
         if (!::candidateContainer.isInitialized) return
         
         val panelBg = assetRes.getColor("panel_background", android.graphics.Color.DKGRAY)
@@ -88,24 +90,24 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
 
         candidateContainer.setBackgroundColor(toolbarBg)
         toolbarView.parent?.let { (it as View).setBackgroundColor(panelBg) }
-        findViewByIdInInputView<View>(R.id.clipboard_view)?.setBackgroundColor(panelBg)
-        findViewByIdInInputView<View>(R.id.edit_pad_view)?.setBackgroundColor(panelBg)
+        root.findViewById<View>(R.id.clipboard_view)?.setBackgroundColor(panelBg)
+        root.findViewById<View>(R.id.edit_pad_view)?.setBackgroundColor(panelBg)
         
         // 更新按钮着色 (工具栏)
         val toolbarButtons = listOf(R.id.btn_settings, R.id.btn_edit_mode, R.id.btn_clipboard, R.id.btn_close_keyboard)
         toolbarButtons.forEach { id ->
-            findViewByIdInInputView<ImageView>(id)?.setColorFilter(keyText)
+            root.findViewById<ImageView>(id)?.setColorFilter(keyText)
         }
 
         // 更新编辑面板 (方向键 & 功能键)
         val editButtons = listOf(R.id.btn_arrow_up, R.id.btn_arrow_down, R.id.btn_arrow_left, R.id.btn_arrow_right)
         editButtons.forEach { id ->
-            findViewByIdInInputView<ImageButton>(id)?.setColorFilter(keyText)
+            root.findViewById<ImageButton>(id)?.setColorFilter(keyText)
         }
 
         val materialButtons = listOf(R.id.btn_select_all, R.id.btn_copy, R.id.btn_pad_paste, R.id.btn_back_to_keyboard)
         materialButtons.forEach { id ->
-            findViewByIdInInputView<com.google.android.material.button.MaterialButton>(id)?.let {
+            root.findViewById<com.google.android.material.button.MaterialButton>(id)?.let {
                 it.setTextColor(keyText)
                 it.rippleColor = android.content.res.ColorStateList.valueOf(rippleColor)
                 if (id == R.id.btn_back_to_keyboard) {
@@ -115,26 +117,24 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
         }
         
         // 更新面板文字
-        findViewByIdInInputView<TextView>(R.id.clipboard_title)?.let {
+        root.findViewById<TextView>(R.id.clipboard_title)?.let {
             it.text = assetRes.getString("clipboard_title")
             it.setTextColor(keyText)
         }
-        findViewByIdInInputView<Button>(R.id.btn_clear_clipboard)?.let {
+        root.findViewById<Button>(R.id.btn_clear_clipboard)?.let {
             it.text = assetRes.getString("clipboard_clear")
             it.setTextColor(accentError)
         }
 
         // 填充编辑面板按钮文字
-        findViewByIdInInputView<com.google.android.material.button.MaterialButton>(R.id.btn_select_all)?.text = assetRes.getString("edit_select_all")
-        findViewByIdInInputView<com.google.android.material.button.MaterialButton>(R.id.btn_copy)?.text = assetRes.getString("edit_copy")
-        findViewByIdInInputView<com.google.android.material.button.MaterialButton>(R.id.btn_pad_paste)?.text = assetRes.getString("edit_paste")
-        findViewByIdInInputView<com.google.android.material.button.MaterialButton>(R.id.btn_back_to_keyboard)?.text = assetRes.getString("edit_back")
+        root.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_select_all)?.text = assetRes.getString("edit_select_all")
+        root.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_copy)?.text = assetRes.getString("edit_copy")
+        root.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_pad_paste)?.text = assetRes.getString("edit_paste")
+        root.findViewById<com.google.android.material.button.MaterialButton>(R.id.btn_back_to_keyboard)?.text = assetRes.getString("edit_back")
     }
 
     private fun <T : View> findViewByIdInInputView(id: Int): T? {
-        return try {
-            (keyboardView.parent.parent as View).findViewById(id)
-        } catch (e: Exception) { null }
+        return inputRootView?.findViewById(id)
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
@@ -167,6 +167,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     override fun onCreateInputView(): View {
         val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_Implus)
         val root = android.view.LayoutInflater.from(themedContext).inflate(R.layout.input_view, null)
+        inputRootView = root
         keyboardView = root.findViewById(R.id.keyboard_view)
         candidateContainer = root.findViewById(R.id.candidate_container)
         btnClose = root.findViewById(R.id.btn_close_keyboard)
@@ -415,7 +416,9 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
                     keyboardView.invalidate() // 强制应用新主题
 
                     if (::panelManager.isInitialized) {
-                        panelManager.theme = loadedLayout.theme // TODO: 面板也应支持双主题
+                        panelManager.theme = loadedLayout.theme
+                        panelManager.themeLight = loadedLayout.themeLight
+                        panelManager.themeDark = loadedLayout.themeDark
                     }
                     candidateContainer.visibility = if (loadedLayout.showCandidates) View.VISIBLE else View.GONE
                     
