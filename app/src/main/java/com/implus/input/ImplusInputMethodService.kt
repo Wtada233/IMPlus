@@ -358,11 +358,9 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
         val config = currentLanguage ?: return
         val dictEnabled = settings.isDictEnabled(langId, isPc)
         
-        // 识别密码框或明确要求不显示建议的输入框
-        val isPassword = isPasswordType(info)
-        val noSuggestions = info?.let { 
-            (it.inputType and EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0 
-        } ?: false
+        // 使用工具类识别密码框或禁用建议的输入框
+        val isPassword = com.implus.input.utils.InputTypeUtils.isPasswordType(info)
+        val noSuggestions = com.implus.input.utils.InputTypeUtils.isNoSuggestions(info)
 
         val shouldEnableDict = config.engine == "dictionary" && 
                                dictEnabled && 
@@ -374,15 +372,6 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
         } else {
             RawEngine()
         }
-    }
-
-    private fun isPasswordType(info: EditorInfo?): Boolean {
-        if (info == null) return false
-        val variation = info.inputType and EditorInfo.TYPE_MASK_VARIATION
-        return variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD ||
-               variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
-               variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD ||
-               variation == EditorInfo.TYPE_NUMBER_VARIATION_PASSWORD
     }
 
     private fun loadLayout(langId: String, fileName: String) {
@@ -699,15 +688,9 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
 
     private fun resolveTargetPageId(info: EditorInfo): String {
         val config = currentLanguage ?: return "main"
-        val inputClass = info.inputType and EditorInfo.TYPE_MASK_CLASS
         
-        // 将 Android 输入类型映射为语义化的 key
-        val typeKey = when (inputClass) {
-            EditorInfo.TYPE_CLASS_NUMBER -> "number"
-            EditorInfo.TYPE_CLASS_PHONE -> "phone"
-            EditorInfo.TYPE_CLASS_DATETIME -> "datetime"
-            else -> "text"
-        }
+        // 使用工具类将 Android 输入类型映射为语义化的 key
+        val typeKey = com.implus.input.utils.InputTypeUtils.resolveTypeKey(info)
         
         // 优先从 JSON 配置中获取，没有则使用默认页面
         return config.inputTypePages?.get(typeKey) ?: config.defaultPage
