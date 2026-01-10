@@ -69,7 +69,9 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         when {
-            key == SettingsManager.KEY_CURRENT_LANG || key?.startsWith(SettingsManager.KEY_USE_PC_LAYOUT_PREFIX) == true -> {
+            key == SettingsManager.KEY_CURRENT_LANG || 
+            key?.startsWith(SettingsManager.KEY_USE_PC_LAYOUT_PREFIX) == true ||
+            key?.startsWith(SettingsManager.KEY_DICT_ENABLED_PREFIX) == true -> {
                 reloadLanguage()
             }
             key == SettingsManager.KEY_HEIGHT_PERCENT || key == SettingsManager.KEY_CANDIDATE_HEIGHT || 
@@ -317,6 +319,8 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             currentLanguage?.dictionary?.let { dictFile ->
                 if (dictEnabledByUser) {
                     dictManager.loadDictionary(langId, dictFile)
+                } else {
+                    dictManager.clear()
                 }
             }
             inputEngine.reset()

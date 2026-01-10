@@ -110,7 +110,7 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
         }
     }
 
-    override fun getCandidates(): List<String> = candidates
+    override fun getCandidates(): List<String> = if (enabled) candidates else emptyList()
 
     override fun reset() {
         composingText = ""
