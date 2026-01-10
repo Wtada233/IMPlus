@@ -225,7 +225,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         val runnable = object : Runnable {
             override fun run() {
-                sendKey(keyCode, calculateTotalMetaState())
+                sendKeyWithActiveModifiers(keyCode)
                 handler.postDelayed(this, 50)
             }
         }
@@ -233,7 +233,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         view.setOnTouchListener { v, event ->
             when (event.action) {
                 android.view.MotionEvent.ACTION_DOWN -> {
-                    sendKey(keyCode, calculateTotalMetaState())
+                    sendKeyWithActiveModifiers(keyCode)
                     handler.postDelayed(runnable, 400)
                     v.isPressed = true
                 }
@@ -244,6 +244,13 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             }
             true
         }
+    }
+
+    /**
+     * 统一发送按键的方法，自动附带当前激活的修饰键状态（如 Shift, Ctrl 等）
+     */
+    private fun sendKeyWithActiveModifiers(keyCode: Int) {
+        sendKey(keyCode, calculateTotalMetaState())
     }
 
     private fun reloadLanguage() {
@@ -376,11 +383,11 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             if (isActive) {
                 metaStateMap[stateId]?.let { value ->
                     meta = meta or value
-                    // Android 兼容性：补全左右掩码
+                    // 补全所有相关的掩码，确保应用能正确识别 Shift/Ctrl/Alt 状态
                     when (value) {
-                        KeyEvent.META_CTRL_ON -> meta = meta or KeyEvent.META_CTRL_LEFT_ON
-                        KeyEvent.META_ALT_ON -> meta = meta or KeyEvent.META_ALT_LEFT_ON
-                        KeyEvent.META_SHIFT_ON -> meta = meta or KeyEvent.META_SHIFT_LEFT_ON
+                        KeyEvent.META_SHIFT_ON -> meta = meta or (KeyEvent.META_SHIFT_LEFT_ON or KeyEvent.META_SHIFT_ON)
+                        KeyEvent.META_CTRL_ON -> meta = meta or (KeyEvent.META_CTRL_LEFT_ON or KeyEvent.META_CTRL_ON)
+                        KeyEvent.META_ALT_ON -> meta = meta or (KeyEvent.META_ALT_LEFT_ON or KeyEvent.META_ALT_ON)
                     }
                 }
             }
@@ -426,8 +433,26 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     private fun sendKey(code: Int, meta: Int) {
         val ic = currentInputConnection ?: return
         val now = SystemClock.uptimeMillis()
+        
+        // 1. 模拟物理修饰键按下 (基于当前 meta 状态)
+        // 很多应用(如 Chrome, Termux) 依赖于收到真实的修饰键 KeyEvent 序列来维护内部状态
+        val modifiers = mutableListOf<Int>()
+        if ((meta and KeyEvent.META_SHIFT_ON) != 0) modifiers.add(KeyEvent.KEYCODE_SHIFT_LEFT)
+        if ((meta and KeyEvent.META_CTRL_ON) != 0) modifiers.add(KeyEvent.KEYCODE_CTRL_LEFT)
+        if ((meta and KeyEvent.META_ALT_ON) != 0) modifiers.add(KeyEvent.KEYCODE_ALT_LEFT)
+
+        modifiers.forEach { modCode ->
+            ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, modCode, 0, 0))
+        }
+
+        // 2. 发送目标按键
         ic.sendKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta))
         ic.sendKeyEvent(KeyEvent(now, now + 10, KeyEvent.ACTION_UP, code, 0, meta))
+
+        // 3. 模拟物理修饰键抬起
+        modifiers.forEach { modCode ->
+            ic.sendKeyEvent(KeyEvent(now, now + 20, KeyEvent.ACTION_UP, modCode, 0, 0))
+        }
     }
 
     private fun updateCandidates() {
