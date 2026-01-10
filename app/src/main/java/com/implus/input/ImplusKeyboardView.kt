@@ -55,8 +55,8 @@ class ImplusKeyboardView @JvmOverloads constructor(
     
     private val vibrator = context.getSystemService(android.os.Vibrator::class.java)
 
-    private val shadowPaint = Paint()
-    private val keyPaint = Paint()
+    private val shadowPaint = Paint().apply { isAntiAlias = true }
+    private val keyPaint = Paint().apply { isAntiAlias = true }
     private val textPaint = Paint().apply { textAlign = Paint.Align.CENTER; isAntiAlias = true }
     private val ripplePaint = Paint().apply { isAntiAlias = true; style = Paint.Style.FILL }
     private val clipPath = Path()
@@ -178,7 +178,11 @@ class ImplusKeyboardView @JvmOverloads constructor(
 
     private fun layoutKeys(page: KeyboardPage, targetList: MutableList<KeyDrawable>, w: Int, h: Int) {
         if (w <= 0 || h <= 0 || page.rows.isEmpty()) return
+        
+        // Cancel existing animations before clearing
+        for (kd in targetList) kd.cancelAnimators()
         targetList.clear()
+        
         val rowHeight = h / page.rows.size.toFloat()
         var curY = 0f
         
@@ -295,7 +299,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
         // Ripple Effect
         if (kd.rippleIntensity > 0f) {
             canvas.save()
-            clipPath.rewind() // Use rewind for performance
+            clipPath.rewind() 
             clipPath.addRoundRect(rect, radius, radius, Path.Direction.CW)
             try {
                 canvas.clipPath(clipPath)
@@ -399,7 +403,6 @@ class ImplusKeyboardView @JvmOverloads constructor(
                 start()
             }
             
-            // Should stay at max intensity while pressed, so we don't animate alpha down here.
             alphaAnimator?.cancel()
             alphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
                 duration = 50
@@ -422,6 +425,11 @@ class ImplusKeyboardView @JvmOverloads constructor(
                 }
                 start()
             }
+        }
+
+        fun cancelAnimators() {
+            radiusAnimator?.cancel()
+            alphaAnimator?.cancel()
         }
     }
 }

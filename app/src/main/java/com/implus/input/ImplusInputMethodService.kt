@@ -38,6 +38,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     private lateinit var toolbarView: View
     private lateinit var candidateScroll: View
+    private lateinit var candidateStrip: android.view.ViewGroup
     private lateinit var pageIndicator: android.widget.LinearLayout
     private lateinit var panelManager: PanelManager
 
@@ -86,6 +87,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         btnClose = root.findViewById(R.id.btn_close_keyboard)
         toolbarView = root.findViewById(R.id.toolbar_view)
         candidateScroll = root.findViewById(R.id.candidate_scroll)
+        candidateStrip = root.findViewById(R.id.candidate_strip)
         pageIndicator = root.findViewById(R.id.page_indicator)
 
         panelManager = PanelManager(root, { text ->
@@ -223,7 +225,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         val runnable = object : Runnable {
             override fun run() {
-                sendKey(keyCode, 0)
+                sendKey(keyCode, calculateTotalMetaState())
                 handler.postDelayed(this, 50)
             }
         }
@@ -231,7 +233,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         view.setOnTouchListener { v, event ->
             when (event.action) {
                 android.view.MotionEvent.ACTION_DOWN -> {
-                    sendKey(keyCode, 0)
+                    sendKey(keyCode, calculateTotalMetaState())
                     handler.postDelayed(runnable, 400)
                     v.isPressed = true
                 }
@@ -321,6 +323,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         // 1. 引擎优先：如果输入引擎（如拼音）截获了此键，则直接返回
         if (inputEngine.processKey(key, ic, activeStates)) {
             updateCandidates()
+            resetTransientStates()
             return
         }
         
@@ -353,6 +356,11 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
         // 5. 执行动作或发送输入
         if (key.action != null) {
             handleAction(key.action)
+            // 修复换页重置 Bug：如果是换页动作，不执行后续的瞬时状态重置
+            if (key.action.startsWith("switch_page:")) {
+                updateCandidates()
+                return
+            }
         } else {
             dispatchInput(effKeyCode, effInput, totalMeta, ic)
         }
@@ -424,7 +432,6 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     private fun updateCandidates() {
         val candidates = inputEngine.getCandidates()
-        val candidateStrip = candidateContainer.findViewById<ViewGroup>(R.id.candidate_strip)
         candidateStrip.removeAllViews()
 
         if (candidates.isEmpty()) {
@@ -446,6 +453,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
                 tv.setOnClickListener {
                     currentInputConnection?.commitText(candidate, 1)
                     inputEngine.processKey(KeyboardKey(action = "commit"), currentInputConnection!!, activeStates) // Notify engine
+                    resetTransientStates()
                     updateCandidates()
                 }
                 candidateStrip.addView(tv)
