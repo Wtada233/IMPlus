@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.implus.input.R
+import com.implus.input.utils.Constants
 
 /**
  * 专门负责管理输入法上方的各种功能面板（剪贴板、编辑区等）
