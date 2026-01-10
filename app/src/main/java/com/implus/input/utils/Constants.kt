@@ -38,6 +38,21 @@ object Constants {
     // Keyboard View Defaults
     const val KEY_TEXT_SIZE_RATIO = 0.4f
     const val KEY_MAX_TEXT_WIDTH_RATIO = 0.8f
+    const val KEY_DEFAULT_RADIUS = 24f
+    const val KEY_DEFAULT_FUNC_RADIUS = 12f
+    const val KEY_DEFAULT_SHADOW_OFFSET = 3f
+    const val KEY_DEFAULT_SHADOW_ALPHA = 30
+    const val KEY_DEFAULT_ANIM_DURATION = 200L
+    const val KEY_DEFAULT_RIPPLE_EXPAND_DURATION = 350L
+    const val KEY_DEFAULT_RIPPLE_FADE_DURATION = 200L
+    const val KEY_DEFAULT_SWIPE_THRESHOLD = 50
+    const val KEY_DEFAULT_SPACING = 6
+    const val KEY_DEFAULT_VIBRATION_STRENGTH = 30
+    const val KEY_FLING_VELOCITY_THRESHOLD = 100
+    const val KEY_RIPPLE_QUICK_FADE_MS = 50L
+    const val KEY_BASELINE_MODIFIER = 2f
+    const val KEY_SPACING_DIVIDER = 2f
+    const val KEY_SHADOW_HORIZONTAL_EXTRA = 1f
 
     // Default Colors (Fallback)
     const val COLOR_DEFAULT_BG = -16777216 // Color.BLACK

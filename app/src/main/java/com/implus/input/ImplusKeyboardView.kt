@@ -34,23 +34,6 @@ class ImplusKeyboardView @JvmOverloads constructor(
     var layoutThemeLight: KeyboardTheme? = null
     var layoutThemeDark: KeyboardTheme? = null
 
-    companion object {
-        // Constants moved to Constants.kt or kept if truly local/default
-        private const val DEFAULT_KEY_RADIUS = 24f
-        private const val DEFAULT_FUNC_KEY_RADIUS = 12f
-        private const val DEFAULT_SHADOW_OFFSET = 3f
-        private const val DEFAULT_SHADOW_ALPHA = 30
-        private const val DEFAULT_ANIM_DURATION = 200L
-        private const val DEFAULT_RIPPLE_EXPAND_DURATION = 350L
-        private const val DEFAULT_RIPPLE_FADE_DURATION = 200L
-        
-        private const val DEFAULT_SWIPE_THRESHOLD = 50
-        private const val DEFAULT_SPACING = 6
-        private const val DEFAULT_VIBRATION_STRENGTH = 30
-        
-        private const val FLING_VELOCITY_THRESHOLD = 100
-    }
-
     private fun performVibration() {
         if (!vibrationEnabled) return
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -62,13 +45,13 @@ class ImplusKeyboardView @JvmOverloads constructor(
     }
 
     // Appearance & Animation Properties (Configurable)
-    var keyRadius = DEFAULT_KEY_RADIUS
-    var funcKeyRadius = DEFAULT_FUNC_KEY_RADIUS
-    var shadowOffset = DEFAULT_SHADOW_OFFSET
-    var shadowAlpha = DEFAULT_SHADOW_ALPHA
-    var animDuration = DEFAULT_ANIM_DURATION
-    var rippleExpandDuration = DEFAULT_RIPPLE_EXPAND_DURATION
-    var rippleFadeDuration = DEFAULT_RIPPLE_FADE_DURATION
+    var keyRadius = Constants.KEY_DEFAULT_RADIUS
+    var funcKeyRadius = Constants.KEY_DEFAULT_FUNC_RADIUS
+    var shadowOffset = Constants.KEY_DEFAULT_SHADOW_OFFSET
+    var shadowAlpha = Constants.KEY_DEFAULT_SHADOW_ALPHA
+    var animDuration = Constants.KEY_DEFAULT_ANIM_DURATION
+    var rippleExpandDuration = Constants.KEY_DEFAULT_RIPPLE_EXPAND_DURATION
+    var rippleFadeDuration = Constants.KEY_DEFAULT_RIPPLE_FADE_DURATION
 
     private var currentPage: KeyboardPage? = null
     private var nextPage: KeyboardPage? = null
@@ -87,11 +70,11 @@ class ImplusKeyboardView @JvmOverloads constructor(
     var onSwipeListener: ((Direction) -> Unit)? = null
 
     // Settings
-    var swipeThreshold = DEFAULT_SWIPE_THRESHOLD 
-    var horizontalSpacing = DEFAULT_SPACING
-    var verticalSpacing = DEFAULT_SPACING
+    var swipeThreshold = Constants.KEY_DEFAULT_SWIPE_THRESHOLD
+    var horizontalSpacing = Constants.KEY_DEFAULT_SPACING
+    var verticalSpacing = Constants.KEY_DEFAULT_SPACING
     var vibrationEnabled = true
-    var vibrationStrength = DEFAULT_VIBRATION_STRENGTH
+    var vibrationStrength = Constants.KEY_DEFAULT_VIBRATION_STRENGTH
 
     enum class Direction { LEFT, RIGHT }
 
@@ -115,7 +98,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
             if (e1 != null) {
                 val diffX = e2.x - e1.x
                 val diffY = e2.y - e1.y
-                if (abs(diffX) > abs(diffY) && abs(diffX) > swipeThreshold && abs(velocityX) > FLING_VELOCITY_THRESHOLD) {
+                if (abs(diffX) > abs(diffY) && abs(diffX) > swipeThreshold && abs(velocityX) > Constants.KEY_FLING_VELOCITY_THRESHOLD) {
                     if (diffX > 0) onSwipeListener?.invoke(Direction.RIGHT)
                     else onSwipeListener?.invoke(Direction.LEFT)
                     handled = true
@@ -232,7 +215,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
         var curX = 0f
         val hSpacing = horizontalSpacing.toFloat()
         val vSpacing = verticalSpacing.toFloat()
-        val spacingDivider = 2f
+        val spacingDivider = Constants.KEY_SPACING_DIVIDER
 
         for (key in row.keys) {
             val keyW = key.weight * (w / totalWeight)
@@ -350,7 +333,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
         val shadowColorAlpha = shadowAlpha
         shadowPaint.color = Color.argb(shadowColorAlpha, 0, 0, 0)
         val shadowOff = shadowOffset
-        val horizontalExtra = 1f
+        val horizontalExtra = Constants.KEY_SHADOW_HORIZONTAL_EXTRA
         canvas.drawRoundRect(rect.left - horizontalExtra, rect.top + shadowOff, rect.right + horizontalExtra, rect.bottom + shadowOff, radius, radius, shadowPaint)
     }
 
@@ -380,7 +363,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private fun drawKeyLabel(canvas: Canvas, rect: RectF, label: String, color: Int, textSize: Float) {
         textPaint.color = color
         textPaint.textSize = textSize 
-        val baselineModifier = 2f
+        val baselineModifier = Constants.KEY_BASELINE_MODIFIER
         val baseline = rect.centerY() - (textPaint.fontMetrics.bottom + textPaint.fontMetrics.top) / baselineModifier
         canvas.drawText(label, rect.centerX(), baseline, textPaint)
     }
@@ -469,7 +452,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
             }
             
             alphaAnimator?.cancel()
-            val quickFadeMs = 50L
+            val quickFadeMs = Constants.KEY_RIPPLE_QUICK_FADE_MS
             alphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
                 duration = quickFadeMs
                 addUpdateListener {
