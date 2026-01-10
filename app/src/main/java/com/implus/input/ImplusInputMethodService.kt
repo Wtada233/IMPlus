@@ -25,8 +25,6 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
 
     companion object {
         private const val TAG = "ImplusInputMethodService"
-        private const val CANDIDATE_TEXT_SIZE = 18f
-        private const val CANDIDATE_PADDING_HORIZONTAL = 32
     }
 
     private lateinit var keyboardView: ImplusKeyboardView
@@ -466,6 +464,7 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
     }
 
     private fun updateCandidates() {
+        if (!::candidateStrip.isInitialized) return
         val candidates = inputEngine.getCandidates()
         candidateStrip.removeAllViews()
 
@@ -476,12 +475,23 @@ class ImplusInputMethodService : InputMethodService(), ClipboardManager.OnPrimar
             toolbarView.visibility = View.GONE
             candidateScroll.visibility = View.VISIBLE
             
+            // 获取当前主题中的文字颜色，如果没定义则默认为白色
+            val textColorStr = keyboardView.theme?.keyText
+            val textColor = try {
+                if (textColorStr != null) android.graphics.Color.parseColor(textColorStr) else android.graphics.Color.WHITE
+            } catch (e: Exception) {
+                android.graphics.Color.WHITE
+            }
+
+            val textSize = settings.candidateTextSize
+            val padding = settings.candidatePadding
+
             for (candidate in candidates) {
                 val tv = TextView(this)
                 tv.text = candidate
-                tv.setTextColor(android.graphics.Color.WHITE)
-                tv.textSize = CANDIDATE_TEXT_SIZE
-                tv.setPadding(CANDIDATE_PADDING_HORIZONTAL, 0, CANDIDATE_PADDING_HORIZONTAL, 0)
+                tv.setTextColor(textColor)
+                tv.textSize = textSize
+                tv.setPadding(padding, 0, padding, 0)
                 tv.gravity = android.view.Gravity.CENTER
                 tv.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
                 tv.setBackgroundResource(android.R.drawable.list_selector_background)

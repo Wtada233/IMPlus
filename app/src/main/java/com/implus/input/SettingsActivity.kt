@@ -22,6 +22,7 @@ class SettingsActivity : AppCompatActivity() {
         setupSpacingControl()
         setupSwipeThresholdControl()
         setupAnimationControl()
+        setupAdvancedLayoutControl()
         setupLanguageSettings()
         setupFeedbackControl()
         setupCloseOutside()
@@ -71,6 +72,54 @@ class SettingsActivity : AppCompatActivity() {
                 val real = if (progress < 10) 10 else progress
                 tvAnim.text = "${real}ms"
                 settings.putInt(SettingsManager.KEY_ANIM_DURATION, real)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        // Ripple Duration
+        val seekRipple = findViewById<SeekBar>(R.id.seekbar_ripple_duration)
+        val tvRipple = findViewById<TextView>(R.id.tv_ripple_duration_val)
+        val savedRipple = settings.rippleDuration.toInt()
+        seekRipple.progress = savedRipple
+        tvRipple.text = "${savedRipple}ms"
+        seekRipple.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val real = if (progress < 10) 10 else progress
+                tvRipple.text = "${real}ms"
+                settings.putInt(SettingsManager.KEY_RIPPLE_DURATION, real)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+    }
+
+    private fun setupAdvancedLayoutControl() {
+        // Candidate Text Size
+        val seekSize = findViewById<SeekBar>(R.id.seekbar_candidate_text_size)
+        val tvSize = findViewById<TextView>(R.id.tv_candidate_text_size_val)
+        val savedSize = settings.candidateTextSize.toInt()
+        seekSize.progress = savedSize
+        tvSize.text = "${savedSize}sp"
+        seekSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                tvSize.text = "${progress}sp"
+                settings.putInt(SettingsManager.KEY_CANDIDATE_TEXT_SIZE, progress)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        // Candidate Padding
+        val seekPadding = findViewById<SeekBar>(R.id.seekbar_candidate_padding)
+        val tvPadding = findViewById<TextView>(R.id.tv_candidate_padding_val)
+        val savedPadding = settings.candidatePadding
+        seekPadding.progress = savedPadding
+        tvPadding.text = "${savedPadding}px"
+        seekPadding.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                tvPadding.text = "${progress}px"
+                settings.putInt(SettingsManager.KEY_CANDIDATE_PADDING, progress)
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
