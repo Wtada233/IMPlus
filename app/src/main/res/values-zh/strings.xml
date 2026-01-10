@@ -22,6 +22,7 @@
     <string name="pref_close_outside">点击外部关闭键盘</string>
     <string name="open_settings">打开设置</string>
 
+    <string name="pref_category_behavior">行为与交互</string>
     <string name="pref_swipe_threshold_title">滑动灵敏度 (越小越灵敏)</string>
     <string name="pref_category_language">语言相关设置</string>
     <string name="pref_enable_pc_layout">启用 PC 布局 (五行)</string>

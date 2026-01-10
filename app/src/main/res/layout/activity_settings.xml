@@ -84,13 +84,6 @@
             <TextView android:id="@+id/tv_v_spacing_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="6px" />
         </LinearLayout>
 
-        <!-- Swipe Threshold -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_swipe_threshold_title" android:layout_marginTop="8dp"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-            <SeekBar android:id="@+id/seekbar_swipe_threshold" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="1000" android:progress="50" />
-            <TextView android:id="@+id/tv_swipe_threshold_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="50px" />
-        </LinearLayout>
-
         <!-- New Animation Settings -->
         <TextView
             android:layout_width="match_parent"
@@ -113,6 +106,23 @@
             <SeekBar android:id="@+id/seekbar_ripple_duration" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="1000" android:progress="350" />
             <TextView android:id="@+id/tv_ripple_duration_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="350ms" />
         </LinearLayout>
+
+        <!-- Behavior Settings -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_category_behavior"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:textColor="?attr/colorPrimary"/>
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_swipe_threshold_title" android:layout_marginTop="8dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <SeekBar android:id="@+id/seekbar_swipe_threshold" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="1000" android:progress="50" />
+            <TextView android:id="@+id/tv_swipe_threshold_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="50px" />
+        </LinearLayout>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_close_outside" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_close_outside" />
 
         <!-- Advanced Layout Settings -->
         <TextView
@@ -166,7 +176,6 @@
         <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_pc_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_enable_pc_layout" />
 
         <Space android:layout_width="match_parent" android:layout_height="32dp" />
-        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_close_outside" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pref_close_outside" />
 
     </LinearLayout>
 </ScrollView>
