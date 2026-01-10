@@ -16,12 +16,12 @@ class UIManager(private val assetRes: AssetResourceManager) {
     fun applyThemeToStaticViews(root: View?) {
         val view = root ?: return
         
-        val panelBg = assetRes.getColor("panel_background", android.graphics.Color.DKGRAY)
-        val toolbarBg = assetRes.getColor("toolbar_background", android.graphics.Color.BLACK)
-        val keyText = assetRes.getColor("key_text", android.graphics.Color.WHITE)
+        val panelBg = assetRes.getColor("panel_background", Constants.COLOR_PANEL_BG_DEFAULT)
+        val toolbarBg = assetRes.getColor("toolbar_background", Constants.COLOR_TOOLBAR_BG_DEFAULT)
+        val keyText = assetRes.getColor("key_text", Constants.COLOR_DEFAULT_KEY_TEXT)
         val rippleColor = assetRes.getColor("ripple_color", Constants.DEFAULT_RIPPLE_COLOR)
-        val accentError = assetRes.getColor("accent_error", android.graphics.Color.RED)
-        val dividerColor = assetRes.getColor("divider_color", android.graphics.Color.LTGRAY)
+        val accentError = assetRes.getColor("accent_error", Constants.COLOR_ACCENT_ERROR_DEFAULT)
+        val dividerColor = assetRes.getColor("divider_color", Constants.COLOR_DIVIDER_DEFAULT)
 
         view.findViewById<View>(R.id.candidate_container)?.setBackgroundColor(toolbarBg)
         view.findViewById<View>(R.id.toolbar_view)?.parent?.let { (it as View).setBackgroundColor(panelBg) }

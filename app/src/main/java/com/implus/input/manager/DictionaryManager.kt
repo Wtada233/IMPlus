@@ -22,23 +22,32 @@ class DictionaryManager(private val context: Context) {
                 val inputStream = context.assets.open(path)
                 val reader = BufferedReader(InputStreamReader(inputStream))
                 val loadedWords = mutableListOf<Word>()
+                var count = 0
+                val maxWords = 50000 // Limit to prevent OOM
                 
                 reader.forEachLine { line ->
+                    if (count >= maxWords) return@forEachLine
                     val parts = line.split("\t", "=", " ", limit = 2)
                     if (parts.isNotEmpty()) {
                         val word = parts[0].trim()
                         val freq = if (parts.size > 1) parts[1].trim().toIntOrNull() ?: 0 else 0
                         if (word.isNotEmpty()) {
                             loadedWords.add(Word(word, freq))
+                            count++
                         }
                     }
                 }
                 // 必须按字母顺序排序，以便进行二分查找前缀
-                words = loadedWords.sortedBy { it.text.lowercase() }
+                // 使用 ROOT Locale 确保排序与后续搜索的一致性
+                words = loadedWords.sortedBy { it.text.lowercase(java.util.Locale.ROOT) }
                 currentDictPath = path
                 Log.d("DictionaryManager", "Loaded ${words.size} words with frequencies from $path")
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Log.e("DictionaryManager", "Failed to load dictionary: $path", e)
+                words = emptyList()
+                currentDictPath = null
+            } catch (e: OutOfMemoryError) {
+                Log.e("DictionaryManager", "OOM loading dictionary: $path", e)
                 words = emptyList()
                 currentDictPath = null
             }
@@ -49,7 +58,7 @@ class DictionaryManager(private val context: Context) {
         if (prefix.isBlank() || words.isEmpty()) {
             return emptyList()
         }
-        val lowerPrefix = prefix.lowercase()
+        val lowerPrefix = prefix.lowercase(java.util.Locale.ROOT)
         
         val firstMatchIndex = findFirstMatchIndex(lowerPrefix)
         if (firstMatchIndex == -1) {
@@ -66,7 +75,7 @@ class DictionaryManager(private val context: Context) {
         
         while (low <= high) {
             val mid = (low + high) / 2
-            val midWord = words[mid].text.lowercase()
+            val midWord = words[mid].text.lowercase(java.util.Locale.ROOT)
             if (midWord.startsWith(lowerPrefix)) {
                 firstMatchIndex = mid
                 high = mid - 1
@@ -83,7 +92,7 @@ class DictionaryManager(private val context: Context) {
         val matches = mutableListOf<Word>()
         for (i in startIndex until words.size) {
             val w = words[i]
-            if (w.text.lowercase().startsWith(lowerPrefix)) {
+            if (w.text.lowercase(java.util.Locale.ROOT).startsWith(lowerPrefix)) {
                 matches.add(w)
             } else {
                 break

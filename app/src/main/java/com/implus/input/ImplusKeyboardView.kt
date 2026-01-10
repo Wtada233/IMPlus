@@ -35,9 +35,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
     var layoutThemeDark: KeyboardTheme? = null
 
     companion object {
-        private const val TEXT_SIZE_RATIO = 0.4f
-        private const val MAX_TEXT_WIDTH_RATIO = 0.8f
-        
+        // Constants moved to Constants.kt or kept if truly local/default
         private const val DEFAULT_KEY_RADIUS = 24f
         private const val DEFAULT_FUNC_KEY_RADIUS = 12f
         private const val DEFAULT_SHADOW_OFFSET = 3f
@@ -133,16 +131,16 @@ class ImplusKeyboardView @JvmOverloads constructor(
         val isDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         assetRes.refresh()
 
-        // 1. 设置默认颜色 (从 Assets 加载)
-        colorBg = assetRes.getColor("keyboard_background", Color.BLACK)
-        colorKey = assetRes.getColor("key_background", Color.DKGRAY)
-        colorFuncKey = assetRes.getColor("func_key_background", Color.GRAY)
-        colorText = assetRes.getColor("key_text", Color.WHITE)
-        colorFuncText = assetRes.getColor("func_key_text", Color.WHITE)
-        colorSticky = assetRes.getColor("sticky_inactive_background", Color.GRAY)
-        colorStickyActive = assetRes.getColor("sticky_active_background", Color.BLUE)
-        colorStickyTextActive = assetRes.getColor("sticky_active_text", Color.WHITE)
-        colorRipple = assetRes.getColor("ripple_color", Color.WHITE)
+        // 1. 设置默认颜色 (从 Assets 加载或使用 Constants 兜底)
+        colorBg = assetRes.getColor("keyboard_background", Constants.COLOR_DEFAULT_BG)
+        colorKey = assetRes.getColor("key_background", Constants.COLOR_DEFAULT_KEY_BG)
+        colorFuncKey = assetRes.getColor("func_key_background", Constants.COLOR_DEFAULT_FUNC_KEY_BG)
+        colorText = assetRes.getColor("key_text", Constants.COLOR_DEFAULT_KEY_TEXT)
+        colorFuncText = assetRes.getColor("func_key_text", Constants.COLOR_DEFAULT_FUNC_KEY_TEXT)
+        colorSticky = assetRes.getColor("sticky_inactive_background", Constants.COLOR_DEFAULT_STICKY_INACTIVE)
+        colorStickyActive = assetRes.getColor("sticky_active_background", Constants.COLOR_DEFAULT_STICKY_ACTIVE)
+        colorStickyTextActive = assetRes.getColor("sticky_active_text", Constants.COLOR_DEFAULT_STICKY_TEXT_ACTIVE)
+        colorRipple = assetRes.getColor("ripple_color", Constants.DEFAULT_RIPPLE_COLOR)
 
         // 2. 根据当前模式选择 JSON 覆盖 (Layout 级别覆盖)
         val activeTheme = if (isDark) layoutThemeDark ?: theme else layoutThemeLight ?: theme
@@ -251,12 +249,12 @@ class ImplusKeyboardView @JvmOverloads constructor(
     }
 
     private fun createKeyDrawable(key: KeyboardKey, rect: RectF, rowHeight: Float): KeyDrawable {
-        var textSize = rowHeight * TEXT_SIZE_RATIO
+        var textSize = rowHeight * Constants.KEY_TEXT_SIZE_RATIO
         val label = key.label ?: ""
         if (label.isNotEmpty()) {
             textPaint.textSize = textSize
             val textW = textPaint.measureText(label)
-            val maxTextW = rect.width() * MAX_TEXT_WIDTH_RATIO
+            val maxTextW = rect.width() * Constants.KEY_MAX_TEXT_WIDTH_RATIO
             if (textW > maxTextW) {
                 textSize *= (maxTextW / textW)
             }

@@ -13,11 +13,7 @@ class PanelManager(
     private val onCommitText: (String) -> Unit
 ) {
     companion object {
-        private const val EMPTY_VIEW_PADDING = 32
-        private const val ITEM_PADDING_HORIZONTAL = 16
-        private const val ITEM_PADDING_VERTICAL = 12
-        private const val ITEM_TEXT_SIZE = 16f
-        private const val DIVIDER_HEIGHT = 1
+        // Constants moved to Constants.kt
     }
 
     var theme: com.implus.input.layout.KeyboardTheme? = null
@@ -79,21 +75,26 @@ class PanelManager(
         val emptyView = TextView(context).apply {
             text = assetRes.getString("clipboard_empty")
             setTextColor(textColor)
-            setPadding(EMPTY_VIEW_PADDING, EMPTY_VIEW_PADDING, EMPTY_VIEW_PADDING, EMPTY_VIEW_PADDING)
+            setPadding(
+                Constants.PANEL_EMPTY_VIEW_PADDING, 
+                Constants.PANEL_EMPTY_VIEW_PADDING, 
+                Constants.PANEL_EMPTY_VIEW_PADDING, 
+                Constants.PANEL_EMPTY_VIEW_PADDING
+            )
         }
         clipboardList.addView(emptyView)
     }
 
     private fun addHistoryItems(context: android.content.Context, history: List<String>, textColor: Int) {
         val density = context.resources.displayMetrics.density
-        val padH = (ITEM_PADDING_HORIZONTAL * density).toInt()
-        val padV = (ITEM_PADDING_VERTICAL * density).toInt()
+        val padH = (Constants.PANEL_ITEM_PADDING_HORIZONTAL * density).toInt()
+        val padV = (Constants.PANEL_ITEM_PADDING_VERTICAL * density).toInt()
 
         for (text in history) {
             val tv = TextView(context).apply {
                 this.text = text
                 setTextColor(textColor)
-                textSize = ITEM_TEXT_SIZE
+                textSize = Constants.PANEL_ITEM_TEXT_SIZE
                 setPadding(padH, padV, padH, padV)
                 setBackgroundResource(android.R.drawable.list_selector_background)
                 setOnClickListener {
@@ -104,8 +105,8 @@ class PanelManager(
             clipboardList.addView(tv)
             
             val divider = View(context).apply {
-                layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, DIVIDER_HEIGHT)
-                val dividerColor = assetRes.getColor("divider_color", android.graphics.Color.LTGRAY)
+                layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Constants.PANEL_DIVIDER_HEIGHT)
+                val dividerColor = assetRes.getColor("divider_color", Constants.COLOR_DIVIDER_DEFAULT)
                 setBackgroundColor(dividerColor)
             }
             clipboardList.addView(divider)

@@ -27,4 +27,30 @@ object Constants {
     // 日志标签
     const val TAG_SERVICE = "ImplusIME"
     const val TAG_VIEW = "ImplusView"
+
+    // Panel Defaults
+    const val PANEL_EMPTY_VIEW_PADDING = 32
+    const val PANEL_ITEM_PADDING_HORIZONTAL = 16
+    const val PANEL_ITEM_PADDING_VERTICAL = 12
+    const val PANEL_ITEM_TEXT_SIZE = 16f
+    const val PANEL_DIVIDER_HEIGHT = 1
+
+    // Keyboard View Defaults
+    const val KEY_TEXT_SIZE_RATIO = 0.4f
+    const val KEY_MAX_TEXT_WIDTH_RATIO = 0.8f
+
+    // Default Colors (Fallback)
+    const val COLOR_DEFAULT_BG = -16777216 // Color.BLACK
+    const val COLOR_DEFAULT_KEY_BG = -12303292 // Color.DKGRAY
+    const val COLOR_DEFAULT_FUNC_KEY_BG = -7829368 // Color.GRAY
+    const val COLOR_DEFAULT_KEY_TEXT = -1 // Color.WHITE
+    const val COLOR_DEFAULT_FUNC_KEY_TEXT = -1 // Color.WHITE
+    const val COLOR_DEFAULT_STICKY_INACTIVE = -7829368 // Color.GRAY
+    const val COLOR_DEFAULT_STICKY_ACTIVE = -16776961 // Color.BLUE
+    const val COLOR_DEFAULT_STICKY_TEXT_ACTIVE = -1 // Color.WHITE
+    
+    const val COLOR_PANEL_BG_DEFAULT = -12303292 // Color.DKGRAY
+    const val COLOR_TOOLBAR_BG_DEFAULT = -16777216 // Color.BLACK
+    const val COLOR_ACCENT_ERROR_DEFAULT = -65536 // Color.RED
+    const val COLOR_DIVIDER_DEFAULT = -3355444 // Color.LTGRAY
 }

@@ -65,6 +65,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     }
     
     private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val loadExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
     private var currentLoadTaskId = 0
     
     private lateinit var toolbarView: View
@@ -89,6 +90,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
         val cm = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
         cm.removePrimaryClipChangedListener(this)
         settings.unregisterListener(this)
+        loadExecutor.shutdownNow()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -336,8 +338,8 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
         val isPcLayout = settings.usePcLayout(langId)
         val taskId = ++currentLoadTaskId
 
-        // 切换到后台线程处理加载逻辑
-        Thread {
+        // 切换到后台线程处理加载逻辑 (串行执行)
+        loadExecutor.execute {
             val config = LayoutManager.loadLanguageConfig(this, langId)
             mainHandler.post {
                 if (taskId != currentLoadTaskId) return@post
@@ -349,7 +351,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
                 }
                 updateCandidates()
             }
-        }.start()
+        }
     }
 
     private fun setupEngine(langId: String, isPc: Boolean) {
@@ -367,7 +369,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
         val startTime = SystemClock.elapsedRealtime()
         val taskId = currentLoadTaskId
         
-        Thread {
+        loadExecutor.execute {
             val layout = LayoutManager.loadLayout(this, langId, fileName)
             mainHandler.post {
                 if (taskId != currentLoadTaskId) return@post
@@ -375,20 +377,20 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
                     onLayoutLoaded(loadedLayout, startTime)
                 }
             }
-        }.start()
+        }
     }
 
     private fun onLayoutLoaded(loadedLayout: KeyboardLayout, startTime: Long) {
         currentLayout = loadedLayout
         Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
         
-        // 异步加载词典
+        // 异步加载词典 (放入同一队列以确保顺序，或独立执行均可，这里为了不阻塞后续UI操作选择独立execute)
         if (inputEngine is DictionaryEngine) {
-            Thread {
+            loadExecutor.execute {
                 currentLanguage?.dictionary?.let { dictFile ->
                     dictManager.loadDictionary(currentLanguage?.id ?: "", dictFile)
                 }
-            }.start()
+            }
         } else {
             dictManager.clear()
         }
