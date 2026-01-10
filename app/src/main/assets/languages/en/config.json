@@ -5,5 +5,9 @@
   "dictionary": "en_US.dict",
   "pcLayout": "pc_layout.json",
   "mobileLayout": "mobile_layout.json",
-  "defaultPage": "main"
+  "defaultPage": "main",
+  "inputTypePages": {
+    "number": "symbols",
+    "phone": "symbols"
+  }
 }

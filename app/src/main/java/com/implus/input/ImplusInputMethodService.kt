@@ -685,17 +685,29 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
             panelManager.switchPanel(PanelManager.PanelType.KEYBOARD)
         }
         
-        // 自动适配输入框类型：如果是数字或电话，自动切换到 symbols 页面
+        // 数据驱动的输入类型适配逻辑
         info?.let {
-            val inputType = it.inputType and EditorInfo.TYPE_MASK_CLASS
-            val isNumber = inputType == EditorInfo.TYPE_CLASS_NUMBER || inputType == EditorInfo.TYPE_CLASS_PHONE
-            val defaultPageId = currentLanguage?.defaultPage ?: "main"
-            val targetPageId = if (isNumber) "symbols" else defaultPageId
-            
+            val targetPageId = resolveTargetPageId(it)
             currentLayout?.pages?.find { p -> p.id == targetPageId }?.let { page ->
                 keyboardView.setPage(page)
                 updatePageIndicator(page)
             }
         }
+    }
+
+    private fun resolveTargetPageId(info: EditorInfo): String {
+        val config = currentLanguage ?: return "main"
+        val inputClass = info.inputType and EditorInfo.TYPE_MASK_CLASS
+        
+        // 将 Android 输入类型映射为语义化的 key
+        val typeKey = when (inputClass) {
+            EditorInfo.TYPE_CLASS_NUMBER -> "number"
+            EditorInfo.TYPE_CLASS_PHONE -> "phone"
+            EditorInfo.TYPE_CLASS_DATETIME -> "datetime"
+            else -> "text"
+        }
+        
+        // 优先从 JSON 配置中获取，没有则使用默认页面
+        return config.inputTypePages?.get(typeKey) ?: config.defaultPage
     }
 }

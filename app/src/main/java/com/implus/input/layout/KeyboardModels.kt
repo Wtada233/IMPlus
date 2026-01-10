@@ -34,6 +34,7 @@ data class LanguageConfig(
     @SerializedName("pcLayout") val pcLayout: String = "pc_layout.json",
     @SerializedName("mobileLayout") val mobileLayout: String = "mobile_layout.json",
     @SerializedName("defaultPage") val defaultPage: String = "main",
+    @SerializedName("inputTypePages") val inputTypePages: Map<String, String>? = null,
     @SerializedName("engineConfig") val engineConfig: Map<String, String> = emptyMap()
 )
 
