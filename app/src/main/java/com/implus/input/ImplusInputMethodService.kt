@@ -346,7 +346,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
                 if (config != null) {
                     currentLanguage = config
                     val layoutFile = if (isPcLayout) config.pcLayout else config.mobileLayout
-                    setupEngine(langId, isPcLayout)
+                    setupEngine(langId, isPcLayout, currentInputEditorInfo)
                     loadLayout(langId, layoutFile)
                 }
                 updateCandidates()
@@ -354,15 +354,35 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
         }
     }
 
-    private fun setupEngine(langId: String, isPc: Boolean) {
+    private fun setupEngine(langId: String, isPc: Boolean, info: EditorInfo?) {
         val config = currentLanguage ?: return
         val dictEnabled = settings.isDictEnabled(langId, isPc)
         
-        inputEngine = if (config.engine == "dictionary" && dictEnabled) {
+        // 识别密码框或明确要求不显示建议的输入框
+        val isPassword = isPasswordType(info)
+        val noSuggestions = info?.let { 
+            (it.inputType and EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0 
+        } ?: false
+
+        val shouldEnableDict = config.engine == "dictionary" && 
+                               dictEnabled && 
+                               !isPassword && 
+                               !noSuggestions
+        
+        inputEngine = if (shouldEnableDict) {
             DictionaryEngine(dictManager)
         } else {
             RawEngine()
         }
+    }
+
+    private fun isPasswordType(info: EditorInfo?): Boolean {
+        if (info == null) return false
+        val variation = info.inputType and EditorInfo.TYPE_MASK_VARIATION
+        return variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD ||
+               variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+               variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD ||
+               variation == EditorInfo.TYPE_NUMBER_VARIATION_PASSWORD
     }
 
     private fun loadLayout(langId: String, fileName: String) {
@@ -651,6 +671,10 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) { 
         super.onStartInputView(info, restarting)
         applyKeyboardSettings()
+        
+        // 动态根据当前输入框类型重新配置引擎（如处理密码框）
+        val langId = settings.currentLangId
+        setupEngine(langId, settings.usePcLayout(langId), info)
         
         // 只有在非重启（如切换输入框）时才重置引擎
         if (!restarting) {

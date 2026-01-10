@@ -8,6 +8,10 @@ import java.io.InputStreamReader
 class DictionaryManager(private val context: Context) {
     data class Word(val text: String, val freq: Int)
 
+    companion object {
+        private const val MAX_WORDS_LIMIT = 320000
+    }
+
     private val loadLock = Any()
     @Volatile private var words = listOf<Word>()
     @Volatile private var currentDictPath: String? = null
@@ -23,7 +27,7 @@ class DictionaryManager(private val context: Context) {
                 val reader = BufferedReader(InputStreamReader(inputStream))
                 val loadedWords = mutableListOf<Word>()
                 var count = 0
-                val maxWords = 50000 // Limit to prevent OOM
+                val maxWords = MAX_WORDS_LIMIT // 提高上限以支持更大词库
                 
                 reader.forEachLine { line ->
                     if (count >= maxWords) return@forEachLine
