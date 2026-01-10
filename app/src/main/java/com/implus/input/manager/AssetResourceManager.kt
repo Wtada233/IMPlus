@@ -31,7 +31,12 @@ class AssetResourceManager(private val context: Context) {
         val langCode = locale.language
         val countryCode = locale.country
         
-        val availableI18n = try { context.assets.list("i18n") ?: emptyArray() } catch (e: Exception) { emptyArray() }
+        val availableI18n = try { 
+            context.assets.list("i18n") ?: emptyArray() 
+        } catch (e: java.io.IOException) {
+            android.util.Log.e("AssetResourceManager", "Failed to list assets", e)
+            emptyArray()
+        }
         
         val fullMatch = "${langCode}_$countryCode.json"
         val langMatch = "$langCode.json"
@@ -66,7 +71,15 @@ class AssetResourceManager(private val context: Context) {
             val result: Map<String, String> = gson.fromJson(reader, type)
             reader.close()
             result
+        } catch (e: java.io.IOException) {
+            android.util.Log.e("AssetResourceManager", "IO error loading $path", e)
+            emptyMap()
+        } catch (e: com.google.gson.JsonSyntaxException) {
+            android.util.Log.e("AssetResourceManager", "JSON syntax error in $path", e)
+            emptyMap()
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            // Fallback for other unexpected errors
+            android.util.Log.e("AssetResourceManager", "Unknown error loading $path", e)
             emptyMap()
         }
     }

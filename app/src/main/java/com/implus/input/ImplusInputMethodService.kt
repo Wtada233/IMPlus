@@ -1,3 +1,4 @@
+@file:Suppress("TooManyFunctions")
 package com.implus.input
 
 import android.content.Context

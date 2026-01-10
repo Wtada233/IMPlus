@@ -78,23 +78,17 @@ class EngineAndGestureTest {
             var detectedDirection: ImplusKeyboardView.Direction? = null
             view.onSwipeListener = { detectedDirection = it }
 
-            // 模拟向左滑动 (X 坐标从 200 减小到 50)
+            // 模拟向左滑动，增加位移和缩短时间以产生足够速度
             val downTime = android.os.SystemClock.uptimeMillis()
-            val eventDown = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, 200f, 100f, 0)
-            val eventMove = MotionEvent.obtain(downTime, downTime + 50, MotionEvent.ACTION_MOVE, 100f, 100f, 0)
-            val eventUp = MotionEvent.obtain(downTime, downTime + 100, MotionEvent.ACTION_UP, 50f, 100f, 0)
-
-            // 注入事件
-            view.onTouchEvent(eventDown)
-            view.onTouchEvent(eventMove)
-            view.onTouchEvent(eventUp)
+            // 注入事件序列
+            view.onTouchEvent(MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, 500f, 100f, 0))
+            view.onTouchEvent(MotionEvent.obtain(downTime, downTime + 10, MotionEvent.ACTION_MOVE, 250f, 100f, 0))
+            view.onTouchEvent(MotionEvent.obtain(downTime, downTime + 20, MotionEvent.ACTION_UP, 50f, 100f, 0))
             
             assertEquals(50, view.swipeThreshold)
-            // 验证是否触发了监听器（由于是通过模拟事件触发 GestureDetector 内部的 onFling，
-            // 实际可能受模拟环境速度影响，但添加断言是良好的实践）
-            // assertNotNull(detectedDirection)
-            
-            eventDown.recycle(); eventMove.recycle(); eventUp.recycle()
+            // 验证是否触发了监听器
+            assertNotNull("Should detect a swipe direction", detectedDirection)
+            assertEquals(ImplusKeyboardView.Direction.LEFT, detectedDirection)
         }
     }
 }

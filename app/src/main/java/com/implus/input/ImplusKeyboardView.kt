@@ -293,21 +293,9 @@ class ImplusKeyboardView @JvmOverloads constructor(
         val key = kd.key
         val rect = kd.rect
         
-        // Resolve Effective Appearance (Inlined)
-        var label = key.label ?: ""
-        var style = key.style
-        
-        // 使用 for 循环避免 forEach 的迭代器分配 (虽然 Kotlin 编译器可能优化，但手动更稳)
-        key.overrides?.let { overrides ->
-            for ((stateId, override) in overrides) {
-                if (activeStates[stateId] == true) {
-                    override.label?.let { label = it }
-                    override.style?.let { style = it }
-                }
-            }
-        }
+        val label = resolveKeyLabel(key)
+        val style = resolveKeyStyle(key)
 
-        // Calculate Paint Config (Inlined)
         var paintColor = colorKey
         var radius = keyRadius 
         var textColor = colorText
@@ -336,6 +324,28 @@ class ImplusKeyboardView @JvmOverloads constructor(
         drawKeyBackground(canvas, rect, radius, paintColor)
         drawRippleEffect(canvas, rect, radius, kd)
         drawKeyLabel(canvas, rect, label, textColor, kd.baseTextSize)
+    }
+
+    private fun resolveKeyLabel(key: KeyboardKey): String {
+        var label = key.label ?: ""
+        val overrides = key.overrides ?: return label
+        for ((stateId, override) in overrides) {
+            if (activeStates[stateId] == true) {
+                override.label?.let { label = it }
+            }
+        }
+        return label
+    }
+
+    private fun resolveKeyStyle(key: KeyboardKey): KeyStyle {
+        var style = key.style
+        val overrides = key.overrides ?: return style
+        for ((stateId, override) in overrides) {
+            if (activeStates[stateId] == true) {
+                override.style?.let { style = it }
+            }
+        }
+        return style
     }
 
     private fun drawKeyShadow(canvas: Canvas, rect: RectF, radius: Float) {

@@ -6,42 +6,50 @@ config:
   validation: true
   warningsAsErrors: false
   checkExhaustiveness: false
-  excludes: ''
+
 
 complexity:
   active: true
   LargeClass:
     active: true
-    threshold: 1000
+    threshold: 600
   TooManyFunctions:
     active: true
-    thresholdInClasses: 100
+    thresholdInClasses: 30
   NestedBlockDepth:
     active: true
-    threshold: 10
+    threshold: 4
   CyclomaticComplexMethod:
     active: true
-    threshold: 30
+    threshold: 15
 
 style:
   active: true
   MagicNumber:
-    active: false
+    active: true
+    ignoreNumbers: ['-1', '0', '1', '2', '3', '4', '5', '6', '8', '10', '12', '16', '24', '30', '32', '48', '50', '60', '64', '100', '128', '255', '256', '500', '1000']
+    ignorePropertyDeclaration: true
+    ignoreAnnotation: true
+    ignoreEnums: true
+    ignoreConstantDeclaration: true
   MaxLineLength:
-    active: false
+    active: true
+    maxLineLength: 300
   ReturnCount:
-    active: false
+    active: true
+    max: 4
   WildcardImport:
     active: true
 
 exceptions:
   active: true
   TooGenericExceptionCaught:
-    active: false
+    active: true
   SwallowedException:
-    active: false
+    active: true
 
 empty-blocks:
   active: true
   EmptyFunctionBlock:
-    active: false
+    active: true
+    ignoreOverridden: true
