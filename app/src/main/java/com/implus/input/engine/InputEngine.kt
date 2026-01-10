@@ -1,5 +1,6 @@
 package com.implus.input.engine
 
+import android.view.KeyEvent
 import android.view.inputmethod.InputConnection
 import com.implus.input.layout.KeyboardKey
 import com.implus.input.manager.DictionaryManager
@@ -46,32 +47,53 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
             return false
         }
 
-        // 确定按键文本内容
-        var text: String? = null
+        // 确定最终生效的输入内容和 KeyCode
+        var effText: String? = null
         if (key.text?.isJsonPrimitive == true && key.text.asJsonPrimitive.isString) {
-            text = key.text.asString
+            effText = key.text.asString
         }
-        
-        // 考虑 overrides
+        var effKeyCode = key.parsedKeyCode
+
         key.overrides?.forEach { (id, override) ->
-            if (activeStates[id] == true && override.text?.isJsonPrimitive == true) {
-                text = override.text.asString
+            if (activeStates[id] == true) {
+                override.text?.let { 
+                    effText = it.asString
+                    effKeyCode = override.parsedKeyCode
+                }
             }
         }
 
-        if (text != null && text!!.length == 1 && text!![0].isLetter()) {
-            composingText += text
+        // 如果是字母键 A-Z
+        if (effKeyCode >= KeyEvent.KEYCODE_A && effKeyCode <= KeyEvent.KEYCODE_Z) {
+            val isShift = activeStates["shift"] == true
+            val isCaps = activeStates["caps"] == true
+            val isUpper = isShift xor isCaps
+            
+            val baseChar = 'a' + (effKeyCode - KeyEvent.KEYCODE_A)
+            val char = if (isUpper) baseChar.uppercaseChar() else baseChar
+            
+            composingText += char
             updateCandidates(ic)
             return true
-        } else {
-            // 如果按下了非字母键（如空格、回车），提交当前内容并重置
-            if (composingText.isNotEmpty()) {
-                ic.commitText(composingText, 1)
-                reset()
-                ic.setComposingText("", 1)
+        } 
+        
+        // 处理其他单字符输入（如数字、符号）
+        if (effText != null && effText!!.length == 1) {
+            val char = effText!![0]
+            if (char.isLetterOrDigit()) {
+                composingText += char
+                updateCandidates(ic)
+                return true
             }
-            return false
         }
+
+        // 如果按下了非组合键（如空格、回车），提交当前内容并重置
+        if (composingText.isNotEmpty()) {
+            ic.commitText(composingText, 1)
+            reset()
+            ic.setComposingText("", 1)
+        }
+        return false
     }
 
     private fun updateCandidates(ic: InputConnection) {
