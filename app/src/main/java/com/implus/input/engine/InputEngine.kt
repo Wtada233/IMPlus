@@ -34,7 +34,7 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
             if (composingText.isNotEmpty()) {
                 composingText = composingText.substring(0, composingText.length - 1)
                 updateCandidates(ic)
-                return composingText.isNotEmpty()
+                return true // 只要之前有联想词，就拦截退格动作，防止 Service 重复删除
             }
             return false
         }

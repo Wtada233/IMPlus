@@ -20,29 +20,34 @@ class AssetResourceManager(private val context: Context) {
      * 根据当前系统语言和深浅色模式刷新缓存
      */
     fun refresh() {
-        // 1. 加载语言：尝试匹配当前语言代码，找不到则回退到 en
+        // 1. 加载语言：先加载 en.json 作为兜底，再叠加当前语言
+        val baseStrings = loadJson("i18n/en.json")
+        
         val locale = context.resources.configuration.locales[0]
         val langCode = locale.language
         val countryCode = locale.country
         
-        var langFile = "i18n/en.json" // 默认回退
         val availableI18n = try { context.assets.list("i18n") ?: emptyArray() } catch (e: Exception) { emptyArray() }
         
-        // 优先级：语言_国家 (zh_CN.json) > 语言 (zh.json) > en.json
         val fullMatch = "${langCode}_$countryCode.json"
         val langMatch = "$langCode.json"
         
-        when {
-            availableI18n.contains(fullMatch) -> langFile = "i18n/$fullMatch"
-            availableI18n.contains(langMatch) -> langFile = "i18n/$langMatch"
+        val currentStrings = when {
+            availableI18n.contains(fullMatch) -> loadJson("i18n/$fullMatch")
+            availableI18n.contains(langMatch) -> loadJson("i18n/$langMatch")
+            else -> emptyMap()
         }
         
-        strings = loadJson(langFile)
+        // 合并资源，currentStrings 覆盖 baseStrings
+        strings = baseStrings.toMutableMap().apply { putAll(currentStrings) }
 
-        // 2. 加载主题
+        // 2. 加载主题：默认加载 light.json 兜底
+        val baseColors = loadJson("themes/light.json")
         val isDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        val themeFile = if (isDark) "themes/dark.json" else "themes/light.json"
-        colors = loadJson(themeFile)
+        
+        val currentColors = if (isDark) loadJson("themes/dark.json") else emptyMap()
+        
+        colors = baseColors.toMutableMap().apply { putAll(currentColors) }
     }
 
     private fun loadJson(path: String): Map<String, String> {

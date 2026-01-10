@@ -36,6 +36,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     private val dictManager by lazy { DictionaryManager(this) }
     
     private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var currentLoadTaskId = 0
     
     // 框架核心状态：仅追踪 JSON 中定义的 ID
     private val activeStates = mutableMapOf<String, Boolean>()
@@ -355,11 +356,13 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     private fun reloadLanguage() {
         val langId = settings.currentLangId
         val isPcLayout = settings.usePcLayout(langId)
+        val taskId = ++currentLoadTaskId
 
         // 切换到后台线程处理加载逻辑
         Thread {
             val config = LayoutManager.loadLanguageConfig(this, langId)
             mainHandler.post {
+                if (taskId != currentLoadTaskId) return@post
                 if (config != null) {
                     currentLanguage = config
                     val layoutFile = if (isPcLayout) config.pcLayout else config.mobileLayout
@@ -384,10 +387,12 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
 
     private fun loadLayout(langId: String, fileName: String) {
         val startTime = SystemClock.elapsedRealtime()
+        val taskId = currentLoadTaskId
         
         Thread {
             val layout = LayoutManager.loadLayout(this, langId, fileName)
             mainHandler.post {
+                if (taskId != currentLoadTaskId) return@post
                 layout?.let { loadedLayout ->
                     currentLayout = loadedLayout
                     Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
