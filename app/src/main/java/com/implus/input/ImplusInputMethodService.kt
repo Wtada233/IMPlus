@@ -462,14 +462,23 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     private fun handleKey(key: KeyboardKey) {
         val ic = currentInputConnection ?: return
 
-        // 1. 引擎优先：如果输入引擎（如拼音）截获了此键，则直接返回
-        if (inputEngine.processKey(key, ic, calculateTotalMetaState())) {
-            updateCandidates()
-            resetTransientStates()
-            return
+        // 1. 确定最终生效的输入内容 (考虑 overrides)，这一步提前，供引擎和后续逻辑共同使用
+        var effInputJson = key.text
+        var effKeyCode = key.parsedKeyCode
+        key.overrides?.forEach { (stateId, override) ->
+            if (activeStates[stateId] == true) {
+                override.text?.let { 
+                    effInputJson = it 
+                    effKeyCode = override.parsedKeyCode
+                }
+            }
         }
         
-        // 2. 状态切换逻辑 (完全数据驱动，基于 JSON 的 sticky 属性)
+        val effText = if (effInputJson?.isJsonPrimitive == true && effInputJson!!.asJsonPrimitive.isString) {
+            effInputJson!!.asString
+        } else null
+
+        // 3. 状态切换逻辑 (完全数据驱动，基于 JSON 的 sticky 属性)
         if (key.sticky != null && key.id != null) {
             val currentState = activeStates[key.id] ?: false
             activeStates[key.id] = !currentState
@@ -480,31 +489,26 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
             return
         }
 
-        // 3. 确定最终生效的输入内容 (考虑 overrides)
-        var effInput = key.text
-        var effKeyCode = key.parsedKeyCode
-        key.overrides?.forEach { (stateId, override) ->
-            if (activeStates[stateId] == true) {
-                override.text?.let { 
-                    effInput = it 
-                    effKeyCode = override.parsedKeyCode
-                }
-            }
-        }
-
         // 4. 计算组合键状态 (Meta State)
         val totalMeta = calculateTotalMetaState()
 
         // 5. 执行动作或发送输入
         if (key.action != null) {
-            handleAction(key.action)
+            // 拦截逻辑：引擎也有权拦截动作（如 DictionaryEngine 拦截退格以同步删除联想词）
+            if (!inputEngine.processKey(key, effText, effKeyCode, ic, totalMeta)) {
+                handleAction(key.action)
+            }
+            
             // 修复换页重置 Bug：如果是换页动作，不执行后续的瞬时状态重置
             if (key.action.startsWith(ACTION_SWITCH_PAGE)) {
                 updateCandidates()
                 return
             }
         } else {
-            dispatchInput(effKeyCode, effInput, totalMeta, ic)
+            // 拦截逻辑：如果引擎处理了此输入（例如加入联想序列），则不再执行默认分发
+            if (!inputEngine.processKey(key, effText, effKeyCode, ic, totalMeta)) {
+                dispatchInput(effKeyCode, effInputJson, totalMeta, ic)
+            }
         }
 
         // 6. 行为后置处理：重置所有“瞬时”状态（如按完 Shift 后恢复）
@@ -630,7 +634,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
                 tv.setPadding(padding, 0, padding, 0)
                 tv.setOnClickListener {
                     currentInputConnection?.commitText(candidate, 1)
-                    inputEngine.processKey(KeyboardKey(action = "commit"), currentInputConnection!!, calculateTotalMetaState())
+                    inputEngine.processKey(KeyboardKey(action = "commit"), null, KeyEvent.KEYCODE_UNKNOWN, currentInputConnection!!, calculateTotalMetaState())
                     resetTransientStates()
                     updateCandidates()
                 }

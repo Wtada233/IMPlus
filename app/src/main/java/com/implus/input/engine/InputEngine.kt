@@ -6,13 +6,13 @@ import com.implus.input.layout.KeyboardKey
 import com.implus.input.manager.DictionaryManager
 
 interface InputEngine {
-    fun processKey(key: KeyboardKey, ic: InputConnection, metaState: Int): Boolean
+    fun processKey(key: KeyboardKey, effText: String?, effKeyCode: Int, ic: InputConnection, metaState: Int): Boolean
     fun getCandidates(): List<String>
     fun reset()
 }
 
 class RawEngine : InputEngine {
-    override fun processKey(key: KeyboardKey, ic: InputConnection, metaState: Int): Boolean {
+    override fun processKey(key: KeyboardKey, effText: String?, effKeyCode: Int, ic: InputConnection, metaState: Int): Boolean {
         return false
     }
 
@@ -24,7 +24,7 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
     private var composingText = ""
     private var candidates = listOf<String>()
 
-    override fun processKey(key: KeyboardKey, ic: InputConnection, metaState: Int): Boolean {
+    override fun processKey(key: KeyboardKey, effText: String?, effKeyCode: Int, ic: InputConnection, metaState: Int): Boolean {
         if (key.action == "commit") {
             reset()
             return true
@@ -39,29 +39,11 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
             return false
         }
 
-        var effText: String? = null
-        if (key.text?.isJsonPrimitive == true && key.text.asJsonPrimitive.isString) {
-            effText = key.text.asString
-        }
-        
-        // 注意：此处不再处理 overrides，因为 Service 已经计算好了最终的 effText 和 keyCode
-        // 我们直接使用传入的 key 属性即可
-
-        if (effText != null && effText.length == 1) {
-            val char = effText[0]
-            if (char.isLetter()) {
-                // 使用 Android 标准的 metaState 判断大小写
-                val isShift = (metaState and android.view.KeyEvent.META_SHIFT_ON) != 0
-                val isCaps = (metaState and android.view.KeyEvent.META_CAPS_LOCK_ON) != 0
-                val finalChar = if (isShift xor isCaps) char.uppercaseChar() else char.lowercaseChar()
-                
-                composingText += finalChar
-                updateCandidates(ic)
-                return true
-            } else if (char.isDigit() || char.isWhitespace()) {
-                commitComposing(ic)
-                return false
-            }
+        // 直接拦截 Service 传来的 effText
+        if (effText != null && effText.length == 1 && !effText[0].isWhitespace()) {
+            composingText += effText
+            updateCandidates(ic)
+            return true
         }
 
         commitComposing(ic)
@@ -79,8 +61,17 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
     private fun updateCandidates(ic: InputConnection) {
         if (composingText.isNotEmpty()) {
             ic.setComposingText(composingText, 1)
-            candidates = dictManager.getSuggestions(composingText)
-            // 如果词典里没找到，或者输入太短，我们也把当前输入作为一个候选词
+            val suggestions = dictManager.getSuggestions(composingText)
+            
+            // 核心拦截逻辑：保留用户输入的原始前缀，仅附加词典的剩余部分
+            candidates = suggestions.map { word ->
+                if (word.length >= composingText.length) {
+                    composingText + word.substring(composingText.length)
+                } else {
+                    word
+                }
+            }
+            
             if (!candidates.contains(composingText)) {
                 candidates = listOf(composingText) + candidates
             }
