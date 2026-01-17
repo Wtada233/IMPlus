@@ -55,6 +55,7 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tv_category_advanced)?.text = assetRes.getString("pref_category_advanced")
         findViewById<TextView>(R.id.tv_candidate_text_size_title)?.text = assetRes.getString("pref_candidate_text_size")
         findViewById<TextView>(R.id.tv_candidate_padding_title)?.text = assetRes.getString("pref_candidate_padding")
+        findViewById<TextView>(R.id.tv_max_candidates_title)?.text = assetRes.getString("pref_max_candidates")
         findViewById<TextView>(R.id.tv_category_feedback)?.text = assetRes.getString("pref_category_feedback")
         findViewById<SwitchMaterial>(R.id.switch_vibration)?.text = assetRes.getString("pref_vibration_enable")
         findViewById<TextView>(R.id.tv_vibration_strength_label)?.text = assetRes.getString("pref_vibration_strength")
@@ -140,6 +141,16 @@ class SettingsActivity : AppCompatActivity() {
         seekPadding.onProgressChanged { progress ->
             tvPadding.text = assetRes.getString("unit_px", progress)
             settings.putInt(SettingsManager.KEY_CANDIDATE_PADDING, progress)
+        }
+
+        val seekMax = findViewById<SeekBar>(R.id.seekbar_max_candidates)
+        val tvMax = findViewById<TextView>(R.id.tv_max_candidates_val)
+        val savedMax = settings.maxCandidates
+        seekMax.progress = savedMax
+        tvMax.text = savedMax.toString()
+        seekMax.onProgressChanged { progress ->
+            tvMax.text = progress.toString()
+            settings.putInt(SettingsManager.KEY_MAX_CANDIDATES, progress)
         }
     }
 

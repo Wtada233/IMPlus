@@ -154,6 +154,13 @@
             <TextView android:id="@+id/tv_candidate_padding_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="32px" />
         </LinearLayout>
 
+        <!-- Max Candidates -->
+        <TextView android:id="@+id/tv_max_candidates_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <SeekBar android:id="@+id/seekbar_max_candidates" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:min="1" android:max="100" android:progress="20" />
+            <TextView android:id="@+id/tv_max_candidates_val" android:layout_width="48dp" android:layout_height="wrap_content" android:gravity="end" android:text="20" />
+        </LinearLayout>
+
         <TextView
             android:id="@+id/tv_category_feedback"
             android:layout_width="match_parent"

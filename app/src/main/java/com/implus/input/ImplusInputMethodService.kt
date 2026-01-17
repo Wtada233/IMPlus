@@ -60,7 +60,8 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
             switchPageFunc = { page -> 
                 keyboardView.setPage(page)
                 updatePageIndicator(page)
-            }
+            },
+            switchLanguageFunc = { rotateLanguage() }
         )
     }
     
@@ -100,6 +101,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     }
 
     private fun applyThemeToStaticViews() {
+        if (!::keyboardView.isInitialized) return
         uiManager.applyThemeToStaticViews(inputRootView)
     }
 
@@ -113,7 +115,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
             key == SettingsManager.KEY_HEIGHT_PERCENT || key == SettingsManager.KEY_CANDIDATE_HEIGHT || 
             key == SettingsManager.KEY_SWIPE_THRESHOLD || key == SettingsManager.KEY_H_SPACING || 
             key == SettingsManager.KEY_V_SPACING || key == SettingsManager.KEY_VIBRATION_ENABLED || 
-            key == SettingsManager.KEY_VIBRATION_STRENGTH -> {
+            key == SettingsManager.KEY_VIBRATION_STRENGTH || key == SettingsManager.KEY_MAX_CANDIDATES -> {
                 applyKeyboardSettings()
             }
         }
@@ -178,7 +180,41 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
 
     private fun setupKeyboardLogic() {
         keyboardView.onKeyListener = { key -> handleKey(key) }
+        keyboardView.onKeyLongPressListener = { key -> handleKeyLongPress(key) }
         keyboardView.onSwipeListener = { direction -> handleSwipe(direction) }
+    }
+
+    private fun handleKeyLongPress(key: KeyboardKey) {
+        if (key.action == "switch_language") {
+            showLanguageDialog()
+        }
+    }
+
+                private fun showLanguageDialog() {
+
+                    val intent = android.content.Intent(this, LanguageSelectActivity::class.java)
+
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION)
+
+                    startActivity(intent)
+
+                }
+
+    private fun rotateLanguage() {
+        val languages = LayoutManager.getAvailableLanguages(this)
+        if (languages.size <= 1) return
+        
+        val currentId = settings.currentLangId
+        val currentIndex = languages.indexOfFirst { it.id == currentId }
+        val nextIndex = (currentIndex + 1) % languages.size
+        val nextLang = languages[nextIndex]
+        
+        settings.putString(SettingsManager.KEY_CURRENT_LANG, nextLang.id)
+        reloadLanguage()
     }
 
     private fun handleSwipe(direction: ImplusKeyboardView.Direction) {
@@ -212,6 +248,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     }
 
     private fun updatePageIndicator(currentPage: KeyboardPage) {
+        if (!::pageIndicator.isInitialized) return
         pageIndicator.removeAllViews()
         val allPages = currentLayout?.pages ?: emptyList()
         val groupPages = if (currentPage.groupId != null) {
@@ -358,19 +395,23 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
         val config = currentLanguage ?: return
         val dictEnabled = settings.isDictEnabled(langId, isPc)
         
-        // 使用工具类识别密码框或禁用建议的输入框
         val isPassword = com.implus.input.utils.InputTypeUtils.isPasswordType(info)
         val noSuggestions = com.implus.input.utils.InputTypeUtils.isNoSuggestions(info)
 
-        val shouldEnableDict = config.engine == "dictionary" && 
-                               dictEnabled && 
-                               !isPassword && 
-                               !noSuggestions
-        
-        inputEngine = if (shouldEnableDict) {
-            DictionaryEngine(dictManager)
-        } else {
-            RawEngine()
+        // Password/NoSuggestions force RawEngine (bypass)
+        if (isPassword || noSuggestions) {
+            inputEngine = RawEngine()
+            return
+        }
+
+        inputEngine = when (config.engine) {
+            "dictionary" -> {
+                if (dictEnabled) DictionaryEngine(dictManager) else RawEngine()
+            }
+            "pinyin" -> {
+                com.implus.input.engine.PinyinEngine(this, dictManager)
+            }
+            else -> RawEngine()
         }
     }
 
@@ -393,11 +434,17 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
         currentLayout = loadedLayout
         Log.d(TAG, "Layout loaded in ${SystemClock.elapsedRealtime() - startTime}ms")
         
-        // 异步加载词典 (放入同一队列以确保顺序，或独立执行均可，这里为了不阻塞后续UI操作选择独立execute)
+        // 只有视图初始化后才继续
+        if (!::keyboardView.isInitialized) return
+
+        // 异步加载词典
         if (inputEngine is DictionaryEngine) {
             loadExecutor.execute {
-                currentLanguage?.dictionary?.let { dictFile ->
+                val dictFile = currentLanguage?.dictionary
+                if (dictFile != null && dictFile != "none") {
                     dictManager.loadDictionary(currentLanguage?.id ?: "", dictFile)
+                } else {
+                    dictManager.clear()
                 }
             }
         } else {
@@ -418,6 +465,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     }
 
     private fun applyLayoutToViews(layout: KeyboardLayout) {
+        if (!::keyboardView.isInitialized) return
         keyboardView.theme = layout.theme
         keyboardView.layoutThemeLight = layout.themeLight
         keyboardView.layoutThemeDark = layout.themeDark
@@ -432,6 +480,7 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     }
 
     private fun resetStateAndPreparseKeys(layout: KeyboardLayout) {
+        if (!::keyboardView.isInitialized) return
         stateManager.resetAndPreparse(layout) { parseKeyCode(it) }
         keyboardView.activeStates = stateManager.activeStates
     }
@@ -585,11 +634,13 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     private fun renderCandidateViews(candidates: List<String>, textColor: Int) {
         val textSize = settings.candidateTextSize
         val padding = settings.candidatePadding
+        val maxToShow = settings.maxCandidates
+        val displayedCandidates = if (candidates.size > maxToShow) candidates.take(maxToShow) else candidates
         val currentChildCount = candidateStrip.childCount
 
-        for (i in 0 until maxOf(candidates.size, currentChildCount)) {
-            if (i < candidates.size) {
-                val candidate = candidates[i]
+        for (i in 0 until maxOf(displayedCandidates.size, currentChildCount)) {
+            if (i < displayedCandidates.size) {
+                val candidate = displayedCandidates[i]
                 val tv = getOrCreateCandidateTextView(i, currentChildCount)
                 tv.visibility = View.VISIBLE
                 tv.text = candidate
@@ -622,16 +673,20 @@ class ImplusInputMethodService : InputMethodService(), android.content.Clipboard
     }
 
     private fun onCandidateClicked(candidate: String) {
-        currentInputConnection?.commitText(candidate, 1)
-        val commitKey = KeyboardKey(action = "commit")
-        inputEngine.processKey(
-            commitKey, 
-            null, 
-            KeyEvent.KEYCODE_UNKNOWN, 
-            currentInputConnection!!, 
-            calculateTotalMetaState()
-        )
-        resetTransientStates()
+        // Let the engine handle the selection state (commit text, partial commit, or autocomplete)
+        val keepComposing = inputEngine.onCandidateSelected(candidate)
+        
+        if (!keepComposing) {
+            val commitKey = KeyboardKey(action = "commit")
+            inputEngine.processKey(
+                commitKey, 
+                null, 
+                KeyEvent.KEYCODE_UNKNOWN, 
+                currentInputConnection!!, 
+                calculateTotalMetaState()
+            )
+            resetTransientStates()
+        }
         updateCandidates()
     }
 

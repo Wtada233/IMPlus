@@ -1,30 +1,36 @@
 {
-  "name": "PC Framework Layout",
-  "defaultHeight": 280,
+  "name": "Mobile Layout",
+  "defaultHeight": 250,
   "showCandidates": true,
   "useDictionary": true,
+  "theme_light": {
+    "background": "#F0F0F0",
+    "keyBackground": "#FFFFFF",
+    "keyText": "#1C1B1F",
+    "functionKeyBackground": "#E1E2EC",
+    "functionKeyText": "#1C1B1F",
+    "stickyInactiveBackground": "#E1E2EC",
+    "stickyActiveBackground": "#3F51B5",
+    "stickyActiveText": "#FFFFFF",
+    "rippleColor": "#20000000"
+  },
+  "theme_dark": {
+    "background": "#1A1C1E",
+    "keyBackground": "#303030",
+    "keyText": "#E2E2E6",
+    "functionKeyBackground": "#252525",
+    "functionKeyText": "#E2E2E6",
+    "stickyInactiveBackground": "#42474E",
+    "stickyActiveBackground": "#D1E4FF",
+    "stickyActiveText": "#00315E",
+    "rippleColor": "#40FFFFFF"
+  },
   "pages": [
     {
       "id": "main",
       "rows": [
         {
           "keys": [
-            {"label": "Esc", "text": "ESCAPE", "weight": 1, "type": "func", "style": "function"},
-            {"label": "1", "text": "1", "weight": 1, "overrides": {"shift": {"label": "!", "text": "1"}}},
-            {"label": "2", "text": "2", "weight": 1, "overrides": {"shift": {"label": "@", "text": "2"}}},
-            {"label": "3", "text": "3", "weight": 1, "overrides": {"shift": {"label": "#", "text": "3"}}},
-            {"label": "4", "text": "4", "weight": 1, "overrides": {"shift": {"label": "$", "text": "4"}}},
-            {"label": "5", "text": "5", "weight": 1, "overrides": {"shift": {"label": "%", "text": "5"}}},
-            {"label": "6", "text": "6", "weight": 1, "overrides": {"shift": {"label": "^", "text": "6"}}},
-            {"label": "7", "text": "7", "weight": 1, "overrides": {"shift": {"label": "&", "text": "7"}}},
-            {"label": "8", "text": "8", "weight": 1, "overrides": {"shift": {"label": "*", "text": "8"}}},
-            {"label": "9", "text": "9", "weight": 1, "overrides": {"shift": {"label": "(", "text": "9"}}},
-            {"label": "0", "text": "0", "weight": 1, "overrides": {"shift": {"label": ")", "text": "0"}}}
-          ]
-        },
-        {
-          "keys": [
-            {"label": "Tab", "text": "TAB", "weight": 1.2, "type": "func", "style": "function"},
             {"label": "q", "text": "q", "weight": 1, "overrides": {"shift": {"label": "Q", "text": "Q"}, "caps": {"label": "Q", "text": "Q"}}},
             {"label": "w", "text": "w", "weight": 1, "overrides": {"shift": {"label": "W", "text": "W"}, "caps": {"label": "W", "text": "W"}}},
             {"label": "e", "text": "e", "weight": 1, "overrides": {"shift": {"label": "E", "text": "E"}, "caps": {"label": "E", "text": "E"}}},
@@ -39,7 +45,6 @@
         },
         {
           "keys": [
-            {"id": "caps", "label": "Caps", "sticky": "permanent", "text": "CAPS_LOCK", "metaValue": 1048576, "weight": 1.3, "type": "modifier", "style": "sticky", "overrides": {"caps": {"label": "CAPS", "text": "CAPS_LOCK"}}},
             {"label": "a", "text": "a", "weight": 1, "overrides": {"shift": {"label": "A", "text": "A"}, "caps": {"label": "A", "text": "A"}}},
             {"label": "s", "text": "s", "weight": 1, "overrides": {"shift": {"label": "S", "text": "S"}, "caps": {"label": "S", "text": "S"}}},
             {"label": "d", "text": "d", "weight": 1, "overrides": {"shift": {"label": "D", "text": "D"}, "caps": {"label": "D", "text": "D"}}},
@@ -48,8 +53,7 @@
             {"label": "h", "text": "h", "weight": 1, "overrides": {"shift": {"label": "H", "text": "H"}, "caps": {"label": "H", "text": "H"}}},
             {"label": "j", "text": "j", "weight": 1, "overrides": {"shift": {"label": "J", "text": "J"}, "caps": {"label": "J", "text": "J"}}},
             {"label": "k", "text": "k", "weight": 1, "overrides": {"shift": {"label": "K", "text": "K"}, "caps": {"label": "K", "text": "K"}}},
-            {"label": "l", "text": "l", "weight": 1, "overrides": {"shift": {"label": "L", "text": "L"}, "caps": {"label": "L", "text": "L"}}},
-            {"label": "Enter", "text": "ENTER", "weight": 1.7, "type": "func", "style": "function"}
+            {"label": "l", "text": "l", "weight": 1, "overrides": {"shift": {"label": "L", "text": "L"}, "caps": {"label": "L", "text": "L"}}}
           ]
         },
         {
@@ -67,13 +71,12 @@
         },
         {
           "keys": [
-            {"id": "ctrl", "label": "Ctrl", "sticky": "transient", "text": "CTRL_LEFT", "metaValue": 12288, "weight": 1.2, "type": "modifier", "style": "sticky"},
             {"label": "?123", "weight": 1.5, "type": "modifier", "action": "switch_page:symbols", "style": "function"},
             {"label": "🌐", "weight": 1, "action": "switch_language", "style": "function"},
-            {"id": "alt", "label": "Alt", "sticky": "transient", "text": "ALT_LEFT", "metaValue": 18, "weight": 1.2, "type": "modifier", "style": "sticky"},
-            {"label": "Space", "text": " ", "weight": 4},
-            {"label": ".", "text": "PERIOD", "weight": 1, "overrides": {"shift": {"label": ">"}}}, 
-            {"label": ",", "text": "COMMA", "weight": 1, "overrides": {"shift": {"label": "<"}}}
+            {"label": ",", "text": "COMMA", "weight": 1},
+            {"label": "空格", "text": " ", "weight": 4},
+            {"label": ".", "text": "PERIOD", "weight": 1},
+            {"label": "回车", "text": "ENTER", "weight": 1.5, "type": "func", "style": "function"}
           ]
         }
       ]
@@ -98,11 +101,11 @@
         },
         {
           "keys": [
-            {"label": "@", "text": "AT", "weight": 1},
-            {"label": "#", "text": "POUND", "weight": 1},
-            {"label": "$", "text": "DOLLAR", "weight": 1},
-            {"label": "%", "text": "PERCENT", "weight": 1},
-            {"label": "&", "text": "AT", "weight": 1},
+            {"label": "@", "text": "@", "weight": 1},
+            {"label": "#", "text": "#", "weight": 1},
+            {"label": "$", "text": "$", "weight": 1},
+            {"label": "%", "text": "%", "weight": 1},
+            {"label": "&", "text": "&", "weight": 1},
             {"label": "-", "text": "MINUS", "weight": 1},
             {"label": "+", "text": "PLUS", "weight": 1},
             {"label": "(", "text": "LEFT_PAREN", "weight": 1},
@@ -128,7 +131,7 @@
           "keys": [
              {"label": "ABC", "weight": 1.5, "type": "modifier", "action": "switch_page:main", "style": "function"},
              {"label": "🌐", "weight": 1, "action": "switch_language", "style": "function"},
-             {"label": "Space", "text": " ", "weight": 4},
+             {"label": "空格", "text": " ", "weight": 4},
              {"label": "⌫", "action": "backspace", "weight": 1.5, "type": "func", "style": "function"}
           ]
         }
@@ -170,7 +173,7 @@
           "keys": [
              {"label": "ABC", "weight": 1.5, "type": "modifier", "action": "switch_page:main", "style": "function"},
              {"label": "🌐", "weight": 1, "action": "switch_language", "style": "function"},
-             {"label": "Space", "text": " ", "weight": 4},
+             {"label": "空格", "text": " ", "weight": 4},
              {"label": "⌫", "action": "backspace", "weight": 1.5, "type": "func", "style": "function"}
           ]
         }

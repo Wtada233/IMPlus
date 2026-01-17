@@ -21,7 +21,8 @@ class ActionHandlerTest {
         val handler = ActionHandler(
             sendKeyFunc = { code, _ -> lastKeyCode.set(code) },
             hideFunc = {},
-            switchPageFunc = {}
+            switchPageFunc = {},
+            switchLanguageFunc = {}
         )
 
         handler.handleAction("backspace", null)
@@ -34,7 +35,8 @@ class ActionHandlerTest {
         val handler = ActionHandler(
             sendKeyFunc = { _, _ -> },
             hideFunc = { hideCalled.set(true) },
-            switchPageFunc = {}
+            switchPageFunc = {},
+            switchLanguageFunc = {}
         )
 
         handler.handleAction("hide", null)
@@ -56,11 +58,26 @@ class ActionHandlerTest {
         val handler = ActionHandler(
             sendKeyFunc = { _, _ -> },
             hideFunc = {},
-            switchPageFunc = { switchedPage.set(it) }
+            switchPageFunc = { switchedPage.set(it) },
+            switchLanguageFunc = {}
         )
 
         handler.handleAction("switch_page:$targetPageId", layout)
         assertNotNull(switchedPage.get())
         assertEquals(targetPageId, switchedPage.get()?.id)
+    }
+
+    @Test
+    fun testHandleActionSwitchLanguage() {
+        val switchCalled = AtomicBoolean(false)
+        val handler = ActionHandler(
+            sendKeyFunc = { _, _ -> },
+            hideFunc = {},
+            switchPageFunc = {},
+            switchLanguageFunc = { switchCalled.set(true) }
+        )
+
+        handler.handleAction("switch_language", null)
+        assertTrue("switch_language action should trigger callback", switchCalled.get())
     }
 }

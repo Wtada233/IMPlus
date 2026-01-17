@@ -1,0 +1,12 @@
+{
+  "id": "zh",
+  "name": "中文 (简体)",
+  "engine": "pinyin",
+  "pcLayout": "pc_layout.json",
+  "mobileLayout": "mobile_layout.json",
+  "defaultPage": "main",
+  "inputTypePages": {
+    "number": "symbols",
+    "phone": "symbols"
+  }
+}

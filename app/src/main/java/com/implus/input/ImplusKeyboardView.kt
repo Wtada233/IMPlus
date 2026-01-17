@@ -69,6 +69,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
         set(value) { field = value; applyTheme(); invalidate() }
 
     var onKeyListener: ((KeyboardKey) -> Unit)? = null
+    var onKeyLongPressListener: ((KeyboardKey) -> Unit)? = null
     var onSwipeListener: ((Direction) -> Unit)? = null
 
     // Settings
@@ -93,6 +94,11 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private val textPaint = Paint().apply { textAlign = Paint.Align.CENTER; isAntiAlias = true }
     private val ripplePaint = Paint().apply { isAntiAlias = true; style = Paint.Style.FILL }
     private val clipPath = Path()
+    private var isLongPressConsumed = false
+    
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var longPressRunnable: Runnable? = null
+    private val longPressTimeout = android.view.ViewConfiguration.getLongPressTimeout().toLong()
 
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
@@ -380,7 +386,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
     private val pointerMap = mutableMapOf<Int, KeyDrawable>()
 
     override fun onTouchEvent(e: MotionEvent): Boolean {
-        if (gestureDetector.onTouchEvent(e)) return true
+        gestureDetector.onTouchEvent(e)
         
         val action = e.actionMasked
         val index = e.actionIndex
@@ -390,11 +396,15 @@ class ImplusKeyboardView @JvmOverloads constructor(
 
         when (action) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                isLongPressConsumed = false
                 val kd = keyDrawables.find { it.rect.contains(x, y) }
                 kd?.let {
                     pointerMap[id] = it
                     it.onPressed(x, y)
                     performVibration()
+                    
+                    // 启动长按计时器
+                    startLongPressTimer(it)
                     invalidate()
                 }
             }
@@ -405,6 +415,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
                     val py = e.getY(i)
                     val kd = pointerMap[pid]
                     if (kd != null && !kd.rect.contains(px, py)) {
+                        cancelLongPressTimer()
                         kd.onReleased()
                         pointerMap.remove(pid)
                         invalidate()
@@ -412,8 +423,9 @@ class ImplusKeyboardView @JvmOverloads constructor(
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                cancelLongPressTimer()
                 pointerMap[id]?.let {
-                    if (it.rect.contains(x, y)) {
+                    if (!isLongPressConsumed && it.rect.contains(x, y)) {
                         onKeyListener?.invoke(it.key)
                     }
                     it.onReleased()
@@ -422,6 +434,7 @@ class ImplusKeyboardView @JvmOverloads constructor(
                 }
             }
             MotionEvent.ACTION_CANCEL -> {
+                cancelLongPressTimer()
                 pointerMap.values.forEach { it.onReleased() }
                 pointerMap.clear()
                 invalidate()
@@ -429,7 +442,26 @@ class ImplusKeyboardView @JvmOverloads constructor(
         }
         return true
     }
-    
+
+    private fun startLongPressTimer(kd: KeyDrawable) {
+        cancelLongPressTimer()
+        val runnable = Runnable {
+            isLongPressConsumed = true
+            performVibration()
+            // 立即重置视觉效果并触发长按动作
+            kd.onReleased()
+            invalidate()
+            onKeyLongPressListener?.invoke(kd.key)
+        }
+        longPressRunnable = runnable
+        mainHandler.postDelayed(runnable, longPressTimeout)
+    }
+
+    private fun cancelLongPressTimer() {
+        longPressRunnable?.let { mainHandler.removeCallbacks(it) }
+        longPressRunnable = null
+    }
+
     private inner class KeyDrawable(val key: KeyboardKey, val rect: RectF, val baseTextSize: Float) { 
         // Ripple State
         var rippleX = 0f
@@ -491,4 +523,3 @@ class ImplusKeyboardView @JvmOverloads constructor(
         }
     }
 }
-

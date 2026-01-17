@@ -30,6 +30,11 @@
             android:label="@string/settings_title"
             android:parentActivityName=".MainActivity" />
 
+        <activity
+            android:name=".LanguageSelectActivity"
+            android:theme="@style/Theme.Implus.Transparent"
+            android:exported="false" />
+
         <service
             android:name=".ImplusInputMethodService"
             android:label="@string/ime_name"

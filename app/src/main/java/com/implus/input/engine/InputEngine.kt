@@ -8,24 +8,39 @@ import com.implus.input.manager.DictionaryManager
 interface InputEngine {
     fun processKey(key: KeyboardKey, effText: String?, effKeyCode: Int, ic: InputConnection, metaState: Int): Boolean
     fun getCandidates(): List<String>
+    fun onCandidateSelected(text: String): Boolean
     fun reset()
 }
 
 class RawEngine : InputEngine {
+    private var lastIc: InputConnection? = null
+
     override fun processKey(key: KeyboardKey, effText: String?, effKeyCode: Int, ic: InputConnection, metaState: Int): Boolean {
+        lastIc = ic
         return false
     }
 
     override fun getCandidates(): List<String> = emptyList()
+    
+    override fun onCandidateSelected(text: String): Boolean {
+        // RawEngine doesn't usually show candidates, but if it did, it should commit them.
+        lastIc?.commitText(text, 1)
+        return false
+    }
+
     @Suppress("EmptyFunctionBlock")
-    override fun reset() {}
+    override fun reset() {
+        lastIc = null
+    }
 }
 
 class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine {
     private var composingText = ""
     private var candidates = listOf<String>()
+    private var lastIc: InputConnection? = null
 
     override fun processKey(key: KeyboardKey, effText: String?, effKeyCode: Int, ic: InputConnection, metaState: Int): Boolean {
+        lastIc = ic
         var handled = true
         when {
             key.action == "commit" -> reset()
@@ -99,9 +114,16 @@ class DictionaryEngine(private val dictManager: DictionaryManager) : InputEngine
 
     override fun getCandidates(): List<String> = candidates
 
+    override fun onCandidateSelected(text: String): Boolean {
+        lastIc?.commitText(text, 1)
+        // Simple dictionary engine resets after selection
+        return false
+    }
+
     override fun reset() {
         composingText = ""
         candidates = emptyList()
+        lastIc = null
     }
 }
 

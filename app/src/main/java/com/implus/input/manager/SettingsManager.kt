@@ -3,7 +3,7 @@ package com.implus.input.manager
 import android.content.Context
 import android.content.SharedPreferences
 
-class SettingsManager(context: Context) {
+class SettingsManager(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     companion object {
@@ -32,6 +32,7 @@ class SettingsManager(context: Context) {
         const val KEY_RIPPLE_DURATION = "ripple_duration"
         const val KEY_CANDIDATE_TEXT_SIZE = "candidate_text_size"
         const val KEY_CANDIDATE_PADDING = "candidate_padding"
+        const val KEY_MAX_CANDIDATES = "max_candidates"
 
         const val DEFAULT_LANG = "en"
         const val DEFAULT_HEIGHT_PERCENT = 35
@@ -47,7 +48,8 @@ class SettingsManager(context: Context) {
         const val DEFAULT_ANIM_DURATION = 200
         const val DEFAULT_RIPPLE_DURATION = 350
         const val DEFAULT_CANDIDATE_TEXT_SIZE = 18
-        const val DEFAULT_CANDIDATE_PADDING = 32
+        const val DEFAULT_CANDIDATE_PADDING = 12
+        const val DEFAULT_MAX_CANDIDATES = 20
     }
 
     fun getString(key: String, default: String): String = prefs.getString(key, default) ?: default
@@ -88,7 +90,21 @@ class SettingsManager(context: Context) {
         putBoolean(key, enabled)
     }
     
-    val currentLangId: String get() = getString(KEY_CURRENT_LANG, DEFAULT_LANG)
+    val currentLangId: String 
+        get() {
+            val saved = getString(KEY_CURRENT_LANG, "")
+            if (saved.isNotEmpty()) return saved
+            
+            // 自动匹配系统语言逻辑
+            val locale = context.resources.configuration.locales[0]
+            val lang = locale.language
+            val country = locale.country
+            
+            // 尝试全匹配 zh_CN, zh_TW 等
+            val fullMatch = "${lang}_$country"
+            return if (fullMatch == "zh_CN" || fullMatch == "zh_TW") "zh" else lang
+        }
+    
     val heightPercent: Int get() = getInt(KEY_HEIGHT_PERCENT, DEFAULT_HEIGHT_PERCENT)
     val candidateHeight: Int get() = getInt(KEY_CANDIDATE_HEIGHT, DEFAULT_CANDIDATE_HEIGHT)
     val swipeThreshold: Int get() = getInt(KEY_SWIPE_THRESHOLD, DEFAULT_SWIPE_THRESHOLD)
@@ -106,5 +122,6 @@ class SettingsManager(context: Context) {
     val rippleDuration: Long get() = getInt(KEY_RIPPLE_DURATION, DEFAULT_RIPPLE_DURATION).toLong()
     val candidateTextSize: Float get() = getInt(KEY_CANDIDATE_TEXT_SIZE, DEFAULT_CANDIDATE_TEXT_SIZE).toFloat()
     val candidatePadding: Int get() = getInt(KEY_CANDIDATE_PADDING, DEFAULT_CANDIDATE_PADDING)
+    val maxCandidates: Int get() = getInt(KEY_MAX_CANDIDATES, DEFAULT_MAX_CANDIDATES)
 }
 

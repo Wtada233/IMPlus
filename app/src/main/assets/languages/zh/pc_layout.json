@@ -49,7 +49,7 @@
             {"label": "j", "text": "j", "weight": 1, "overrides": {"shift": {"label": "J", "text": "J"}, "caps": {"label": "J", "text": "J"}}},
             {"label": "k", "text": "k", "weight": 1, "overrides": {"shift": {"label": "K", "text": "K"}, "caps": {"label": "K", "text": "K"}}},
             {"label": "l", "text": "l", "weight": 1, "overrides": {"shift": {"label": "L", "text": "L"}, "caps": {"label": "L", "text": "L"}}},
-            {"label": "Enter", "text": "ENTER", "weight": 1.7, "type": "func", "style": "function"}
+            {"label": "回车", "text": "ENTER", "weight": 1.7, "type": "func", "style": "function"}
           ]
         },
         {
@@ -71,7 +71,7 @@
             {"label": "?123", "weight": 1.5, "type": "modifier", "action": "switch_page:symbols", "style": "function"},
             {"label": "🌐", "weight": 1, "action": "switch_language", "style": "function"},
             {"id": "alt", "label": "Alt", "sticky": "transient", "text": "ALT_LEFT", "metaValue": 18, "weight": 1.2, "type": "modifier", "style": "sticky"},
-            {"label": "Space", "text": " ", "weight": 4},
+            {"label": "空格", "text": " ", "weight": 4},
             {"label": ".", "text": "PERIOD", "weight": 1, "overrides": {"shift": {"label": ">"}}}, 
             {"label": ",", "text": "COMMA", "weight": 1, "overrides": {"shift": {"label": "<"}}}
           ]
@@ -128,7 +128,7 @@
           "keys": [
              {"label": "ABC", "weight": 1.5, "type": "modifier", "action": "switch_page:main", "style": "function"},
              {"label": "🌐", "weight": 1, "action": "switch_language", "style": "function"},
-             {"label": "Space", "text": " ", "weight": 4},
+             {"label": "空格", "text": " ", "weight": 4},
              {"label": "⌫", "action": "backspace", "weight": 1.5, "type": "func", "style": "function"}
           ]
         }
@@ -170,7 +170,7 @@
           "keys": [
              {"label": "ABC", "weight": 1.5, "type": "modifier", "action": "switch_page:main", "style": "function"},
              {"label": "🌐", "weight": 1, "action": "switch_language", "style": "function"},
-             {"label": "Space", "text": " ", "weight": 4},
+             {"label": "空格", "text": " ", "weight": 4},
              {"label": "⌫", "action": "backspace", "weight": 1.5, "type": "func", "style": "function"}
           ]
         }

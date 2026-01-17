@@ -12,7 +12,8 @@ import com.implus.input.utils.Constants
 class ActionHandler(
     private val sendKeyFunc: (Int, Int) -> Unit,
     private val hideFunc: () -> Unit,
-    private val switchPageFunc: (KeyboardPage) -> Unit
+    private val switchPageFunc: (KeyboardPage) -> Unit,
+    private val switchLanguageFunc: () -> Unit
 ) {
     companion object {
         private const val ACTION_SWITCH_PAGE = "switch_page:"
@@ -28,6 +29,7 @@ class ActionHandler(
             }
             action == "backspace" -> sendKeyFunc(KeyEvent.KEYCODE_DEL, 0)
             action == "hide" -> hideFunc()
+            action == "switch_language" -> switchLanguageFunc()
         }
     }
     
